@@ -2,11 +2,15 @@ package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.entity.limit.AiLimit;
 import com.bsu.cvbuilder.repository.LimitRepository;
+import com.bsu.cvbuilder.repository.UserProfileRepository;
 import com.bsu.cvbuilder.service.LimitService;
 import com.bsu.cvbuilder.service.SecurityService;
+import com.bsu.cvbuilder.service.UserProfileService;
+import io.lettuce.core.Limit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -18,6 +22,7 @@ public class LimitServiceImpl implements LimitService {
 
     private final SecurityService securityService;
     private final LimitRepository limitRepository;
+    private final UserProfileService userProfileService;
 
     @Override
     public List<AiLimit> findActiveLimits() {
@@ -36,7 +41,20 @@ public class LimitServiceImpl implements LimitService {
     }
 
     @Override
+    @Transactional
     public AiLimit createLimit(AiLimit limit) {
-        return null;
+        log.debug("Attempting to create limit by current user");
+        var user = securityService.findCurrentUser();
+        var newLimit = AiLimit.builder()
+                .name(limit.getName())
+                .description(limit.getDescription())
+                .appliedAt(LocalDate.now())
+                .appliedFor(limit.getAppliedFor() == null ? LocalDate.now().plusDays(30) : limit.getAppliedFor())
+                .build();
+        var createdLimit = limitRepository.save(newLimit);
+        user.getAiLimits().add(createdLimit);
+        userProfileService.update(user);
+        log.info("Created limit by current user: {}", createdLimit);
+        return createdLimit;
     }
 }

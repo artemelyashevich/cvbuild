@@ -13,4 +13,6 @@ public interface UserProfileService {
     UserProfile create(UserProfile build);
 
     UserProfile login(String email);
+
+    UserProfile update(UserProfile profile);
 }

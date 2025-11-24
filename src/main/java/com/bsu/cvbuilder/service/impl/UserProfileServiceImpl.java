@@ -88,4 +88,23 @@ public class UserProfileServiceImpl implements UserProfileService {
         log.info("UserProfile logged in");
         return user;
     }
+
+    @Override
+    public UserProfile update(UserProfile profile) {
+        log.debug("Attempting to update user profile {}", profile);
+        var user = userProfileRepository.findByEmail(profile.getEmail()).orElseThrow(
+                () -> {
+                    var message = String.format("UserProfile with email %s not found", profile.getEmail());
+                    log.error(message);
+                    return new AppException(message, 404);
+                }
+        );
+
+        user.setAiLimits(profile.getAiLimits());
+
+        var updatedUser = userProfileRepository.save(user);
+
+        log.info("UserProfile updated {}", updatedUser);
+        return updatedUser;
+    }
 }
