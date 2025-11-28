@@ -53,6 +53,9 @@ server:
   port: 8888
 
 app:
+  security:
+    oauth2:
+      enabled: false
   interview:
     blocks:
       - personalInfo

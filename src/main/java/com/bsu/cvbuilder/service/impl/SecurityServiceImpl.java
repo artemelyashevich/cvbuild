@@ -7,9 +7,13 @@ import com.bsu.cvbuilder.service.EmailService;
 import com.bsu.cvbuilder.service.RedisService;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.service.UserProfileService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -29,6 +33,9 @@ public class SecurityServiceImpl implements SecurityService {
     private final ThreadLocal<UserProfile> currentUser = new ThreadLocal<>();
     private final EmailService emailService;
     private final RedisService redisService;
+
+    @Value("${app.security.oauth2.enabled:false}")
+    private boolean oauth2Enabled;
 
     @Override
     public UserProfile findCurrentUser() {
@@ -72,6 +79,11 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     @Override
+    public void entryPoint(HttpServletRequest request) {
+
+    }
+
+    @Override
     public void emailVerification() {
         var email = extractEmail(SecurityContextHolder.getContext().getAuthentication());
         var otp = redisService.getOtp(email);
@@ -103,16 +115,40 @@ public class SecurityServiceImpl implements SecurityService {
         return otp;
     }
 
+    @Override
+    public boolean isTokenValid(String token) {
+        return false;
+    }
+
+    @Override
+    public boolean isTokenExpire(String authToken) {
+        return false;
+    }
+
+    @Override
+    public void checkSecureData() {
+
+    }
+
     private String extractEmail(Authentication authentication) {
         var authToken = validateAuthentication(authentication);
         var principal = extractPrincipal(authToken);
         return principal.getAttribute("email");
     }
 
-    private OAuth2AuthenticationToken validateAuthentication(Authentication authentication) {
-        if (!(authentication instanceof OAuth2AuthenticationToken authToken)) {
+    private AbstractAuthenticationToken validateAuthentication(Authentication authentication) {
+        if (oauth2Enabled) {
+            if (!(authentication instanceof OAuth2AuthenticationToken)) {
+                log.debug("Invalid authentication type: {}", authentication.getClass());
+                throw new AppException("Unsupported authentication type", 401);
+            }
+        }
+        if (oauth2Enabled && !(authentication instanceof OAuth2AuthenticationToken authToken)) {
             log.debug("Invalid authentication type: {}", authentication.getClass());
             throw new AppException("Unsupported authentication type", 401);
+        }
+        if (!(authentication instanceof UsernamePasswordAuthenticationToken authToken)) {
+
         }
         return authToken;
     }
@@ -121,7 +157,7 @@ public class SecurityServiceImpl implements SecurityService {
         return String.format("::%s::", email);
     }
 
-    private DefaultOAuth2User extractPrincipal(OAuth2AuthenticationToken authToken) {
+    private DefaultOAuth2User extractPrincipal(AbstractAuthenticationToken authToken) {
         try {
             return (DefaultOAuth2User) authToken.getPrincipal();
         } catch (ClassCastException e) {

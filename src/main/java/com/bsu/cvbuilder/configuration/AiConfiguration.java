@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.ai;
+package com.bsu.cvbuilder.configuration;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
