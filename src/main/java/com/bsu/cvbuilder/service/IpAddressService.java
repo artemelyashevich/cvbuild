@@ -4,5 +4,5 @@ import jakarta.servlet.http.HttpServletRequest;
 
 public interface IpAddressService {
 
-    public String getIpAddress(HttpServletRequest request);
+    String getIpAddress(HttpServletRequest request);
 }

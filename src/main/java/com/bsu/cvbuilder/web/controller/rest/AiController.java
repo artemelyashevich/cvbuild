@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
-import com.bsu.cvbuilder.dto.AiRequestDto;
+import com.bsu.cvbuilder.dto.ai.AiRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.web.bind.annotation.PostMapping;

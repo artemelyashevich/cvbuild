@@ -138,17 +138,15 @@ public class SecurityServiceImpl implements SecurityService {
 
     private AbstractAuthenticationToken validateAuthentication(Authentication authentication) {
         if (oauth2Enabled) {
-            if (!(authentication instanceof OAuth2AuthenticationToken)) {
+            if (!(authentication instanceof OAuth2AuthenticationToken authToken)) {
                 log.debug("Invalid authentication type: {}", authentication.getClass());
                 throw new AppException("Unsupported authentication type", 401);
             }
-        }
-        if (oauth2Enabled && !(authentication instanceof OAuth2AuthenticationToken authToken)) {
-            log.debug("Invalid authentication type: {}", authentication.getClass());
-            throw new AppException("Unsupported authentication type", 401);
+            return authToken;
         }
         if (!(authentication instanceof UsernamePasswordAuthenticationToken authToken)) {
-
+            log.debug("Invalid authentication type: {}", authentication.getClass());
+            throw new AppException("Unsupported authentication type", 401);
         }
         return authToken;
     }

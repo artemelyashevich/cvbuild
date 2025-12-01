@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.dto;
+package com.bsu.cvbuilder.dto.ai;
 
 import java.util.UUID;
 
