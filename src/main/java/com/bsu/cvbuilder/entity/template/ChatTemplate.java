@@ -1,45 +1,42 @@
-package com.bsu.cvbuilder.entity.chat;
+package com.bsu.cvbuilder.entity.template;
 
-import com.bsu.cvbuilder.entity.template.ChatQuestion;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Document(collection = "chat")
-public class AiChat {
+@ToString
+@Document(collection = "templates")
+public class ChatTemplate {
 
     @Id
     private String id;
 
-    private String chatName;
+    private String title;
 
-    @DBRef(db = "users")
-    private String userId;
+    private String description;
+
+    private String img;
 
     @Builder.Default
-    private LinkedHashMap<AiMessage, AiMessage> aiQuestionsAnswers = new LinkedHashMap<>();
-
-    @DBRef
-    private String templateId;
+    private Set<ChatQuestion> questions = new HashSet<>();
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")

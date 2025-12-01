@@ -12,7 +12,8 @@ public record ChatRequestDto(
         ChatOptions chatOptions,
         boolean isOptions,
         ChatState chatState,
-        String locale
+        String locale,
+        boolean isUserAnswer
 ) {
 
     @Getter
