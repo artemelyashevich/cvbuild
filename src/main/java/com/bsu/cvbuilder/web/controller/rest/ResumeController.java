@@ -4,6 +4,7 @@ import com.bsu.cvbuilder.service.ResumeService;
 import com.bsu.cvbuilder.web.dto.resume.CreateResumeRequest;
 import com.bsu.cvbuilder.web.dto.resume.ResumeResponse;
 import com.bsu.cvbuilder.web.mapper.impl.ResumeDtoMapper;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.mapstruct.factory.Mappers;
 import org.springframework.validation.annotation.Validated;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Tag(name = "Resume")
 @RestController
 @RequestMapping("/api/v1/resumes")
 @RequiredArgsConstructor

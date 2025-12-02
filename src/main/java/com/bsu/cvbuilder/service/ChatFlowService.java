@@ -1,11 +1,11 @@
 package com.bsu.cvbuilder.service;
 
-import com.bsu.cvbuilder.dto.ChatRequestDto;
-import com.bsu.cvbuilder.dto.ChatResponseDto;
+import com.bsu.cvbuilder.dto.chat.AnswerRequest;
+import com.bsu.cvbuilder.entity.chat.ChatSession;
 
 public interface ChatFlowService {
 
-    ChatResponseDto message(ChatRequestDto dto);
+    ChatSession startSession(String templateId);
 
-    ChatResponseDto processAnswer(ChatRequestDto dto);
+    ChatSession processAnswer(String sessionId, AnswerRequest answer);
 }

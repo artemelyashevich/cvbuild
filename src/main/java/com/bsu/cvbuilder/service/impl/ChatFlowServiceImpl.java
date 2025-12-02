@@ -1,64 +1,148 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.dto.ChatRequestDto;
-import com.bsu.cvbuilder.dto.ChatResponseDto;
-import com.bsu.cvbuilder.dto.ai.AiRequestDto;
-import com.bsu.cvbuilder.entity.chat.AiMessage;
-import com.bsu.cvbuilder.service.AiService;
+import com.bsu.cvbuilder.dto.chat.AnswerRequest;
+import com.bsu.cvbuilder.entity.chat.ChatMessage;
+import com.bsu.cvbuilder.entity.chat.ChatQuestion;
+import com.bsu.cvbuilder.entity.chat.ChatSession;
+import com.bsu.cvbuilder.entity.chat.MessageRole;
+import com.bsu.cvbuilder.entity.chat.SessionState;
+import com.bsu.cvbuilder.exception.AppException;
+import com.bsu.cvbuilder.repository.ChatSessionRepository;
 import com.bsu.cvbuilder.service.ChatFlowService;
-import com.bsu.cvbuilder.service.ChatService;
-import com.bsu.cvbuilder.service.ChatTemplateService;
+import com.bsu.cvbuilder.service.MessageSourceService;
+import com.bsu.cvbuilder.service.QuestionTemplateService;
+import com.bsu.cvbuilder.service.SecurityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.LinkedHashMap;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatFlowServiceImpl implements ChatFlowService {
 
-    private final AiService aiService;
-    private final ChatTemplateService chatTemplateService;
-    private final ChatService chatService;
+    private final SecurityService securityService;
+    private final QuestionTemplateService questionTemplateService;
+    private final ChatSessionRepository chatSessionRepository;
+    private final MessageSourceService messageSourceService;
 
     @Override
-    public ChatResponseDto message(ChatRequestDto dto) {
-        log.debug("--- CHAT FLOW SERVICE: STARTED - id: {} / isOptions: {} / options: {} ---",
-                dto.chatId(),
-                dto.isOptions(),
-                dto.chatOptions()
-        );
+    @Transactional
+    public ChatSession startSession(String templateId) {
+        log.info("--- CHAT FLOW: <<START SESSION>> ---");
 
-        return ChatResponseDto.builder()
-                .isOption(false)
-                .message(processMessage(dto))
-                .build();
+        var template = questionTemplateService.findById(templateId);
+        var user = securityService.findCurrentUser();
+
+        var session = new ChatSession();
+        session.setUserId(user.getId());
+        session.setTemplateId(template.getId());
+        session.setState(SessionState.IN_PROGRESS);
+
+        var message = new ChatMessage();
+        message.setQuestionId(UUID.randomUUID().toString());
+        message.setRole(MessageRole.ASSISTANT);
+        message.setContent(messageSourceService.findMessage("chat.welcome", user.getEmail()));
+        message.setTimestamp(LocalDateTime.now());
+        message.setAnswer(false);
+
+        session.setCurrentQuestionId(message.getQuestionId());
+        session.setCurrentQuestionOrder(0);
+        session.getMessageHistory().add(message);
+
+        log.info("--- CHAT FLOW: <<GENERATE WELCOME MESSAGES>> ---");
+        return chatSessionRepository.save(session);
     }
 
     @Override
-    public ChatResponseDto processAnswer(ChatRequestDto dto) {
-        log.debug("--- CHAT FLOW SERVICE: Attempting to process answer: {} ---", dto.chatId());
+    @Transactional
+    public ChatSession processAnswer(String sessionId, AnswerRequest answer) {
+        log.info("--- CHAT FLOW '{}': <<PROCESS ANSWER>> ---", sessionId);
 
-        var chat = chatService.findByChatId(dto.chatId().toString());
+        var session = chatSessionRepository.findById(sessionId).orElseThrow(() -> {
+            var message = "Chat message with id '%s' not found".formatted(sessionId);
+            log.warn(message);
+            return new AppException(message, 404);
+        });
 
-        var template = chatTemplateService.findChatTemplate(chat.getTemplateId());
+        var template = questionTemplateService.findById(session.getTemplateId());
 
-        var lastQuestion = chat.getAiQuestionsAnswers().lastEntry().getKey();
+        var user = securityService.findCurrentUser();
 
+        var currentQuestion = session.getMessageHistory().stream()
+                .filter(question -> question.getRole().equals(MessageRole.ASSISTANT) && !question.isAnswer())
+                .filter(question -> question.getQuestionId().equalsIgnoreCase(session.getCurrentQuestionId()))
+                .findFirst()
+                .orElseThrow(() -> {
+                    var message = "Chat: current message with id '%s' not found".formatted(session.getCurrentQuestionOrder());
+                    log.warn(message);
+                    return new AppException(message, 404);
+                });
 
+        session.getMessageHistory().add(
+                ChatMessage.builder()
+                        .questionId(currentQuestion.getQuestionId())
+                        .content(answer.getValue())
+                        .role(MessageRole.USER)
+                        .isAnswer(true)
+                        .timestamp(LocalDateTime.now())
+                        .build()
+        );
+
+        var newQuestion = template.getQuestions().stream()
+                .filter(question -> question.getOrder() > session.getCurrentQuestionOrder())
+                .filter(question -> checkConditions(question, session))
+                .min(Comparator.comparing(ChatQuestion::getOrder));
+
+        if (newQuestion.isEmpty()) {
+            session.setState(SessionState.WAITING_APPROVAL);
+            session.getMessageHistory().add(
+                    ChatMessage.builder()
+                            .questionId(UUID.randomUUID().toString())
+                            .content(messageSourceService.findMessage("chat.lastQuestion", user.getEmail()))
+                            .role(MessageRole.ASSISTANT)
+                            .isAnswer(true)
+                            .timestamp(LocalDateTime.now())
+                            .build()
+            );
+            chatSessionRepository.save(session);
+            // TODO: generate resume
+
+        }
+
+        log.info("--- CHAT FLOW '{}': <<PROCESSED ANSWER SUCCESSFULLY>> ---", sessionId);
         return null;
     }
 
-    public String processMessage(ChatRequestDto dto) {
-        log.debug("--- CHAT FLOW SERVICE: PROCESSING - id: {} ---", dto.chatId());
+    private boolean checkConditions(ChatQuestion question, ChatSession session) {
+        if (question.getConditions() == null || question.getConditions().isEmpty()) {
+            return true;
+        }
 
-        return aiService.call(AiRequestDto.builder()
-                        .chatId(dto.chatId())
-                        .aiRequestType(AiRequestDto.AiRequestType.get(dto.isUserAnswer()))
-                        .content(dto.message())
-                .build())
-                .message();
+        return question.getConditions().stream()
+                .allMatch(condition -> {
+                    var dependedAnswer = session.getMessageHistory().stream()
+                            .filter(q -> q.getQuestionId().equals(condition.getQuestionId()))
+                            .findFirst()
+                            .orElseThrow(() -> {
+                                var message = "Depended message with if %s was not found".formatted(condition.getQuestionId());
+                                log.warn(message);
+                                return new AppException(message, 400);
+                            });
+                    var actualAnswer = dependedAnswer.getContent();
+                    var expectedAnswer = condition.getValue();
+
+                    return switch (condition.getOperator()) {
+                        case ChatQuestion.Condition.Operator.EQUALS -> actualAnswer.equals(expectedAnswer);
+                        case NOT_EQUALS -> !actualAnswer.equals(expectedAnswer);
+                        case CONTAINS -> actualAnswer.contains(expectedAnswer);
+                        default -> false;
+                    };
+                });
     }
 }
