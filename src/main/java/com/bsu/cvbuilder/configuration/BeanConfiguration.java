@@ -6,6 +6,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+import java.util.concurrent.Executor;
 
 @Configuration
 public class BeanConfiguration {
@@ -24,5 +27,16 @@ public class BeanConfiguration {
         messageSource.setFallbackToSystemLocale(false);
         messageSource.setCacheSeconds(60);
         return messageSource;
+    }
+
+    @Bean
+    public Executor limitExecutor() {
+        var executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(5);
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(1000);
+        executor.setThreadNamePrefix("limitScheduler-");
+        executor.initialize();
+        return executor;
     }
 }

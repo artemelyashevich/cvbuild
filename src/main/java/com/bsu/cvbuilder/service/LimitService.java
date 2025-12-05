@@ -6,6 +6,8 @@ import java.util.List;
 
 public interface LimitService {
 
+    List<AiLimit> findAllLimits();
+
     List<AiLimit> findActiveLimits();
 
     AiLimit createLimit(AiLimit limit);

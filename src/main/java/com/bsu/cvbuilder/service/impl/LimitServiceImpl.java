@@ -25,6 +25,12 @@ public class LimitServiceImpl implements LimitService {
     private final UserProfileService userProfileService;
 
     @Override
+    public List<AiLimit> findAllLimits() {
+        log.debug("Attempting to find all limits");
+        return limitRepository.findAll();
+    }
+
+    @Override
     public List<AiLimit> findActiveLimits() {
         log.debug("Attempting to fetch limit list by current user");
 
