@@ -133,7 +133,7 @@ public class SecurityServiceImpl implements SecurityService {
     private String extractEmail(Authentication authentication) {
         var authToken = validateAuthentication(authentication);
         var principal = extractPrincipal(authToken);
-        return principal.getAttribute("email");
+        return principal.getAttribute("login");
     }
 
     private AbstractAuthenticationToken validateAuthentication(Authentication authentication) {

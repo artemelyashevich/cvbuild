@@ -27,6 +27,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Caching(
             put = {
                     @CachePut(value = "user::email", key = "#email"),
+                    @CachePut(value = "user::login", key = "#result.login"),
                     @CachePut(value = "user::id", key = "#result.id")
             }
     )
@@ -40,6 +41,26 @@ public class UserProfileServiceImpl implements UserProfileService {
         log.info("UserProfile found by email {}", user);
         return user;
     }
+
+    @Override
+    @Caching(
+            put = {
+                    @CachePut(value = "user::login", key = "#result.login"),
+                    @CachePut(value = "user::email", key = "#result.email"),
+                    @CachePut(value = "user::id", key = "#result.id")
+            }
+    )
+    public UserProfile findByLogin(String login) {
+        log.debug("Attempting to find user profile by login {}", login);
+        var user = userProfileRepository.findByLogin(login).orElseThrow(() -> {
+            var message = String.format("UserProfile with login %s not found", login);
+            log.error(message);
+            return new AppException(message, 404);
+        });
+        log.info("UserProfile found by login {}", user);
+        return user;
+    }
+
 
     @Override
     @CachePut(value = "user::id", key = "#id")
@@ -72,16 +93,16 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     @Override
     @Transactional(propagation = Propagation.NESTED, rollbackFor = Exception.class)
-    public synchronized UserProfile login(String email) {
-        log.debug("Attempting to login user profile by email {}", email);
+    public synchronized UserProfile login(String login) {
+        log.debug("Attempting to login user profile by email {}", login);
         UserProfile user;
         try {
-            user = applicationContext.getBean(UserProfileServiceImpl.class).findByEmail(email);
+            user = applicationContext.getBean(UserProfileServiceImpl.class).findByLogin(login);
             user.setLastLogin(LocalDateTime.now());
             user = userProfileRepository.save(user);
         } catch (AppException ignored) {
             user = applicationContext.getBean(UserProfileServiceImpl.class).create(UserProfile.builder()
-                    .email(email)
+                    .login(login)
                     .lastLogin(LocalDateTime.now())
                     .build());
         }

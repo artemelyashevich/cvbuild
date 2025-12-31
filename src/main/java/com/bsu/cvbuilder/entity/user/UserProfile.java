@@ -37,6 +37,9 @@ public class UserProfile {
     @Indexed(unique = true)
     private String email;
 
+    @Indexed(unique = true)
+    private String login;
+
     private String firstName;
 
     private String lastName;
