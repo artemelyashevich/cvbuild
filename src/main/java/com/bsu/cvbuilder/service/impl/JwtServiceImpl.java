@@ -119,7 +119,7 @@ public class JwtServiceImpl implements JwtService {
                                userDetails.getRole().name()
                         )
                 )
-                .setSubject(userDetails.getEmail())
+                .setSubject(userDetails.getLogin())
                 .setIssuedAt(issuedAt)
                 .setExpiration(expirationDate)
                 .signWith(Keys.hmacShaKeyFor(secret.getBytes()), SignatureAlgorithm.HS256)
