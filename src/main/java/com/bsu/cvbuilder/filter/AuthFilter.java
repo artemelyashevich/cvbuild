@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.filter;
 
+import com.bsu.cvbuilder.domain.TokenType;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.util.HandleSecurityErrorUtil;
@@ -34,24 +35,18 @@ public class AuthFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         try {
             var authHeader = request.getHeader("Authorization");
+
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 throw new AppException("There are no access token", 401);
             }
 
             var authToken = authHeader.substring(7);
+
             if (authToken.isBlank()) {
                 throw new AppException("Empty access token", 401);
             }
 
-            if (!securityService.isTokenValid(authToken)) {
-                securityService.logout();
-                throw new AppException("Invalid access token", 401);
-            }
-
-            if (securityService.isTokenExpire(authToken)) {
-                securityService.logout();
-                throw new AppException("Token expire", 401);
-            }
+            securityService.checkToken(authToken, TokenType.ACCESS);
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 var ctx = SecurityContextHolder.createEmptyContext();
@@ -72,7 +67,7 @@ public class AuthFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+    protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
         return PathUtil.PUBLIC_RESOURCES.contains(path);
     }

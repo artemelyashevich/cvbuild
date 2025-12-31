@@ -1,12 +1,15 @@
 package com.bsu.cvbuilder.service.impl;
 
+import com.bsu.cvbuilder.configuration.ApplicationProperties;
+import com.bsu.cvbuilder.domain.AuthResponse;
+import com.bsu.cvbuilder.domain.TokenType;
 import com.bsu.cvbuilder.dto.EmailDto;
+import com.bsu.cvbuilder.entity.security.SecureData;
 import com.bsu.cvbuilder.entity.user.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
-import com.bsu.cvbuilder.service.EmailService;
-import com.bsu.cvbuilder.service.RedisService;
-import com.bsu.cvbuilder.service.SecurityService;
-import com.bsu.cvbuilder.service.UserProfileService;
+import com.bsu.cvbuilder.repository.SecureDataRepository;
+import com.bsu.cvbuilder.service.*;
+import com.bsu.cvbuilder.util.SecretDecodeUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +36,9 @@ public class SecurityServiceImpl implements SecurityService {
     private final ThreadLocal<UserProfile> currentUser = new ThreadLocal<>();
     private final EmailService emailService;
     private final RedisService redisService;
+    private final JwtService jwtService;
+    private final SecureDataRepository secureDataRepository;
+    private final ApplicationProperties applicationProperties;
 
     @Value("${app.security.oauth2.enabled:false}")
     private boolean oauth2Enabled;
@@ -56,7 +62,7 @@ public class SecurityServiceImpl implements SecurityService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void authenticate(Authentication authentication) {
+    public AuthResponse authenticate(Authentication authentication) {
         log.debug("Attempting to authenticate User via OAuth2");
 
         var email = extractEmail(SecurityContextHolder.getContext().getAuthentication());
@@ -70,6 +76,38 @@ public class SecurityServiceImpl implements SecurityService {
         }
 
         currentUser.set(user);
+
+        var secureData = secureDataRepository.findByUserId(user.getId()).orElse(
+                SecureData.builder()
+                        .userId(user.getId())
+                        .refreshTokenEncoded(SecretDecodeUtil.encode(
+                                jwtService.generateToken(user, TokenType.REFRESH),
+                                applicationProperties.getSecurity().getDecodeSignature()))
+                        .build()
+        );
+
+        if (secureData.getRefreshTokenEncoded() == null) {
+            var refreshToken = jwtService.generateToken(user, TokenType.REFRESH);
+            secureData.setRefreshTokenEncoded(refreshToken);
+        } else {
+            try {
+                checkToken(
+                        SecretDecodeUtil.decode(
+                                secureData.getRefreshTokenEncoded(),
+                                applicationProperties.getSecurity().getDecodeSignature()
+                        ),
+                        TokenType.REFRESH
+                );
+            } catch (AppException e) {
+                secureData.setRefreshTokenEncoded(null);
+                secureDataRepository.save(secureData);
+                throw e;
+            }
+        }
+
+        secureDataRepository.save(secureData);
+
+        return new AuthResponse(jwtService.generateToken(user, TokenType.ACCESS), secureData.getRefreshTokenEncoded());
     }
 
     @Override
@@ -116,13 +154,8 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     @Override
-    public boolean isTokenValid(String token) {
-        return false;
-    }
-
-    @Override
-    public boolean isTokenExpire(String authToken) {
-        return false;
+    public void checkToken(String token, TokenType tokenType) {
+        jwtService.validateToken(token, tokenType);
     }
 
     @Override

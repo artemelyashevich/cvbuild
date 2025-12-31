@@ -62,11 +62,11 @@ public class UserProfile {
     private LocalDateTime createdAt;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
     @Indexed(name = "last_login_idx", direction = IndexDirection.DESCENDING)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime lastLogin;
 
     @ToString.Exclude

@@ -1,6 +1,7 @@
 package com.bsu.cvbuilder.configuration;
 
 import com.bsu.cvbuilder.filter.AuthFilter;
+import com.bsu.cvbuilder.security.exception.CustomAccessDeniedHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -34,6 +35,9 @@ public class SecurityCommonConfiguration {
                 .authorizeHttpRequests(auth ->
                                 auth
                                         .anyRequest().permitAll()
+                )
+                .exceptionHandling(exception -> exception
+                        .accessDeniedHandler(new CustomAccessDeniedHandler())
                 )
                 .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

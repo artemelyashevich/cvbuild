@@ -9,7 +9,9 @@ import java.util.List;
 public class PathUtil {
 
     public static List<String> PUBLIC_RESOURCES = List.of(
-            "/api/v1/auth/", "/login", "/oauth2/", "/favicon.ico"
+            "/api/v1/auth/", "/login", "/oauth2/", "/favicon.ico",
+            // FIXME!!!
+            "/api/v1/ai-chat"
     );
     public static List<String> PRIVATE_RESOURCES = new ArrayList<>();
 }

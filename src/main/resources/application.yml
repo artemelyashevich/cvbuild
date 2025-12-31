@@ -47,6 +47,11 @@ app:
   security:
     oauth2:
       enabled: true
+    refresh-secret: ${JWT_REFRESH_SECRET}
+    access-secret: ${JWT_ACCESS_SECRET}
+    access-lifetime: 56400000
+    refresh-lifetime: 90400000
+    decode-signature: ${DECODE_SIGNATURE}
   interview:
     blocks:
       - personalInfo

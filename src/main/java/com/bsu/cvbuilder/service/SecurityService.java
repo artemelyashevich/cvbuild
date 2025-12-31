@@ -1,5 +1,7 @@
 package com.bsu.cvbuilder.service;
 
+import com.bsu.cvbuilder.domain.AuthResponse;
+import com.bsu.cvbuilder.domain.TokenType;
 import com.bsu.cvbuilder.entity.user.UserProfile;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
@@ -8,7 +10,7 @@ public interface SecurityService {
 
     UserProfile findCurrentUser();
 
-    void authenticate(Authentication authentication);
+    AuthResponse authenticate(Authentication authentication);
 
     void logout();
 
@@ -20,9 +22,7 @@ public interface SecurityService {
 
     String createOtp(String key);
 
-    boolean isTokenValid(String token);
-
-    boolean isTokenExpire(String authToken);
+    void checkToken(String token, TokenType tokenType);
 
     void checkSecureData();
 }

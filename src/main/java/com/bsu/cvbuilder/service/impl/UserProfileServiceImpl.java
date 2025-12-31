@@ -27,7 +27,6 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Caching(
             put = {
                     @CachePut(value = "user::email", key = "#email"),
-                    @CachePut(value = "user::login", key = "#result.login"),
                     @CachePut(value = "user::id", key = "#result.id")
             }
     )
@@ -45,8 +44,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Override
     @Caching(
             put = {
-                    @CachePut(value = "user::login", key = "#result.login"),
-                    @CachePut(value = "user::email", key = "#result.email"),
+                    @CachePut(value = "user::login", key = "#result.login", unless = "#result.login == null"),
                     @CachePut(value = "user::id", key = "#result.id")
             }
     )
@@ -60,7 +58,6 @@ public class UserProfileServiceImpl implements UserProfileService {
         log.info("UserProfile found by login {}", user);
         return user;
     }
-
 
     @Override
     @CachePut(value = "user::id", key = "#id")
