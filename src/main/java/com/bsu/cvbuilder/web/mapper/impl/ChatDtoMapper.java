@@ -20,7 +20,7 @@ public class ChatDtoMapper implements Mappable<ChatSession, ChatResponseDto> {
     public ChatResponseDto toDto(ChatSession dto) {
         return ChatResponseDto.builder()
                 .chatMessages(dto.getMessageHistory().stream()
-                        .sorted(Comparator.comparing(ChatMessage::getQuestionId))
+                        //.sorted(Comparator.comparing(ChatMessage::getQuestionId))
                         .sorted(Comparator.comparing(ChatMessage::getRole))
                         .toList())
                 .build();

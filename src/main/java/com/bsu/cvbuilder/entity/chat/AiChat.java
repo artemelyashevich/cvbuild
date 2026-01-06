@@ -15,9 +15,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Getter
 @Setter
@@ -28,17 +26,13 @@ import java.util.Map;
 public class AiChat {
 
     @Id
-    private String id;
+    private UUID id;
 
-    private String chatName;
-
-    @DBRef(db = "users")
     private String userId;
 
     @Builder.Default
-    private LinkedHashMap<AiMessage, AiMessage> aiQuestionsAnswers = new LinkedHashMap<>();
+    private List<ChatMessage> messages = new ArrayList<>();
 
-    @DBRef
     private String templateId;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)

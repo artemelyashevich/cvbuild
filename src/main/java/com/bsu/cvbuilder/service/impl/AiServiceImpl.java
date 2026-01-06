@@ -2,6 +2,7 @@ package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.dto.ai.AiRequestDto;
 import com.bsu.cvbuilder.dto.ai.AiResponse;
+import com.bsu.cvbuilder.entity.chat.AiChat;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.AiChatRepository;
 import com.bsu.cvbuilder.service.AiService;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import java.util.Locale;
+import java.util.UUID;
 
 @Slf4j
 @Service
