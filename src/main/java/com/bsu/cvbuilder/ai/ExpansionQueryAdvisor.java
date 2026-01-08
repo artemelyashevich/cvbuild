@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.ai;
 
+import com.bsu.cvbuilder.domain.AiTemplateMessage;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +10,6 @@ import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.advisor.api.AdvisorChain;
 import org.springframework.ai.chat.client.advisor.api.BaseAdvisor;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.ollama.api.OllamaOptions;
 
@@ -23,7 +23,7 @@ public record ExpansionQueryAdvisor(ChatClient chatClient, int order, double tem
     public static final String ENRICHED_QUESTION = "ENRICHED_QUESTION";
     public static final String ORIGINAL_QUESTION = "ORIGINAL_QUESTION";
 
-    private static final PromptTemplate template = PromptTemplate.builder()
+    private static final PromptTemplate systemTemplate = PromptTemplate.builder()
             .template(AiTemplateMessage.SYSTEM_INTERVIEWER.getMessage())
             .build();
 

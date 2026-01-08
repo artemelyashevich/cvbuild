@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -26,6 +27,7 @@ import java.util.concurrent.CompletableFuture;
 public class AuthFilter extends OncePerRequestFilter {
 
     private final SecurityService securityService;
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     @Override
     protected void doFilterInternal(
@@ -66,9 +68,12 @@ public class AuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return PathUtil.PUBLIC_RESOURCES.contains(path);
+
+        return PathUtil.PUBLIC_RESOURCES.stream()
+                .anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 }

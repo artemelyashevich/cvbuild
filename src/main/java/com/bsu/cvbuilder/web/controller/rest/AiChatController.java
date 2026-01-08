@@ -1,16 +1,21 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
-import com.bsu.cvbuilder.ai.AiTemplateMessage;
+import com.bsu.cvbuilder.domain.AiTemplateMessage;
+import com.bsu.cvbuilder.domain.ResumeData;
 import com.bsu.cvbuilder.dto.ai.AiRequestDto;
+import com.bsu.cvbuilder.service.ResumeDataExtractorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
+import java.util.UUID;
 
 
 @RestController
@@ -19,6 +24,7 @@ import java.util.Map;
 public class AiChatController {
 
     private final ChatClient chatClient;
+    private final ResumeDataExtractorService resumeDataExtractorService;
 
     @PostMapping
     public String ask(@RequestBody AiRequestDto aiRequestDto) {
@@ -41,5 +47,10 @@ public class AiChatController {
                 )
                 .call()
                 .content();
+    }
+
+    @GetMapping("/{chatId}")
+    public ResumeData extract(@PathVariable String chatId) {
+        return resumeDataExtractorService.extract(UUID.fromString(chatId));
     }
 }

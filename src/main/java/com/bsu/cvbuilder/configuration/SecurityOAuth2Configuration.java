@@ -40,7 +40,7 @@ public class SecurityOAuth2Configuration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth ->
                         auth
-                                .requestMatchers(PathUtil.PUBLIC_RESOURCES.toArray(new String[0])).permitAll()
+                                //.requestMatchers(PathUtil.PUBLIC_RESOURCES.toArray(new String[0])).permitAll()
                                 .anyRequest().permitAll()
                 )
                 .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
