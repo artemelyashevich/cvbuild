@@ -1,16 +1,10 @@
 package com.bsu.cvbuilder.service;
 
-import com.bsu.cvbuilder.entity.resume.Resume;
+import com.bsu.cvbuilder.entity.resume.ResumeData;
 
-import java.util.List;
+import java.util.UUID;
 
 public interface ResumeService {
 
-    List<Resume> findAll();
-
-    Resume findById(String id);
-
-    Resume create(Resume resume);
-
-    Resume update(Resume resume);
+    ResumeData extract(UUID chatId);
 }

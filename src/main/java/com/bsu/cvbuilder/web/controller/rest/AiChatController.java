@@ -1,9 +1,9 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
 import com.bsu.cvbuilder.domain.AiTemplateMessage;
-import com.bsu.cvbuilder.domain.ResumeData;
+import com.bsu.cvbuilder.entity.resume.ResumeData;
 import com.bsu.cvbuilder.dto.ai.AiRequestDto;
-import com.bsu.cvbuilder.service.ResumeDataExtractorService;
+import com.bsu.cvbuilder.service.ResumeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -24,7 +24,7 @@ import java.util.UUID;
 public class AiChatController {
 
     private final ChatClient chatClient;
-    private final ResumeDataExtractorService resumeDataExtractorService;
+    private final ResumeService resumeDataExtractorService;
 
     @PostMapping
     public String ask(@RequestBody AiRequestDto aiRequestDto) {
