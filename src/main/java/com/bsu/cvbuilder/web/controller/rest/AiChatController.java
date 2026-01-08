@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
 import com.bsu.cvbuilder.domain.AiTemplateMessage;
-import com.bsu.cvbuilder.entity.resume.ResumeData;
+import com.bsu.cvbuilder.entity.resume.Resume;
 import com.bsu.cvbuilder.dto.ai.AiRequestDto;
 import com.bsu.cvbuilder.service.ResumeService;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 import java.util.UUID;
-
 
 @RestController
 @RequestMapping("/api/v1/ai-chat")
@@ -50,7 +49,7 @@ public class AiChatController {
     }
 
     @GetMapping("/{chatId}")
-    public ResumeData extract(@PathVariable String chatId) {
+    public Resume extract(@PathVariable String chatId) {
         return resumeDataExtractorService.extract(UUID.fromString(chatId));
     }
 }

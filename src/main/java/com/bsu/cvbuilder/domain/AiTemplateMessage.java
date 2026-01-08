@@ -83,7 +83,7 @@ public enum AiTemplateMessage {
             - Ensure all technical skills are normalized (e.g., "JS" -> "JavaScript", "node" -> "Node.js").
             
             ### FORMAT SPECIFICATION
-            {
+            "blocks": {
               "personal_info": {
                 "full_name": "string",
                 "current_role": "string",
@@ -102,6 +102,7 @@ public enum AiTemplateMessage {
               "education": [
                 { "institution": "string", "degree": "string", "year": "number" }
               ]
+                }
             }
             
             ### EXAMPLE
