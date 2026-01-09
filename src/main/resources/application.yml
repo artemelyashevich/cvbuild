@@ -61,12 +61,19 @@ app:
     access-lifetime: 56400000
     refresh-lifetime: 90400000
     decode-signature: ${DECODE_SIGNATURE}
-  interview:
-    blocks:
-      - personalInfo
-      - experience
-      - education
-      - skills
-      - projects
-      - languages
-      - certificates
+  chat:
+    max-messages: 25
+    temperature: 0.3
+    topp: 0.7
+    expansion-topp: 0.4
+    expansion-temperature: 0.1
+    extraction-temperature: 0.2
+    memory-max-messages: 10
+    stop-condition: "###INTERVIEW_COMPLETED###"
+  prompt:
+    base-prefix: /templates/prompt
+    base-extension: .txt
+    expansion: ${app.prompt.base-prefix}/expansion${app.prompt.base-extension}
+    extractor: ${app.prompt.base-prefix}/extractor${app.prompt.base-extension}
+    final-phase: ${app.prompt.base-prefix}/final${app.prompt.base-extension}
+    interviewer: ${app.prompt.base-prefix}/interviewer${app.prompt.base-extension}

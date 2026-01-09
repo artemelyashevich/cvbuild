@@ -16,7 +16,6 @@ public enum AiTemplateMessage {
                     """
     ),
 
-
     SYSTEM_INTERVIEWER(
             """
                     ### ROLE
@@ -114,6 +113,19 @@ public enum AiTemplateMessage {
             
             ### CHAT HISTORY TO PROCESS:
             %s
+            """),
+
+    FINAL_PHASE("""
+            You are a professional HR interviewer and career coach.
+            We have reached a point where enough information has been gathered to create a strong profile.
+            
+            Your task:
+            1. Briefly (in 1-2 sentences) thank the user and acknowledge that the data collected is very helpful.
+            2. Provide a clear choice between two options:
+               - "Continue our conversation" (to add more details or refine specific points).
+               - "Proceed to Resume Builder" (to start generating the final CV document).
+            
+            Keep the tone professional, encouraging, and concise.
             """);
 
     private final String message;

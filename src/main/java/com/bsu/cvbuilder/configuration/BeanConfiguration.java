@@ -4,6 +4,8 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -38,5 +40,10 @@ public class BeanConfiguration {
         executor.setThreadNamePrefix("limitScheduler-");
         executor.initialize();
         return executor;
+    }
+
+    @Bean
+    public ResourcePatternResolver resourcePatternResolver() {
+        return new PathMatchingResourcePatternResolver();
     }
 }

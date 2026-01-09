@@ -6,5 +6,7 @@ import java.util.UUID;
 
 public interface ResumeService {
 
-    Resume extract(UUID chatId);
+    Resume findByChatId(UUID chatId);
+
+    Resume findById(String id);
 }

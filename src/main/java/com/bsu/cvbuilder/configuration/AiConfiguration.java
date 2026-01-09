@@ -2,7 +2,6 @@ package com.bsu.cvbuilder.configuration;
 
 import com.bsu.cvbuilder.ai.ExpansionQueryAdvisor;
 import com.bsu.cvbuilder.ai.MongoChatMemory;
-import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
@@ -16,7 +15,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
-import org.springframework.context.annotation.Lazy;
 
 
 @Configuration
@@ -28,6 +26,7 @@ public class AiConfiguration {
 
     private final ChatService aiService;
     private final ExpansionQueryAdvisor expansionQueryAdvisor;
+    private final ApplicationProperties applicationProperties;
 
     @Bean
     public ChatClient chatClient(ChatClient.Builder builder) {
@@ -39,8 +38,8 @@ public class AiConfiguration {
                 )
                 .defaultOptions(
                         OllamaOptions.builder()
-                                .temperature(0.3)
-                                .topP(0.7)
+                                .temperature(applicationProperties.getChat().getTemperature())
+                                .topP(applicationProperties.getChat().getTopp())
                                 .build()
                 )
                 .build();
@@ -50,7 +49,7 @@ public class AiConfiguration {
     public ChatMemory chatMemory(ChatMemoryRepository chatMemoryRepository) {
         return MessageWindowChatMemory.builder()
                 .chatMemoryRepository(chatMemoryRepository)
-                .maxMessages(10)
+                .maxMessages(applicationProperties.getChat().getMemoryMaxMessages())
                 .build();
     }
 

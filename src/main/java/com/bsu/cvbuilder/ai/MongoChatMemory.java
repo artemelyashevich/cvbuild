@@ -6,7 +6,6 @@ import com.bsu.cvbuilder.entity.chat.MessageRole;
 import com.bsu.cvbuilder.service.ChatService;
 import lombok.Builder;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -16,11 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Builder
-@RequiredArgsConstructor
-public class MongoChatMemory implements ChatMemory {
-
-    private final ChatService chatService;
-    private final int maxMessages;
+public record MongoChatMemory(ChatService chatService, int maxMessages) implements ChatMemory {
 
     @Override
     public void add(@NonNull String conversationId, List<Message> messages) {
@@ -44,6 +39,7 @@ public class MongoChatMemory implements ChatMemory {
     }
 
     @Override
+    @NonNull
     public List<Message> get(@NonNull String conversationId) {
         AiChat aiChat = chatService.getChatById(UUID.fromString(conversationId));
         return aiChat.getMessages().stream()
@@ -72,8 +68,8 @@ public class MongoChatMemory implements ChatMemory {
         }
     }
 
-    private MessageRole getAirole(Message message){
-        switch (message.getMessageType()){
+    private MessageRole getAirole(Message message) {
+        switch (message.getMessageType()) {
             case USER -> {
                 return MessageRole.USER;
             }

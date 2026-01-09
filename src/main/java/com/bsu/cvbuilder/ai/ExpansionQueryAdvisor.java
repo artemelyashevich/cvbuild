@@ -1,6 +1,7 @@
 package com.bsu.cvbuilder.ai;
 
-import com.bsu.cvbuilder.domain.AiTemplateMessage;
+import com.bsu.cvbuilder.configuration.ApplicationProperties;
+import com.bsu.cvbuilder.service.PromptRegistryService;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -17,38 +18,33 @@ import java.util.Map;
 
 @Slf4j
 @Builder
-public record ExpansionQueryAdvisor(ChatClient chatClient, int order, double temperature,
-                                    double topP) implements BaseAdvisor {
+public record ExpansionQueryAdvisor(
+        ChatClient chatClient,
+        PromptRegistryService  promptRegistryService,
+        ApplicationProperties.Chat chatProperties
+) implements BaseAdvisor {
 
     public static final String ENRICHED_QUESTION = "ENRICHED_QUESTION";
     public static final String ORIGINAL_QUESTION = "ORIGINAL_QUESTION";
 
-    private static final PromptTemplate systemTemplate = PromptTemplate.builder()
-            .template(AiTemplateMessage.SYSTEM_INTERVIEWER.getMessage())
-            .build();
-
-    private static final PromptTemplate expansionTemplate = PromptTemplate.builder()
-            .template(AiTemplateMessage.PROMPT_EXPANSION.getMessage())
-            .build();
-
     public static ExpansionQueryAdvisorBuilder builder(
             ChatModel chatModel,
-            double temperature,
-            double topP
+            ApplicationProperties.Chat chatProperties,
+            PromptRegistryService promptRegistryService
     ) {
         return new ExpansionQueryAdvisorBuilder()
+                .promptRegistryService(promptRegistryService)
                 .chatClient(
                         ChatClient.builder(chatModel)
                                 .defaultOptions(
                                         OllamaOptions.builder()
-                                                .temperature(0.1)
-                                                .topP(topP)
+                                                .temperature(chatProperties.getExpansionTemperature())
+                                                .topP(chatProperties.getExpansionTopp())
                                                 .build()
                                 )
                                 .build()
                 )
-                .temperature(temperature)
-                .topP(topP);
+                .chatProperties(chatProperties);
     }
 
     @Override
@@ -80,6 +76,9 @@ public record ExpansionQueryAdvisor(ChatClient chatClient, int order, double tem
 
     private String expand(String originalQuestion) {
         try {
+            PromptTemplate expansionTemplate = PromptTemplate.builder()
+                    .template(promptRegistryService().getPrompt("expansion"))
+                    .build();
             String rendered = expansionTemplate.render(Map.of("question", originalQuestion));
             return chatClient
                     .prompt()

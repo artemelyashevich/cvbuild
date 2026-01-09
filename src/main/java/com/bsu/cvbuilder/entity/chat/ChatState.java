@@ -19,7 +19,7 @@ public enum ChatState {
     FOLLOW_UP(""),
     EDITOR("");
 
-    private static final String PATH_TO_PROMPT = "/chat/%s";
+    private static final String PATH_TO_PROMPT = "/prompt/%s";
 
     private final String path;
 

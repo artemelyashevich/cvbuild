@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 public class ApplicationProperties {
 
     private Security security;
+    private Chat chat;
+    private Prompt prompt;
 
     @Getter
     @Setter
@@ -21,5 +23,27 @@ public class ApplicationProperties {
         private String refreshSecret;
         private String accessLifetime;
         private String refreshLifetime;
+    }
+
+    @Getter
+    @Setter
+    public static class Chat {
+        private Integer maxMessages;
+        private Double temperature;
+        private Double topp;
+        private Double expansionTopp;
+        private Double expansionTemperature;
+        private Double extractionTemperature;
+        private Integer memoryMaxMessages;
+        private String stopCondition;
+    }
+
+    @Getter
+    @Setter
+    public static class Prompt {
+        private String expansion;
+        private String extractor;
+        private String finalPhase;
+        private String interviewer;
     }
 }

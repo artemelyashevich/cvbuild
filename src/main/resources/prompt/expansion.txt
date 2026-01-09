@@ -1,0 +1,4 @@
+Rephrase the user's message for a professional CV Assistant.
+                If it's a greeting, make it a request to start.
+                Original message: "{question}"
+                Rephrased (Output only the result):

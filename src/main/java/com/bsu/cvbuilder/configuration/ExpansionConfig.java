@@ -1,26 +1,26 @@
 package com.bsu.cvbuilder.configuration;
 
 import com.bsu.cvbuilder.ai.ExpansionQueryAdvisor;
+import com.bsu.cvbuilder.service.PromptRegistryService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@RequiredArgsConstructor
 public class ExpansionConfig {
 
+    private final ApplicationProperties applicationProperties;
+    private final PromptRegistryService promptRegistryService;
+
     @Bean
-    ExpansionQueryAdvisor expansionQueryAdvisor(
-            ChatModel chatModel,
-            @Value("${expansion.advisor.temperature:0.1}") double temperature,
-            @Value("${expansion.advisor.top-p:0.4}") double topP
-    ) {
+    public ExpansionQueryAdvisor expansionQueryAdvisor(ChatModel chatModel) {
         return ExpansionQueryAdvisor.builder(
                         chatModel,
-                        temperature,
-                        topP
+                        applicationProperties.getChat(),
+                        promptRegistryService
                 )
-                .order(1)
                 .build();
     }
 }

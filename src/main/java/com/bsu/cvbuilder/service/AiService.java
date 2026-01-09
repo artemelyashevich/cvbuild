@@ -1,12 +1,15 @@
 package com.bsu.cvbuilder.service;
 
 import com.bsu.cvbuilder.dto.ai.AiRequestDto;
-import com.bsu.cvbuilder.dto.ai.AiResponse;
-import com.bsu.cvbuilder.entity.chat.AiChat;
+import org.springframework.ai.chat.client.ChatClient;
 
 import java.util.UUID;
 
 public interface AiService {
 
-    AiResponse call(AiRequestDto dto);
+    String call(AiRequestDto dto);
+
+    ChatClient.CallResponseSpec callExtractor(String history, UUID chatId);
+
+    String callExpand(String text);
 }
