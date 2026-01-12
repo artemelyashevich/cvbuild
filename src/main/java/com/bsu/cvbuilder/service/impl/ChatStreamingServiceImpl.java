@@ -23,10 +23,11 @@ public class ChatStreamingServiceImpl implements ChatStreamingService {
 
     @Override
     public Flux<String> process(AiRequestDto aiRequestDto) {
+        log.debug("Attempting start streaming with chat: {}", aiRequestDto.chatId());
         StringBuilder fullResponseAccumulator = new StringBuilder();
         String systemPrompt = promptRegistryService.getPrompt("interviewer");
 
-        return chatClient.prompt()
+        Flux<String> res = chatClient.prompt()
                 .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID, aiRequestDto.chatId()))
                 .system(systemPrompt)
                 .user(aiRequestDto.content())
@@ -37,17 +38,21 @@ public class ChatStreamingServiceImpl implements ChatStreamingService {
                     String finalFullText = fullResponseAccumulator.toString();
 
                     if (finalFullText.contains("COMPLETED")) {
+                        log.debug("Attempting complete streaming");
                         String finalPrompt = promptRegistryService.getPrompt("final");
                         PromptTemplate promptTemplate = PromptTemplate.builder()
                                 .template(finalPrompt)
                                 .build();
-
-                        return chatClient.prompt()
+                        Flux<String> result = chatClient.prompt()
                                 .user(promptTemplate.render())
                                 .stream()
                                 .content();
+                        log.info("COMPLETED");
+                        return result;
                     }
                     return Flux.empty();
                 }));
+        log.info("Stream complete with chat: {}", aiRequestDto.chatId());
+        return res;
     }
 }

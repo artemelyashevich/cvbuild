@@ -41,11 +41,13 @@ public class ResumeServiceImpl implements ResumeService {
         log.debug("Finding all resumes");
         Query query = new Query().with(pageable);
         List<Resume> all = mongoTemplate.find(query, Resume.class);
-        return PageableExecutionUtils.getPage(
+        Page<Resume> resumes = PageableExecutionUtils.getPage(
                 all,
                 pageable,
                 () -> mongoTemplate.count(Query.of(query).limit(-1).skip(-1), Resume.class)
         );
+        log.info("Find all resumes: {}", resumes.getTotalElements());
+        return resumes;
     }
 
     @Override
@@ -74,7 +76,7 @@ public class ResumeServiceImpl implements ResumeService {
 
     @Override
     public Resume update(String resumeId, UpdateResumeRequest updateResumeRequest) {
-        log.info("Attempting to update resume with id {}", resumeId);
+        log.debug("Attempting to update resume with id {}", resumeId);
         Resume resume = applicationContext.getBean(ResumeService.class).findById(resumeId);
         resume.setBlocks(updateResumeRequest.blocks());
         Resume updatedResume = mongoTemplate.save(resume);
@@ -83,7 +85,7 @@ public class ResumeServiceImpl implements ResumeService {
     }
 
     private Resume generateAndSave(UUID chatId) {
-        log.info("Starting AI extraction for chatId={}", chatId);
+        log.debug("Starting AI extraction for chatId={}", chatId);
         AiChat history = chatService.getChatById(chatId);
 
         String cleanedHistory = history.getMessages().stream()
@@ -98,6 +100,7 @@ public class ResumeServiceImpl implements ResumeService {
                 resume.setChatId(chatId.toString());
                 mongoTemplate.save(resume);
             }
+            log.info("Finished AI [FORM] extraction for chatId={}", chatId);
             return resume;
         } catch (Exception e) {
             log.error("Failed to extract resume for chat {}: {}", chatId, e.getMessage());

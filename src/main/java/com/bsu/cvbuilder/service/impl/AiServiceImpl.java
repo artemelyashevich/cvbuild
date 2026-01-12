@@ -47,17 +47,19 @@ public class AiServiceImpl implements AiService {
             PromptTemplate promptTemplate = PromptTemplate.builder()
                     .template(finalPrompt)
                     .build();
-            return chatClient.prompt()
+            String finalResponse = chatClient.prompt()
                     .user(u -> u.text(promptTemplate.render()))
                     .call()
                     .content();
+            log.info("Response from AI [FINAL] generated");
+            return finalResponse;
         }
         return response;
     }
 
     @Override
     public ChatClient.CallResponseSpec callExtractor(String history, UUID chatId) {
-        log.debug("Attempting call AI: extractor");
+        log.debug("Attempting call AI: EXTRACTOR");
         String extractorPrompt = promptRegistryService.getPrompt("extractor");
         ChatClient.CallResponseSpec spec = chatClient.prompt()
                 .user(u -> u.text(extractorPrompt.formatted(history)))
@@ -73,13 +75,13 @@ public class AiServiceImpl implements AiService {
                         )
                 )
                 .call();
-        log.info("Ai extracted");
+        log.info("Ai [EXTRACTOR] generated]");
         return spec;
     }
 
     @Override
     public String callAnalyzer(String text, UUID chatId) {
-        log.debug("Attempting call AI: analyzer");
+        log.debug("Attempting call AI: ANALYZER");
         String analyzerPrompt = promptRegistryService.getPrompt("analyzer");
         PromptTemplate analyzerTemplate = PromptTemplate.builder()
                 .template(analyzerPrompt)
@@ -104,7 +106,7 @@ public class AiServiceImpl implements AiService {
                         )
                 )
                 .call();
-        log.info("Ai analyzed");
+        log.info("Ai [ANALYZER] generated]");
         return spec.content();
     }
 }
