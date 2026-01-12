@@ -26,7 +26,6 @@ import java.util.Locale;
 @ToString
 @Document(collection = "users")
 @CompoundIndexes({
-        @CompoundIndex(name = "email_subscription_idx", def = "{'email': 1, 'subscriptionTier': 1}"),
         @CompoundIndex(name = "verification_idx", def = "{'emailVerified': 1, 'createdAt': 1}")
 })
 public class UserProfile {
@@ -34,7 +33,6 @@ public class UserProfile {
     @Id
     private String id;
 
-    @Indexed(unique = true)
     private String email;
 
     @Indexed(unique = true)

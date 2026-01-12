@@ -60,12 +60,15 @@
 </style>
 <body>
 <div class="wrapper">
-    <form class="form-signin">
+    <form class="form-signin" th:action="@{/login}" method="post">
         <h2 class="form-signin-heading">Please login</h2>
-        <input type="text" class="form-control" name="username" placeholder="Email Address" required="" autofocus="" />
+        <input type="text" class="form-control" name="login" placeholder="Email Address" required="" autofocus="" />
         <input type="password" class="form-control" name="password" placeholder="Password" required=""/>
         <a class="btn github" th:href="@{/oauth2/authorization/github}">Login with GitHub</a>
         <button class="btn btn-lg btn-primary btn-block" type="submit">Login</button>
+        <div th:if="${param.error}" class="alert alert-danger mt-3">
+            Invalid username or password.
+        </div>
     </form>
 </div>
 </body>

@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import static com.bsu.cvbuilder.util.OAuthUtil.getOAuth2AuthenticationToken;
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.REGISTRATION_ID;
 
 @Slf4j
@@ -76,25 +77,6 @@ public class AuthFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
-
-    private static OAuth2AuthenticationToken getOAuth2AuthenticationToken(String login) {
-        Map<String, Object> attributes = Map.of(
-                "login", login,
-                "sub", login
-        );
-        OAuth2User oAuth2User = new DefaultOAuth2User(
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + UserProfile.Role.USER.name())),
-                attributes,
-                "login"
-        );
-        OAuth2AuthenticationToken authentication = new OAuth2AuthenticationToken(
-                oAuth2User,
-                oAuth2User.getAuthorities(),
-                REGISTRATION_ID
-        );
-        return authentication;
-    }
-
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
