@@ -1,6 +1,7 @@
 package com.bsu.cvbuilder.filter;
 
 import com.bsu.cvbuilder.domain.TokenType;
+import com.bsu.cvbuilder.entity.user.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.util.HandleSecurityErrorUtil;
@@ -12,14 +13,21 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+
+import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.REGISTRATION_ID;
 
 @Slf4j
 @Component
@@ -35,10 +43,6 @@ public class AuthFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-        if (true) {
-            filterChain.doFilter(request, response);
-            return;
-        }
         try {
             var authHeader = request.getHeader("Authorization");
 
@@ -56,8 +60,9 @@ public class AuthFilter extends OncePerRequestFilter {
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 var ctx = SecurityContextHolder.createEmptyContext();
-                var token = new UsernamePasswordAuthenticationToken(authToken, null, null);
-                ctx.setAuthentication(token);
+                var login = securityService.extractSubject(authToken);
+                OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(login);
+                ctx.setAuthentication(authentication);
                 SecurityContextHolder.setContext(ctx);
                 securityService.findCurrentUser();
             }
@@ -70,6 +75,24 @@ public class AuthFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private static OAuth2AuthenticationToken getOAuth2AuthenticationToken(String login) {
+        Map<String, Object> attributes = Map.of(
+                "login", login,
+                "sub", login
+        );
+        OAuth2User oAuth2User = new DefaultOAuth2User(
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + UserProfile.Role.USER.name())),
+                attributes,
+                "login"
+        );
+        OAuth2AuthenticationToken authentication = new OAuth2AuthenticationToken(
+                oAuth2User,
+                oAuth2User.getAuthorities(),
+                REGISTRATION_ID
+        );
+        return authentication;
     }
 
 

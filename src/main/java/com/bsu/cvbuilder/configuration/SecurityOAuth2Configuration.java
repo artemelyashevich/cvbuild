@@ -5,7 +5,6 @@ import com.bsu.cvbuilder.filter.AuthFilter;
 import com.bsu.cvbuilder.security.exception.CustomAccessDeniedHandler;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.util.HandleSecurityErrorUtil;
-import com.bsu.cvbuilder.util.PathUtil;
 import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +15,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.CorsConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -32,11 +32,12 @@ public class SecurityOAuth2Configuration {
 
     private final SecurityService securityService;
     private final AuthFilter authFilter;
+    private final CustomCorsConfiguration corsConfiguration;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .cors(CorsConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfiguration))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth ->
                         auth
@@ -44,19 +45,36 @@ public class SecurityOAuth2Configuration {
                                 .anyRequest().permitAll()
                 )
                 .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
-                .oauth2Login(oauth2Login -> oauth2Login.successHandler(
-                        (request, response, authentication) -> {
-                            try {
-                                var authResponse = securityService.authenticate(authentication);
-                                response.addCookie(new Cookie("access-token", authResponse.accessToken()));
-                                response.addCookie(new Cookie("refresh-token", authResponse.accessToken()));
-                            } catch (AppException e) {
-                                HandleSecurityErrorUtil.handleError(response, e);
-                            } catch (Exception e) {
-                                HandleSecurityErrorUtil.handleError(response, new AppException(e, 500));
-                            }
-                        }
-                ))
+                .oauth2Login(oauth2Login -> oauth2Login
+                        .successHandler(
+                                (request, response, authentication) -> {
+                                    try {
+                                        var authResponse = securityService.authenticate(authentication);
+
+                                        Cookie accessToken = new Cookie("access_token", authResponse.accessToken());
+                                        accessToken.setPath("/");
+                                        accessToken.setHttpOnly(false);
+                                        accessToken.setMaxAge(3600);
+                                        response.addCookie(accessToken);
+
+                                        Cookie refreshToken = new Cookie("refresh_token", authResponse.accessToken());
+                                        refreshToken.setPath("/");
+                                        refreshToken.setHttpOnly(true);
+                                        refreshToken.setMaxAge(604800);
+                                        response.addCookie(refreshToken);
+
+                                        response.sendRedirect("http://localhost:3000/profile");
+                                    } catch (AppException e) {
+                                        HandleSecurityErrorUtil.handleError(response, e);
+                                    } catch (Exception e) {
+                                        HandleSecurityErrorUtil.handleError(response, new AppException(e, 500));
+                                    }
+                                }
+                        )
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
                 .exceptionHandling(exception -> exception
                         .accessDeniedHandler(new CustomAccessDeniedHandler())
                 )

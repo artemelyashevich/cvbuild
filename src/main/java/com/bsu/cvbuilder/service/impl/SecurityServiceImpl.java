@@ -47,12 +47,12 @@ public class SecurityServiceImpl implements SecurityService {
     public UserProfile findCurrentUser() {
         log.debug("Attempting to get current user profile");
 
-        var login = extractEmail(SecurityContextHolder.getContext().getAuthentication());
+        var login = extractLogin(SecurityContextHolder.getContext().getAuthentication());
 
         var user = currentUser.get();
 
         if (user == null) {
-            user = userProfileService.findByEmail(login);
+            user = userProfileService.findByLogin(login);
             currentUser.set(user);
         }
 
@@ -65,7 +65,7 @@ public class SecurityServiceImpl implements SecurityService {
     public AuthResponse authenticate(Authentication authentication) {
         log.debug("Attempting to authenticate User via OAuth2");
 
-        var email = extractEmail(SecurityContextHolder.getContext().getAuthentication());
+        var email = extractLogin(SecurityContextHolder.getContext().getAuthentication());
 
         var user = userProfileService.login(email);
 
@@ -87,17 +87,21 @@ public class SecurityServiceImpl implements SecurityService {
         );
 
         if (secureData.getRefreshTokenEncoded() == null) {
-            var refreshToken = jwtService.generateToken(user, TokenType.REFRESH);
-            secureData.setRefreshTokenEncoded(refreshToken);
-        } else {
-            try {
-                checkToken(
-                        SecretDecodeUtil.decode(
-                                secureData.getRefreshTokenEncoded(),
-                                applicationProperties.getSecurity().getDecodeSignature()
-                        ),
-                        TokenType.REFRESH
+                var refreshToken = jwtService.generateToken(user, TokenType.REFRESH);
+
+                var encodedToken = SecretDecodeUtil.encode(
+                        refreshToken,
+                        applicationProperties.getSecurity().getDecodeSignature()
                 );
+
+                secureData.setRefreshTokenEncoded(encodedToken);
+            } else {
+                try {
+                    String decryptedToken = SecretDecodeUtil.decode(
+                            secureData.getRefreshTokenEncoded(),
+                            applicationProperties.getSecurity().getDecodeSignature()
+                    );
+                    checkToken(decryptedToken, TokenType.REFRESH);
             } catch (AppException e) {
                 secureData.setRefreshTokenEncoded(null);
                 secureDataRepository.save(secureData);
@@ -123,7 +127,7 @@ public class SecurityServiceImpl implements SecurityService {
 
     @Override
     public void emailVerification() {
-        var email = extractEmail(SecurityContextHolder.getContext().getAuthentication());
+        var email = extractLogin(SecurityContextHolder.getContext().getAuthentication());
         var otp = redisService.getOtp(email);
         new Thread(
                 () -> emailService.sendEmail(
@@ -139,7 +143,7 @@ public class SecurityServiceImpl implements SecurityService {
 
     @Override
     public void checkOtp(String otp) {
-        var email = extractEmail(SecurityContextHolder.getContext().getAuthentication());
+        var email = extractLogin(SecurityContextHolder.getContext().getAuthentication());
         var otpFromCache = redisService.getOtp(buildOtpKey(email));
         if (!otpFromCache.equals(otp)) {
             throw new AppException("Otp mismatch", 401);
@@ -163,7 +167,12 @@ public class SecurityServiceImpl implements SecurityService {
 
     }
 
-    private String extractEmail(Authentication authentication) {
+    @Override
+    public String extractSubject(String token) {
+        return jwtService.extractLogin(token, TokenType.ACCESS);
+    }
+
+    private String extractLogin(Authentication authentication) {
         var authToken = validateAuthentication(authentication);
         var principal = extractPrincipal(authToken);
         return principal.getAttribute("login");
@@ -171,6 +180,9 @@ public class SecurityServiceImpl implements SecurityService {
 
     private AbstractAuthenticationToken validateAuthentication(Authentication authentication) {
         if (oauth2Enabled) {
+            if (authentication instanceof UsernamePasswordAuthenticationToken authToken) {
+                return authToken;
+            }
             if (!(authentication instanceof OAuth2AuthenticationToken authToken)) {
                 log.debug("Invalid authentication type: {}", authentication.getClass());
                 throw new AppException("Unsupported authentication type", 401);

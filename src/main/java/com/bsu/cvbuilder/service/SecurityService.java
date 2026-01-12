@@ -25,4 +25,6 @@ public interface SecurityService {
     void checkToken(String token, TokenType tokenType);
 
     void checkSecureData();
+
+    String extractSubject(String token);
 }

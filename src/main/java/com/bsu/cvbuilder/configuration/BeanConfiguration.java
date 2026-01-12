@@ -1,6 +1,5 @@
 package com.bsu.cvbuilder.configuration;
 
-import com.bsu.cvbuilder.util.JsonHelper;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
