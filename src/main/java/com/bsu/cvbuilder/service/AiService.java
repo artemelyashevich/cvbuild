@@ -11,5 +11,5 @@ public interface AiService {
 
     ChatClient.CallResponseSpec callExtractor(String history, UUID chatId);
 
-    String callExpand(String text);
+    String callAnalyzer(String text, UUID chatId);
 }

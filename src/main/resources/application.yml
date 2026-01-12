@@ -52,6 +52,7 @@ spring:
 server:
   port: 8888
 
+
 app:
   security:
     oauth2:
@@ -77,3 +78,7 @@ app:
     extractor: ${app.prompt.base-prefix}/extractor${app.prompt.base-extension}
     final-phase: ${app.prompt.base-prefix}/final${app.prompt.base-extension}
     interviewer: ${app.prompt.base-prefix}/interviewer${app.prompt.base-extension}
+
+logging:
+  level:
+    com.bsu.cvbuilder.service: debug

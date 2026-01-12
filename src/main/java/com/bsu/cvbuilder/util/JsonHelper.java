@@ -11,7 +11,7 @@ import java.util.Objects;
 @UtilityClass
 public class JsonHelper {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    public static ObjectMapper mapper = new ObjectMapper();
 
     private static final String FAILED = "Failed to convert object to json string: {}";
 

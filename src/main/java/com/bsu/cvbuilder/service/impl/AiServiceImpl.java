@@ -78,19 +78,33 @@ public class AiServiceImpl implements AiService {
     }
 
     @Override
-    public String callExpand(String text) {
-        log.debug("Attempting call AI: expand");
-        String prompt = promptRegistryService.getPrompt("expansion");
-        PromptTemplate expansionTemplate = PromptTemplate.builder()
-                .template(prompt)
+    public String callAnalyzer(String text, UUID chatId) {
+        log.debug("Attempting call AI: analyzer");
+        String analyzerPrompt = promptRegistryService.getPrompt("analyzer");
+        PromptTemplate analyzerTemplate = PromptTemplate.builder()
+                .template(analyzerPrompt)
                 .build();
-        String rendered = expansionTemplate.render(Map.of("question", text));
-        String response = chatClient
-                .prompt()
+        String rendered = analyzerTemplate.render(
+                Map.of(
+                        "generated_resume", text,
+                        "job_description", ""
+                )
+        );
+        ChatClient.CallResponseSpec spec = chatClient.prompt()
                 .user(rendered)
-                .call()
-                .content();
-        log.info("AI expanded");
-        return response;
+                .options(OllamaOptions.builder()
+                        .temperature(applicationProperties.getChat().getExtractionTemperature())
+                        .numPredict(2000)
+                        .build()
+                )
+                .advisors(
+                        advisorSpec -> advisorSpec.param(
+                                ChatMemory.CONVERSATION_ID,
+                                chatId
+                        )
+                )
+                .call();
+        log.info("Ai analyzed");
+        return spec.content();
     }
 }

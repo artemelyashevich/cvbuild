@@ -3,8 +3,8 @@ package com.bsu.cvbuilder.service.impl;
 import com.bsu.cvbuilder.service.PromptRegistryService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PromptRegistryServiceImpl implements PromptRegistryService {
@@ -24,12 +25,15 @@ public class PromptRegistryServiceImpl implements PromptRegistryService {
 
     @PostConstruct
     public void init() throws IOException {
+        log.debug("Attempting to load prompts");
         Resource[] resources = resourcePatternResolver.getResources("classpath:/prompt/*.txt");
         for (Resource resource : resources) {
             String content = resource.getContentAsString(StandardCharsets.UTF_8);
             String name = Objects.requireNonNull(resource.getFilename()).replace(".txt", "");
             prompts.put(name, content);
+            log.debug("Loaded prompt {}", name);
         }
+        log.info("Loaded {} prompts.", prompts.size());
     }
 
     @Override
