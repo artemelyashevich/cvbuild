@@ -46,6 +46,7 @@ public class SecurityOAuth2Configuration {
                 )
                 .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2Login -> oauth2Login
+                        .loginPage("/login")
                         .successHandler(
                                 (request, response, authentication) -> {
                                     try {

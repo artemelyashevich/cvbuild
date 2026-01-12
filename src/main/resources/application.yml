@@ -48,7 +48,7 @@ spring:
           github:
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
-            scope: user:email
+            scope: user:email, read:user
 server:
   port: 8888
 
