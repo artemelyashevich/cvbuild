@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <style>
+        body { font-family: 'Roboto', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 40px; }
+        .header { border-bottom: 2px solid #4A90E2; padding-bottom: 20px; margin-bottom: 20px; }
+        .name { font-size: 28px; color: #4A90E2; margin: 0; }
+        .role { font-size: 18px; color: #666; }
+        .section-title { font-size: 18px; font-weight: bold; border-bottom: 1px solid #eee; margin-top: 20px; color: #2C3E50; }
+        .skills-container { margin-top: 10px; }
+        .skill-badge {
+            display: inline-block; background: #f0f0f0; padding: 4px 8px;
+            margin: 2px; border-radius: 4px; font-size: 12px;
+        }
+        .experience-item, .education-item { margin-bottom: 15px; }
+        .company { font-weight: bold; }
+        .duration { font-style: italic; color: #888; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1 class="name" th:text="${blocks.personal_info.full_name}">Имя Фамилия</h1>
+    <div class="role" th:text="${blocks.personal_info.current_role}">Должность</div>
+    <div>
+        Email: <span th:text="${blocks.personal_info.contacts.email}"></span> |
+        Тел: <span th:text="${blocks.personal_info.contacts.phone}"></span>
+    </div>
+</div>
+
+<div class="section-title">О себе</div>
+<p th:text="${blocks.summary}"></p>
+
+<div class="section-title">Технические навыки</div>
+<div class="skills-container">
+    <span class="skill-badge" th:each="skill : ${blocks.technical_skills}" th:text="${skill}"></span>
+</div>
+
+<div class="section-title">Опыт работы</div>
+<div class="experience-item" th:each="exp : ${blocks.experience}">
+    <div class="company" th:text="${exp.company} + ' — ' + ${exp.position}"></div>
+    <div class="duration" th:text="${exp.duration}"></div>
+    <ul>
+        <li th:each="ach : ${exp.key_achievements}" th:text="${ach}"></li>
+    </ul>
+</div>
+
+<div class="section-title">Образование</div>
+<div class="education-item" th:each="edu : ${blocks.education}">
+    <span th:text="${edu.institution}"></span>,
+    <span th:text="${edu.degree}"></span>
+    (<span th:text="${edu.year}"></span>)
+</div>
+
+</body>
+</html>

@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
-import com.bsu.cvbuilder.entity.resume.Resume;
-import com.bsu.cvbuilder.dto.ai.AiRequestDto;
+import com.bsu.cvbuilder.domain.entity.resume.Resume;
+import com.bsu.cvbuilder.domain.dto.ai.AiRequestDto;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.ResumeService;
 import lombok.RequiredArgsConstructor;

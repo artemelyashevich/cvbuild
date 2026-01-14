@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.repository;
 
-import com.bsu.cvbuilder.entity.chat.ChatSession;
-import com.bsu.cvbuilder.entity.chat.SessionState;
+import com.bsu.cvbuilder.domain.entity.chat.ChatSession;
+import com.bsu.cvbuilder.domain.entity.chat.SessionState;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;

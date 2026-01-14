@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.entity.chat.Difficulty;
-import com.bsu.cvbuilder.entity.chat.QuestionTemplate;
+import com.bsu.cvbuilder.domain.entity.chat.Difficulty;
+import com.bsu.cvbuilder.domain.entity.chat.QuestionTemplate;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.QuestionTemplateRepository;
 import com.bsu.cvbuilder.service.QuestionTemplateService;

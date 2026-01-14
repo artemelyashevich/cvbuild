@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.service;
 
-import com.bsu.cvbuilder.entity.chat.AiChat;
+import com.bsu.cvbuilder.domain.entity.chat.AiChat;
 
 import java.util.UUID;
 

@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.web.controller.ws;
 
-import com.bsu.cvbuilder.dto.ai.AiRequestDto;
+import com.bsu.cvbuilder.domain.dto.ai.AiRequestDto;
 import com.bsu.cvbuilder.service.ChatStreamingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;

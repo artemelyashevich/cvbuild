@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.util;
 
-import com.bsu.cvbuilder.dto.exception.ExceptionBodyDto;
+import com.bsu.cvbuilder.domain.dto.exception.ExceptionBodyDto;
 import com.bsu.cvbuilder.exception.AppException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.experimental.UtilityClass;

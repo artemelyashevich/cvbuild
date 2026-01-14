@@ -1,12 +1,17 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
-import com.bsu.cvbuilder.entity.resume.Resume;
+import com.bsu.cvbuilder.domain.entity.resume.Resume;
+import com.bsu.cvbuilder.service.ResumeGeneratorService;
 import com.bsu.cvbuilder.service.ResumeService;
 import com.bsu.cvbuilder.web.dto.resume.UpdateResumeRequest;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+
 @Tag(name = "Resume")
 @RestController
 @RequestMapping("/api/v1/resumes")
@@ -22,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ResumeController {
 
     private final ResumeService resumeService;
+    private final ResumeGeneratorService resumeGeneratorService;
 
     @GetMapping
     public Page<Resume> findAll(
@@ -42,5 +50,19 @@ public class ResumeController {
     @PatchMapping("/{id}")
     public Resume update(@PathVariable String id, @RequestBody UpdateResumeRequest updateResumeRequest) {
         return resumeService.update(id, updateResumeRequest);
+    }
+
+    @GetMapping("/generate/{id}")
+    public ResponseEntity<byte[]> generateResume(@PathVariable String id) throws IOException {
+        var resume = resumeService.findById(id);
+        var filename =  "resume.pdf";
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(filename)
+                                .build()
+                                .toString())
+                .body(resumeGeneratorService.generateResume(resume));
     }
 }

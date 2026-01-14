@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.web.mapper.impl;
 
-import com.bsu.cvbuilder.dto.question.ChatTemplateDto;
-import com.bsu.cvbuilder.entity.chat.QuestionTemplate;
+import com.bsu.cvbuilder.domain.dto.question.ChatTemplateDto;
+import com.bsu.cvbuilder.domain.entity.chat.QuestionTemplate;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 

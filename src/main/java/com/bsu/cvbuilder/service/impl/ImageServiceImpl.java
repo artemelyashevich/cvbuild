@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.entity.image.ImageMetadata;
+import com.bsu.cvbuilder.domain.entity.image.ImageMetadata;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.ImageMetadataRepository;
 import com.bsu.cvbuilder.service.ImageService;

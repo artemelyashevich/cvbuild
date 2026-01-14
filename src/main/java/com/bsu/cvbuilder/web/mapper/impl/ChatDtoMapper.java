@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.web.mapper.impl;
 
-import com.bsu.cvbuilder.entity.chat.ChatMessage;
-import com.bsu.cvbuilder.entity.chat.ChatSession;
+import com.bsu.cvbuilder.domain.entity.chat.ChatMessage;
+import com.bsu.cvbuilder.domain.entity.chat.ChatSession;
 import com.bsu.cvbuilder.web.dto.chat.ChatResponseDto;
 import com.bsu.cvbuilder.web.mapper.Mappable;
 import org.springframework.stereotype.Component;

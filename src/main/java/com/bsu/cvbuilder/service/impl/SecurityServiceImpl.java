@@ -1,11 +1,11 @@
 package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
-import com.bsu.cvbuilder.domain.AuthResponse;
-import com.bsu.cvbuilder.domain.TokenType;
-import com.bsu.cvbuilder.dto.EmailDto;
-import com.bsu.cvbuilder.entity.security.SecureData;
-import com.bsu.cvbuilder.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
+import com.bsu.cvbuilder.domain.dto.auth.TokenType;
+import com.bsu.cvbuilder.domain.dto.EmailDto;
+import com.bsu.cvbuilder.domain.entity.security.SecureData;
+import com.bsu.cvbuilder.domain.entity.user.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.SecureDataRepository;
 import com.bsu.cvbuilder.service.*;

@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.service;
 
-import com.bsu.cvbuilder.entity.chat.Difficulty;
-import com.bsu.cvbuilder.entity.chat.QuestionTemplate;
+import com.bsu.cvbuilder.domain.entity.chat.Difficulty;
+import com.bsu.cvbuilder.domain.entity.chat.QuestionTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

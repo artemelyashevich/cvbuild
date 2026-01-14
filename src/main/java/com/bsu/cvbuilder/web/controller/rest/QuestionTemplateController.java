@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
-import com.bsu.cvbuilder.dto.question.ChatTemplateDto;
-import com.bsu.cvbuilder.entity.chat.Difficulty;
+import com.bsu.cvbuilder.domain.dto.question.ChatTemplateDto;
+import com.bsu.cvbuilder.domain.entity.chat.Difficulty;
 import com.bsu.cvbuilder.service.QuestionTemplateService;
 import com.bsu.cvbuilder.web.mapper.impl.QuestionTemplateMapper;
 import io.swagger.v3.oas.annotations.tags.Tag;

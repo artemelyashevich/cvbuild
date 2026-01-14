@@ -1,8 +1,8 @@
 package com.bsu.cvbuilder.ai;
 
-import com.bsu.cvbuilder.entity.chat.AiChat;
-import com.bsu.cvbuilder.entity.chat.ChatMessage;
-import com.bsu.cvbuilder.entity.chat.MessageRole;
+import com.bsu.cvbuilder.domain.entity.chat.AiChat;
+import com.bsu.cvbuilder.domain.entity.chat.ChatMessage;
+import com.bsu.cvbuilder.domain.entity.chat.MessageRole;
 import com.bsu.cvbuilder.service.ChatService;
 import lombok.Builder;
 import lombok.NonNull;
@@ -50,8 +50,9 @@ public record MongoChatMemory(ChatService chatService, int maxMessages) implemen
     }
 
     @Override
+    @SuppressWarnings("all")
     public void clear(@NonNull String conversationId) {
-
+        // ignored
     }
 
     private Message getMessage(ChatMessage aiChatMessage) {

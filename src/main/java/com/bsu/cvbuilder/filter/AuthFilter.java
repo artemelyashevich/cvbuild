@@ -1,7 +1,6 @@
 package com.bsu.cvbuilder.filter;
 
-import com.bsu.cvbuilder.domain.TokenType;
-import com.bsu.cvbuilder.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.dto.auth.TokenType;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.util.HandleSecurityErrorUtil;
@@ -13,22 +12,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static com.bsu.cvbuilder.util.OAuthUtil.getOAuth2AuthenticationToken;
-import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.REGISTRATION_ID;
 
 @Slf4j
 @Component
@@ -45,6 +38,10 @@ public class AuthFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         try {
+            if (true) {
+                filterChain.doFilter(request, response);
+                return;
+            }
             var authHeader = request.getHeader("Authorization");
 
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {

@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.dto.EmailDto;
+import com.bsu.cvbuilder.domain.dto.EmailDto;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.EmailService;
 import jakarta.mail.MessagingException;

@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.entity.chat.AiChat;
+import com.bsu.cvbuilder.domain.entity.chat.AiChat;
 import com.bsu.cvbuilder.repository.AiChatRepository;
 import com.bsu.cvbuilder.service.ChatService;
 import lombok.RequiredArgsConstructor;

@@ -1,8 +1,8 @@
 package com.bsu.cvbuilder.service;
 
-import com.bsu.cvbuilder.domain.AuthResponse;
-import com.bsu.cvbuilder.domain.TokenType;
-import com.bsu.cvbuilder.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
+import com.bsu.cvbuilder.domain.dto.auth.TokenType;
+import com.bsu.cvbuilder.domain.entity.user.UserProfile;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 

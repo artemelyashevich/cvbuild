@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.repository;
 
-import com.bsu.cvbuilder.entity.image.ImageMetadata;
+import com.bsu.cvbuilder.domain.entity.image.ImageMetadata;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.service;
 
-import com.bsu.cvbuilder.dto.ai.AiRequestDto;
+import com.bsu.cvbuilder.domain.dto.ai.AiRequestDto;
 import org.springframework.ai.chat.client.ChatClient;
 
 import java.util.UUID;

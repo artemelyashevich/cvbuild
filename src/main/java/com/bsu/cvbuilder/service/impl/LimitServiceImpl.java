@@ -1,12 +1,10 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.entity.limit.AiLimit;
+import com.bsu.cvbuilder.domain.entity.limit.AiLimit;
 import com.bsu.cvbuilder.repository.LimitRepository;
-import com.bsu.cvbuilder.repository.UserProfileRepository;
 import com.bsu.cvbuilder.service.LimitService;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.service.UserProfileService;
-import io.lettuce.core.Limit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

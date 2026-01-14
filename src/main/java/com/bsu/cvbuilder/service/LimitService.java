@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.service;
 
-import com.bsu.cvbuilder.entity.limit.AiLimit;
+import com.bsu.cvbuilder.domain.entity.limit.AiLimit;
 
 import java.util.List;
 

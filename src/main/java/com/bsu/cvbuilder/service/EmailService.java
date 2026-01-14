@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.service;
 
-import com.bsu.cvbuilder.dto.EmailDto;
+import com.bsu.cvbuilder.domain.dto.EmailDto;
 
 public interface EmailService {
 

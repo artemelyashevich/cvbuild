@@ -1,8 +1,8 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.entity.chat.MessageRole;
-import com.bsu.cvbuilder.entity.resume.Resume;
-import com.bsu.cvbuilder.entity.chat.AiChat;
+import com.bsu.cvbuilder.domain.entity.chat.MessageRole;
+import com.bsu.cvbuilder.domain.entity.resume.Resume;
+import com.bsu.cvbuilder.domain.entity.chat.AiChat;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.ChatService;

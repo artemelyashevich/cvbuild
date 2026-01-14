@@ -1,6 +1,7 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.event.user.UserCreatedEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.UserProfileRepository;
 import com.bsu.cvbuilder.service.UserProfileService;
@@ -9,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     private final UserProfileRepository userProfileRepository;
     private final ApplicationContext applicationContext;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Caching(
@@ -83,6 +86,7 @@ public class UserProfileServiceImpl implements UserProfileService {
         log.debug("Attempting to create user profile {}", build);
 
         var newUserProfile = userProfileRepository.save(build);
+        applicationEventPublisher.publishEvent(UserCreatedEvent.builder().user(newUserProfile).build());
 
         log.info("UserProfile created {}", newUserProfile);
         return newUserProfile;
