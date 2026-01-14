@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.service.schedule;
 
+import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.service.LimitService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,7 @@ public class LimitSchedule {
 
     private final LimitService limitService;
 
-    @Scheduled(cron = "0 0 * * * *") // every 1 HOUR
+    @Scheduled(cron = "${app.schedule.limit-period:\"0 0 * * * *\"}") // every 1 HOUR
     public void job() {
         log.info("--- LIMIT JOB: STARTED ---");
         var limits = limitService.findAllLimits();

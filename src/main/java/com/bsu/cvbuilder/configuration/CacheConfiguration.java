@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -20,7 +21,10 @@ import java.util.Map;
 
 @Configuration
 @EnableCaching
+@RequiredArgsConstructor
 public class CacheConfiguration {
+
+    private final ApplicationProperties applicationProperties;
 
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
@@ -39,18 +43,18 @@ public class CacheConfiguration {
         var jsonSerializer = new GenericJackson2JsonRedisSerializer(mapper);
 
         var defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(30))
+                .entryTtl(Duration.ofMinutes(applicationProperties.getCache().getTtl()))
                 .disableCachingNullValues()
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(jsonSerializer))
-                .prefixCacheNameWith("cvbuilder:");
+                .prefixCacheNameWith(applicationProperties.getCache().getPrefix());
 
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(defaultConfig)
                 .withInitialCacheConfigurations(Map.of(
-                        "user::id", defaultConfig.entryTtl(Duration.ofMinutes(30)),
-                        "user::login", defaultConfig.entryTtl(Duration.ofMinutes(30)),
-                        "user::email", defaultConfig.entryTtl(Duration.ofMinutes(30))
+                        "user::id", defaultConfig.entryTtl(Duration.ofMinutes(applicationProperties.getCache().getTtl())),
+                        "user::login", defaultConfig.entryTtl(Duration.ofMinutes(applicationProperties.getCache().getTtl())),
+                        "user::email", defaultConfig.entryTtl(Duration.ofMinutes(applicationProperties.getCache().getTtl()))
                 ))
                 .build();
     }

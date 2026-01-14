@@ -54,7 +54,16 @@ server:
 
 
 app:
+  schedule:
+    limit-period: "0 0 * * * *"
+  cache:
+    ttl: 30
+    prefix: "cvbuild::"
   security:
+    allowed-origins: "http://localhost:3000"
+    allowed-methods: "*"
+    allowed-headers: "*"
+    allow-credentials: true
     oauth2:
       enabled: true
     refresh-secret: ${JWT_REFRESH_SECRET}

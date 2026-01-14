@@ -14,10 +14,22 @@ public class ApplicationProperties {
     private Security security;
     private Chat chat;
     private Prompt prompt;
+    private Cache cache;
+
+    @Getter
+    @Setter
+    public static class Cache {
+        private String prefix;
+        private Integer ttl;
+    }
 
     @Getter
     @Setter
     public static class Security {
+        private String allowedOrigins;
+        private String allowedMethods;
+        private String allowedHeaders;
+        private Boolean allowCredentials;
         private String decodeSignature;
         private String accessSecret;
         private String refreshSecret;
