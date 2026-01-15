@@ -10,14 +10,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
-import java.util.concurrent.Executor;
 
 @Configuration
 public class BeanConfiguration {
@@ -36,17 +35,6 @@ public class BeanConfiguration {
         messageSource.setFallbackToSystemLocale(false);
         messageSource.setCacheSeconds(60);
         return messageSource;
-    }
-
-    @Bean
-    public Executor limitExecutor() {
-        var executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(5);
-        executor.setMaxPoolSize(10);
-        executor.setQueueCapacity(1000);
-        executor.setThreadNamePrefix("limitScheduler-");
-        executor.initialize();
-        return executor;
     }
 
     @Bean
@@ -72,5 +60,10 @@ public class BeanConfiguration {
         mapper.setDateFormat(sdf);
 
         return mapper;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }

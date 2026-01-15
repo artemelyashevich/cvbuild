@@ -62,6 +62,7 @@ public class JwtServiceImpl implements JwtService {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void validateToken(String token, TokenType tokenType) {
         if (token == null || token.isBlank()) {
             throw new AppException("Token is empty", 401);

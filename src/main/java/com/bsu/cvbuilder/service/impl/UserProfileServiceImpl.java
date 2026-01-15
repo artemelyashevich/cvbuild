@@ -93,7 +93,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.NESTED, rollbackFor = Exception.class)
+    @CachePut(value = "user::login", key = "#login")
     public synchronized UserProfile login(String login) {
         log.debug("Attempting to login user profile by email {}", login);
         UserProfile user;

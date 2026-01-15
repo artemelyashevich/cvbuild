@@ -54,6 +54,9 @@ server:
 
 
 app:
+  limit:
+    max-messages: 20 # 20 messages per 1 day
+    messages-ban-duration: 1 # 1 day
   schedule:
     limit-period: "0 0 * * * *"
   cache:

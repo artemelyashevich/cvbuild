@@ -42,9 +42,6 @@ public class UserProfile {
 
     private String lastName;
 
-    @ToString.Exclude
-    private String password;
-
     private String avatarUrl;
 
     @Builder.Default

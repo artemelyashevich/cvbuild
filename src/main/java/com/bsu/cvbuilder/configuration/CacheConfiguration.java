@@ -42,6 +42,7 @@ public class CacheConfiguration {
 
         var jsonSerializer = new GenericJackson2JsonRedisSerializer(mapper);
 
+
         var defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(applicationProperties.getCache().getTtl()))
                 .disableCachingNullValues()
@@ -49,12 +50,14 @@ public class CacheConfiguration {
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(jsonSerializer))
                 .prefixCacheNameWith(applicationProperties.getCache().getPrefix());
 
+        var userCacheConfig = defaultConfig.entryTtl(Duration.ofMinutes(applicationProperties.getCache().getTtl()));
+
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(defaultConfig)
                 .withInitialCacheConfigurations(Map.of(
-                        "user::id", defaultConfig.entryTtl(Duration.ofMinutes(applicationProperties.getCache().getTtl())),
-                        "user::login", defaultConfig.entryTtl(Duration.ofMinutes(applicationProperties.getCache().getTtl())),
-                        "user::email", defaultConfig.entryTtl(Duration.ofMinutes(applicationProperties.getCache().getTtl()))
+                        "user::id", userCacheConfig,
+                        "user::login", userCacheConfig,
+                        "user::email", userCacheConfig
                 ))
                 .build();
     }

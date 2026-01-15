@@ -27,6 +27,9 @@ public class SecureData {
     @ToString.Exclude
     private SecureInfo data;
 
+    @ToString.Exclude
+    private String password;
+
     @Getter
     @Setter
     @Builder

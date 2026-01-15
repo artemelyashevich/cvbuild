@@ -1,5 +1,7 @@
 package com.bsu.cvbuilder.service.impl;
 
+import com.bsu.cvbuilder.annotation.LimitType;
+import com.bsu.cvbuilder.annotation.Limited;
 import com.bsu.cvbuilder.domain.entity.chat.MessageRole;
 import com.bsu.cvbuilder.domain.entity.resume.Resume;
 import com.bsu.cvbuilder.domain.entity.chat.AiChat;
@@ -51,6 +53,7 @@ public class ResumeServiceImpl implements ResumeService {
     }
 
     @Override
+    @Limited(value = LimitType.RESUME_GENERATE, capacity = 5)
     public Resume findByChatId(UUID chatId) {
         log.debug("Finding resume by chat id");
         var resume = mongoTemplate.findOne(new Query(Criteria.where("chatId").is(chatId)), Resume.class);

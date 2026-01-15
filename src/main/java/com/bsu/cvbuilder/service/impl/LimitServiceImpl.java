@@ -1,64 +1,40 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.domain.entity.limit.AiLimit;
-import com.bsu.cvbuilder.repository.LimitRepository;
+import com.bsu.cvbuilder.annotation.LimitType;
+import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.LimitService;
-import com.bsu.cvbuilder.service.SecurityService;
-import com.bsu.cvbuilder.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class LimitServiceImpl implements LimitService {
 
-    private final SecurityService securityService;
-    private final LimitRepository limitRepository;
-    private final UserProfileService userProfileService;
+    private final StringRedisTemplate redisTemplate;
 
     @Override
-    public List<AiLimit> findAllLimits() {
-        log.debug("Attempting to find all limits");
-        return limitRepository.findAll();
-    }
+    public void check(String userId, LimitType type, int capacity) {
+        String banKey = "limit:ban:" + type.name() + ":" + userId;
+        String countKey = "limit:count:" + type.name() + ":" + userId;
 
-    @Override
-    public List<AiLimit> findActiveLimits() {
-        log.debug("Attempting to fetch limit list by current user");
+        if (redisTemplate.hasKey(banKey)) {
+            throw new AppException("Limit error", 403);
+        }
 
-        var user = securityService.findCurrentUser();
+        Long currentCount = redisTemplate.opsForValue().increment(countKey);
 
-        var limits = user.getAiLimits();
+        if (currentCount != null && currentCount == 1) {
+            redisTemplate.expire(countKey, 25, TimeUnit.HOURS);
+        }
 
-        var activeLimits = limits.stream()
-                .filter(limit -> limit.getAppliedFor().isAfter(LocalDate.now()))
-                .toList();
-
-        log.info("Found {} active limits for current user", limits.size());
-        return activeLimits;
-    }
-
-    @Override
-    @Transactional
-    public AiLimit createLimit(AiLimit limit) {
-        log.debug("Attempting to create limit by current user");
-        var user = securityService.findCurrentUser();
-        var newLimit = AiLimit.builder()
-                .name(limit.getName())
-                .description(limit.getDescription())
-                .appliedAt(LocalDate.now())
-                .appliedFor(limit.getAppliedFor() == null ? LocalDate.now().plusDays(30) : limit.getAppliedFor())
-                .build();
-        var createdLimit = limitRepository.save(newLimit);
-        user.getAiLimits().add(createdLimit);
-        userProfileService.update(user);
-        log.info("Created limit by current user: {}", createdLimit);
-        return createdLimit;
+        if (currentCount != null && currentCount >= capacity) {
+            redisTemplate.opsForValue().set(banKey, "banned", 24, TimeUnit.HOURS);
+            redisTemplate.delete(countKey);
+        }
     }
 }

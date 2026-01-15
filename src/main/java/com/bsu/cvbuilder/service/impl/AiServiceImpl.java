@@ -1,7 +1,10 @@
 package com.bsu.cvbuilder.service.impl;
 
+import com.bsu.cvbuilder.annotation.LimitType;
+import com.bsu.cvbuilder.annotation.Limited;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.ai.AiRequestDto;
+import com.bsu.cvbuilder.domain.entity.user.UserProfile;
 import com.bsu.cvbuilder.domain.event.user.UserGenerateNewMessageEvent;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.PromptRegistryService;
@@ -12,7 +15,6 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.ollama.api.OllamaOptions;
-import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
@@ -31,9 +33,14 @@ public class AiServiceImpl implements AiService {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
+    @Limited(value = LimitType.AI_MESSAGE, capacity = 20)
     public String call(AiRequestDto aiRequestDto) {
         log.debug("Attempting call AI: {}", aiRequestDto.chatId());
+
+        UserProfile user = securityService.findCurrentUser();
+
         String prompt = promptRegistryService.getPrompt("interviewer");
+
         String response = chatClient.prompt()
                 .advisors(
                         advisorSpec -> advisorSpec.param(
@@ -47,7 +54,7 @@ public class AiServiceImpl implements AiService {
                 .content();
 
         applicationEventPublisher.publishEvent(UserGenerateNewMessageEvent.builder()
-                        .userId(securityService.findCurrentUser().getId())
+                .userId(user.getId())
                 .build());
 
         log.info("Response from AI [INTERVIEWER] generated");

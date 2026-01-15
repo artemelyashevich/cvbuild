@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.filter;
+package com.bsu.cvbuilder.security.filter;
 
 import com.bsu.cvbuilder.domain.dto.auth.TokenType;
 import com.bsu.cvbuilder.exception.AppException;
@@ -64,8 +64,6 @@ public class AuthFilter extends OncePerRequestFilter {
                 SecurityContextHolder.setContext(ctx);
                 securityService.findCurrentUser();
             }
-
-            CompletableFuture.runAsync(securityService::checkSecureData);
         } catch (AppException e) {
             log.warn(e.getMessage());
             HandleSecurityErrorUtil.handleError(response, e).getWriter().flush();

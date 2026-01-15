@@ -1,5 +1,7 @@
 package com.bsu.cvbuilder.service.impl;
 
+import com.bsu.cvbuilder.annotation.LimitType;
+import com.bsu.cvbuilder.annotation.Limited;
 import com.bsu.cvbuilder.domain.entity.resume.Resume;
 import com.bsu.cvbuilder.service.ResumeGeneratorService;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
@@ -21,6 +23,7 @@ public class ResumeGeneratorServiceImpl implements ResumeGeneratorService {
     private final TemplateEngine templateEngine;
 
     @Override
+    @Limited(value = LimitType.RESUME_DOWNLOAD, capacity = 5)
     public byte[] generateResume(Resume resume) throws IOException {
         log.debug("Attempting to generate resume for {}", resume.getId());
         Context context = new Context();

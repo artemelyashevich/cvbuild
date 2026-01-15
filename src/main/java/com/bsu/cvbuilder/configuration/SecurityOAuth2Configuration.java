@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.configuration;
 
 import com.bsu.cvbuilder.exception.AppException;
-import com.bsu.cvbuilder.filter.AuthFilter;
+import com.bsu.cvbuilder.security.filter.AuthFilter;
 import com.bsu.cvbuilder.security.exception.CustomAccessDeniedHandler;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.util.HandleSecurityErrorUtil;
@@ -14,7 +14,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.CorsConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;

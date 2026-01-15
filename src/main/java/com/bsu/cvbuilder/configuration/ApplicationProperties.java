@@ -5,6 +5,8 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+
 @Getter
 @Setter
 @Component
@@ -15,6 +17,21 @@ public class ApplicationProperties {
     private Chat chat;
     private Prompt prompt;
     private Cache cache;
+    private Limit limit;
+
+    @Getter
+    @Setter
+    public static class Limit {
+        private Integer maxMessages;
+        private Integer messagesBanDuration;
+        private Duration banDuration;
+
+        public Limit(Integer maxMessages, Integer messagesBanDuration) {
+            this.maxMessages = maxMessages;
+            this.messagesBanDuration = messagesBanDuration;
+            this.banDuration = Duration.ofDays(messagesBanDuration);
+        }
+    }
 
     @Getter
     @Setter
