@@ -90,6 +90,10 @@ app:
     extractor: ${app.prompt.base-prefix}/extractor${app.prompt.base-extension}
     final-phase: ${app.prompt.base-prefix}/final${app.prompt.base-extension}
     interviewer: ${app.prompt.base-prefix}/interviewer${app.prompt.base-extension}
+  analyzer:
+    user-agent: ${USER_AGENT}
+    trust-urls:
+      - "rabota.by/vacancy/"
 
 logging:
   level:
