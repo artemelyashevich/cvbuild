@@ -11,6 +11,7 @@ import com.bsu.cvbuilder.util.SecretDecodeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.util.Map;
 
+import static com.bsu.cvbuilder.util.OAuthUtil.getOAuth2AuthenticationToken;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -32,13 +35,13 @@ public class SecurityServiceImpl implements SecurityService {
 
     @Lazy
     private final UserProfileService userProfileService;
-    private final ThreadLocal<UserProfile> currentUser = new ThreadLocal<>();
     private final RedisService redisService;
     private final JwtService jwtService;
     private final SecureDataRepository secureDataRepository;
     private final ApplicationProperties applicationProperties;
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
+    private final ApplicationContext applicationContext;
 
     @Value("${app.security.oauth2.enabled:false}")
     private boolean oauth2Enabled;
@@ -49,12 +52,7 @@ public class SecurityServiceImpl implements SecurityService {
 
         var login = extractLogin(SecurityContextHolder.getContext().getAuthentication());
 
-        var user = currentUser.get();
-
-        if (user == null) {
-            user = userProfileService.findByLogin(login);
-            currentUser.set(user);
-        }
+        var user = userProfileService.findByLogin(login);
 
         log.info("Current user profile found: {}", user);
         return user;
@@ -63,9 +61,9 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AuthResponse authenticate(Authentication authentication) {
-        log.debug("Attempting to authenticate User via OAuth2");
+        log.debug("Attempting to authenticate User");
 
-        var login = extractLogin(SecurityContextHolder.getContext().getAuthentication());
+        var login = extractLogin(authentication);
 
         var user = userProfileService.login(login);
 
@@ -74,8 +72,6 @@ public class SecurityServiceImpl implements SecurityService {
             log.error(message);
             throw new AppException(message, 500);
         }
-
-        currentUser.set(user);
 
         var secureData = secureDataRepository.findByUserId(user.getId()).orElse(
                 SecureData.builder()
@@ -86,8 +82,10 @@ public class SecurityServiceImpl implements SecurityService {
                         .build()
         );
 
+        var refreshToken = jwtService.generateToken(user, TokenType.REFRESH);
+
         if (secureData.getRefreshTokenEncoded() == null) {
-            var refreshToken = jwtService.generateToken(user, TokenType.REFRESH);
+
 
             var encodedToken = SecretDecodeUtil.encode(
                     refreshToken,
@@ -122,13 +120,7 @@ public class SecurityServiceImpl implements SecurityService {
             );
         }
 
-        return new AuthResponse(jwtService.generateToken(user, TokenType.ACCESS), secureData.getRefreshTokenEncoded());
-    }
-
-    @Override
-    public void logout() {
-        currentUser.remove();
-        SecurityContextHolder.getContext().setAuthentication(null);
+        return new AuthResponse(jwtService.generateToken(user, TokenType.ACCESS), refreshToken);
     }
 
     @Override
@@ -140,6 +132,14 @@ public class SecurityServiceImpl implements SecurityService {
         }
         profile.setEmailVerified(true);
         userProfileService.update(profile);
+        notificationService.sendNotification(NotificationDto.builder()
+                .engine(NotificationEngine.EMAIL)
+                .receiver(profile.getEmail())
+                .templateName("email_verification_success")
+                .parameters(Map.of(
+                        "login", profile.getLogin()
+                ))
+                .build());
     }
 
     @Override
@@ -154,12 +154,12 @@ public class SecurityServiceImpl implements SecurityService {
         String otp = String.format("%06d", new SecureRandom().nextInt(1000000));
         redisService.putOtp(buildOtpKey(userProfile.getEmail()), otp);
         notificationService.sendNotification(NotificationDto.builder()
-                        .engine(NotificationEngine.EMAIL)
-                        .receiver(userProfile.getEmail())
-                        .templateName("email_verification")
-                        .parameters(Map.of(
-                                "otp", otp
-                        ))
+                .engine(NotificationEngine.EMAIL)
+                .receiver(userProfile.getEmail())
+                .templateName("email_verification")
+                .parameters(Map.of(
+                        "otp", otp
+                ))
                 .build());
     }
 
@@ -192,10 +192,30 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public void loadSecureData(SecureData secureData) {
         SecureData persistentData = SecureData.builder()
-                .password(secureData.getPassword())
+                .password(passwordEncoder.encode(secureData.getPassword()))
                 .userId(secureData.getUserId())
                 .build();
         secureDataRepository.save(persistentData);
+    }
+
+    @Override
+    public AuthResponse refreshAccessToken(String refreshToken) {
+        jwtService.validateToken(refreshToken, TokenType.REFRESH);
+        String login = jwtService.extractLogin(refreshToken, TokenType.REFRESH);
+        String id = userProfileService.findByEmail(login).getId();
+        var secureData = secureDataRepository.findByUserId(id).orElseThrow(
+                () -> new AppException("Invalid user profile", 401)
+        );
+        if (!secureData.getRefreshTokenEncoded().equals(
+                SecretDecodeUtil.encode(refreshToken, applicationProperties.getSecurity().getDecodeSignature())
+        )) {
+            throw new AppException("Invalid refresh token", 401);
+        }
+        var ctx = SecurityContextHolder.createEmptyContext();
+        OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(login);
+        ctx.setAuthentication(authentication);
+        SecurityContextHolder.setContext(ctx);
+        return applicationContext.getBean(SecurityService.class).authenticate(authentication);
     }
 
     private String extractLogin(Authentication authentication) {

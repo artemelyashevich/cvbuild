@@ -15,6 +15,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -45,7 +46,6 @@ public class SecurityOAuth2Configuration {
                 )
                 .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2Login -> oauth2Login
-                        .loginPage("/login")
                         .successHandler(
                                 (request, response, authentication) -> {
                                     try {
@@ -78,7 +78,7 @@ public class SecurityOAuth2Configuration {
                 .exceptionHandling(exception -> exception
                         .accessDeniedHandler(new CustomAccessDeniedHandler())
                 )
-                .logout(l -> securityService.logout())
+                .logout(l -> SecurityContextHolder.clearContext())
                 .build();
     }
 }

@@ -2,6 +2,7 @@ package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
 import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
+import com.bsu.cvbuilder.domain.dto.auth.RefreshRequest;
 import com.bsu.cvbuilder.domain.entity.security.SecureData;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
 import com.bsu.cvbuilder.service.AuthService;
@@ -27,7 +28,7 @@ public class AuthServiceImpl implements AuthService {
     private final ApplicationContext applicationContext;
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AuthResponse authenticate(AuthRequest authRequest) {
         log.debug("Attempting authenticate user with email: {}", authRequest.email());
 
@@ -35,13 +36,10 @@ public class AuthServiceImpl implements AuthService {
 
         securityService.checkSecureData(user, authRequest);
 
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            var ctx = SecurityContextHolder.createEmptyContext();
-            OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(authRequest.email());
-            ctx.setAuthentication(authentication);
-            SecurityContextHolder.setContext(ctx);
-            securityService.findCurrentUser();
-        }
+        var ctx = SecurityContextHolder.createEmptyContext();
+        OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(authRequest.email());
+        ctx.setAuthentication(authentication);
+        SecurityContextHolder.setContext(ctx);
 
         AuthResponse authResponse = securityService.authenticate(SecurityContextHolder.getContext().getAuthentication());
 
@@ -51,7 +49,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AuthResponse register(AuthRequest authRequest) {
         log.debug("Attempting register user with email: {}", authRequest.email());
         UserProfile userProfile = userProfileService.create(UserProfile.builder()
@@ -63,5 +61,10 @@ public class AuthServiceImpl implements AuthService {
                 .userId(userProfile.getId())
                 .build());
         return applicationContext.getBean(AuthService.class).authenticate(authRequest);
+    }
+
+    @Override
+    public AuthResponse refreshToken(RefreshRequest refreshRequest) {
+        return securityService.refreshAccessToken(refreshRequest.refreshToken());
     }
 }

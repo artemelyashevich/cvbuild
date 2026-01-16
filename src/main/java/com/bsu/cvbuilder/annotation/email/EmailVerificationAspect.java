@@ -26,16 +26,16 @@ public class EmailVerificationAspect {
 
         log.debug("Checking email verification for user {}", user.getId());
 
-        if (emailVerification.value()) {
+        if (!emailVerification.value()) {
             return;
         }
 
         if (user.getEmail() == null || user.getEmail().isEmpty()) {
-            throw new AppException("This functionality allows for verified users, please provide and verify your email", 400);
+            throw new AppException("This functionality allows for verified users, please provide and verify your email", 401);
         }
 
         if (!user.getEmailVerified()) {
-            throw new AppException("This functionality allows for verified users", 400);
+            throw new AppException("This functionality allows for verified users", 401);
         }
     }
 }

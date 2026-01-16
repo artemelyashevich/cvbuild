@@ -13,8 +13,6 @@ public interface SecurityService {
 
     AuthResponse authenticate(Authentication authentication);
 
-    void logout();
-
     void checkOtp(String otp);
 
     void verifyEmailRequest();
@@ -28,4 +26,6 @@ public interface SecurityService {
     String extractSubject(String token);
 
     void loadSecureData(SecureData secureData);
+
+    AuthResponse refreshAccessToken(String refreshToken);
 }

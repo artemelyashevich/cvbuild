@@ -1,47 +1,34 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
-import com.bsu.cvbuilder.service.SecurityService;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
+import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
+import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
+import com.bsu.cvbuilder.domain.dto.auth.RefreshRequest;
+import com.bsu.cvbuilder.service.AuthService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.io.IOException;
-
-import static com.bsu.cvbuilder.util.OAuthUtil.getOAuth2AuthenticationToken;
-
-
-@Controller
+@RestController
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final SecurityService securityService;
+    private final AuthService authService;
 
-    @GetMapping("/login")
-    public String login() {
-        return "login";
+    @PostMapping("/register")
+    public AuthResponse register(@RequestBody AuthRequest authRequest) {
+        return authService.register(authRequest);
     }
 
     @PostMapping("/login")
-    public void login(@RequestParam String login, @RequestParam String password, HttpServletResponse response) throws IOException {
-        var token = getOAuth2AuthenticationToken(login);
-        SecurityContextHolder.getContext().setAuthentication(token);
-        var authResponse = securityService.authenticate(token);
-        Cookie accessToken = new Cookie("access_token", authResponse.accessToken());
-        accessToken.setPath("/");
-        accessToken.setHttpOnly(false);
-        accessToken.setMaxAge(3600);
-        response.addCookie(accessToken);
+    public AuthResponse login(@RequestBody AuthRequest authRequest) {
+        return authService.authenticate(authRequest);
+    }
 
-        Cookie refreshToken = new Cookie("refresh_token", authResponse.accessToken());
-        refreshToken.setPath("/");
-        refreshToken.setHttpOnly(true);
-        refreshToken.setMaxAge(604800);
-        response.addCookie(refreshToken);
-        response.sendRedirect("http://localhost:3000/profile");
+    @PostMapping("/refresh")
+    public AuthResponse refresh(@RequestBody RefreshRequest request) {
+        return authService.refreshToken(request);
     }
 }
