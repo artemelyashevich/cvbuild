@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.annotation;
+package com.bsu.cvbuilder.annotation.limit;
 
 public enum LimitType {
     AI_MESSAGE,

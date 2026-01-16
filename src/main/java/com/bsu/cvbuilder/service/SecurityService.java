@@ -5,7 +5,6 @@ import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
 import com.bsu.cvbuilder.domain.dto.auth.TokenType;
 import com.bsu.cvbuilder.domain.entity.security.SecureData;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 
 public interface SecurityService {
@@ -18,7 +17,9 @@ public interface SecurityService {
 
     void checkOtp(String otp);
 
-    String createOtp(String key);
+    void verifyEmailRequest();
+
+    void verifyEmail(String otp);
 
     void checkToken(String token, TokenType tokenType);
 

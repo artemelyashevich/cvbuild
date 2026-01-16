@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.annotation.LimitType;
+import com.bsu.cvbuilder.annotation.limit.LimitType;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.LimitService;
 import lombok.RequiredArgsConstructor;

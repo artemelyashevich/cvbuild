@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.domain.dto;
+package com.bsu.cvbuilder.domain.dto.auth;
 
 import lombok.Builder;
 

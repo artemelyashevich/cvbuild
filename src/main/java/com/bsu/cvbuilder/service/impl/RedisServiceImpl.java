@@ -18,12 +18,14 @@ public class RedisServiceImpl implements RedisService {
 
     @Override
     public void putOtp(String keyUnique, String otp) {
-        redisTemplate.opsForValue().set("otp%s".formatted(keyUnique), otp, 120, TimeUnit.SECONDS);
+        String key = "otp%s".formatted(keyUnique);
+        redisTemplate.opsForValue().set(key, otp, 120, TimeUnit.SECONDS);
     }
 
     @Override
     public String getOtp(String keyUnique) {
-        var otp = redisTemplate.opsForValue().get("otp::%s".formatted(keyUnique));
+        String key = "otp%s".formatted(keyUnique);
+        var otp = redisTemplate.opsForValue().get(key);
         if (otp == null) {
             throw new AppException("Otp expired", 400);
         }

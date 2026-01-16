@@ -1,9 +1,6 @@
 package com.bsu.cvbuilder.service;
 
-import com.bsu.cvbuilder.annotation.LimitType;
-import com.bsu.cvbuilder.domain.entity.limit.AiLimit;
-
-import java.util.List;
+import com.bsu.cvbuilder.annotation.limit.LimitType;
 
 public interface LimitService {
 

@@ -10,8 +10,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -20,11 +18,6 @@ import java.util.TimeZone;
 
 @Configuration
 public class BeanConfiguration {
-
-    @Bean
-    public JavaMailSender getJavaMailSender() {
-        return new JavaMailSenderImpl();
-    }
 
     @Bean
     public MessageSource messageSource() {

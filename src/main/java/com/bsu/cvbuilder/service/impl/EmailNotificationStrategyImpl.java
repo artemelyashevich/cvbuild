@@ -1,11 +1,12 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.domain.dto.auth.EmailDto;
+import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
 import com.bsu.cvbuilder.exception.AppException;
-import com.bsu.cvbuilder.service.EmailService;
+import com.bsu.cvbuilder.service.NotificationStrategy;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -13,18 +14,20 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 @Slf4j
-@Service
+@Service("email")
 @RequiredArgsConstructor
-public class EmailServiceImpl implements EmailService {
+public class EmailNotificationStrategyImpl implements NotificationStrategy {
 
     private final JavaMailSender javaMailSender;
     private final SpringTemplateEngine templateEngine;
 
+    @Value("${spring.mail.username}")
+    private String from;
+
     @Override
-    public void sendEmail(EmailDto email) {
+    public void sendNotification(NotificationDto notificationDto) {
         log.debug("Attempting to send email.");
 
         try {
@@ -36,16 +39,13 @@ public class EmailServiceImpl implements EmailService {
             );
 
             var context = new Context();
-            context.setVariables(Map.of(
-                    "username", email.receiver(),
-                    "activation_code", email.activationCode()
-            ));
+            context.setVariables(notificationDto.getParameters());
 
-            helper.setFrom(email.sender());
-            helper.setTo(email.receiver());
-            helper.setSubject(email.receiver());
+            helper.setFrom(from);
+            helper.setTo(notificationDto.getReceiver());
+            helper.setSubject("Notification from CV Builder");
 
-            var template = templateEngine.process(email.template(), context);
+            var template = templateEngine.process(notificationDto.getTemplateName(), context);
 
             helper.setText(template, true);
 

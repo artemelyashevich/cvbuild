@@ -1,9 +1,7 @@
 package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
-import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
-import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
-import com.bsu.cvbuilder.domain.dto.auth.TokenType;
+import com.bsu.cvbuilder.domain.dto.auth.*;
 import com.bsu.cvbuilder.domain.entity.security.SecureData;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
@@ -25,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -34,12 +33,12 @@ public class SecurityServiceImpl implements SecurityService {
     @Lazy
     private final UserProfileService userProfileService;
     private final ThreadLocal<UserProfile> currentUser = new ThreadLocal<>();
-    private final EmailService emailService;
     private final RedisService redisService;
     private final JwtService jwtService;
     private final SecureDataRepository secureDataRepository;
     private final ApplicationProperties applicationProperties;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationService notificationService;
 
     @Value("${app.security.oauth2.enabled:false}")
     private boolean oauth2Enabled;
@@ -66,12 +65,12 @@ public class SecurityServiceImpl implements SecurityService {
     public AuthResponse authenticate(Authentication authentication) {
         log.debug("Attempting to authenticate User via OAuth2");
 
-        var email = extractLogin(SecurityContextHolder.getContext().getAuthentication());
+        var login = extractLogin(SecurityContextHolder.getContext().getAuthentication());
 
-        var user = userProfileService.login(email);
+        var user = userProfileService.login(login);
 
         if (user == null) {
-            var message = String.format("Invalid email or password: %s", email);
+            var message = String.format("Invalid login or password: %s", login);
             log.error(message);
             throw new AppException(message, 500);
         }
@@ -112,6 +111,17 @@ public class SecurityServiceImpl implements SecurityService {
 
         secureDataRepository.save(secureData);
 
+        if (user.getEmail() == null || user.getEmail().isEmpty()) {
+            notificationService.sendNotification(
+                    NotificationDto.builder()
+                            .parameters(Map.of("message", "Please, provide and verify your email"))
+                            .engine(NotificationEngine.WS)
+                            .receiver(user.getLogin())
+                            .templateName("")
+                            .build()
+            );
+        }
+
         return new AuthResponse(jwtService.generateToken(user, TokenType.ACCESS), secureData.getRefreshTokenEncoded());
     }
 
@@ -123,18 +133,39 @@ public class SecurityServiceImpl implements SecurityService {
 
     @Override
     public void checkOtp(String otp) {
-        var email = extractLogin(SecurityContextHolder.getContext().getAuthentication());
-        var otpFromCache = redisService.getOtp(buildOtpKey(email));
+        UserProfile profile = findCurrentUser();
+        var otpFromCache = redisService.getOtp(buildOtpKey(profile.getEmail()));
         if (!otpFromCache.equals(otp)) {
             throw new AppException("Otp mismatch", 401);
         }
+        profile.setEmailVerified(true);
+        userProfileService.update(profile);
     }
 
     @Override
-    public String createOtp(String key) {
-        var otp = String.format("%06d", new SecureRandom().nextInt(1000000));
-        redisService.putOtp(key, otp);
-        return otp;
+    public void verifyEmailRequest() {
+        UserProfile userProfile = findCurrentUser();
+        if (userProfile.getEmail() == null || userProfile.getEmail().isEmpty()) {
+            throw new AppException("Invalid email", 401);
+        }
+        if (userProfile.getEmailVerified()) {
+            return;
+        }
+        String otp = String.format("%06d", new SecureRandom().nextInt(1000000));
+        redisService.putOtp(buildOtpKey(userProfile.getEmail()), otp);
+        notificationService.sendNotification(NotificationDto.builder()
+                        .engine(NotificationEngine.EMAIL)
+                        .receiver(userProfile.getEmail())
+                        .templateName("email_verification")
+                        .parameters(Map.of(
+                                "otp", otp
+                        ))
+                .build());
+    }
+
+    @Override
+    public void verifyEmail(String otp) {
+        checkOtp(otp);
     }
 
     @Override
@@ -192,7 +223,7 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     private String buildOtpKey(String email) {
-        return String.format("::%s::", email);
+        return String.format("::%s", email);
     }
 
     private DefaultOAuth2User extractPrincipal(AbstractAuthenticationToken authToken) {

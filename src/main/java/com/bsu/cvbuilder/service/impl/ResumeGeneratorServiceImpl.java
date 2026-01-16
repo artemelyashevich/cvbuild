@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.annotation.LimitType;
-import com.bsu.cvbuilder.annotation.Limited;
+import com.bsu.cvbuilder.annotation.limit.LimitType;
+import com.bsu.cvbuilder.annotation.limit.Limited;
 import com.bsu.cvbuilder.domain.entity.resume.Resume;
 import com.bsu.cvbuilder.service.ResumeGeneratorService;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;

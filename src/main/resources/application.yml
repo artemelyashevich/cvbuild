@@ -49,9 +49,20 @@ spring:
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
             scope: user:email, read:user
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: mmfask2024@gmail.com
+    password: syvg ndjv wvdb tjlp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
 server:
   port: 8888
-
 
 app:
   limit:

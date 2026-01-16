@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.annotation.LimitType;
-import com.bsu.cvbuilder.annotation.Limited;
+import com.bsu.cvbuilder.annotation.limit.LimitType;
+import com.bsu.cvbuilder.annotation.limit.Limited;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.ai.AiRequestDto;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;

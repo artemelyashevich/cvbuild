@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.annotation;
+package com.bsu.cvbuilder.annotation.limit;
 
 import com.bsu.cvbuilder.service.LimitService;
 import com.bsu.cvbuilder.service.SecurityService;
