@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.service.impl;
 
+import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.RedisService;
 import lombok.RequiredArgsConstructor;
@@ -15,11 +16,12 @@ public class RedisServiceImpl implements RedisService {
 
     private static final String LOCALE_KEY = "locale::%s";
     private final RedisTemplate<String, String> redisTemplate;
+    private final ApplicationProperties applicationProperties;
 
     @Override
     public void putOtp(String keyUnique, String otp) {
         String key = "otp%s".formatted(keyUnique);
-        redisTemplate.opsForValue().set(key, otp, 120, TimeUnit.SECONDS);
+        redisTemplate.opsForValue().set(key, otp, applicationProperties.getCache().getVerification(), TimeUnit.SECONDS);
     }
 
     @Override
@@ -39,7 +41,7 @@ public class RedisServiceImpl implements RedisService {
 
     @Override
     public String getLocation(String email) {
-        var locale =  redisTemplate.opsForValue().get(String.format(LOCALE_KEY, email));
+        var locale = redisTemplate.opsForValue().get(String.format(LOCALE_KEY, email));
         if (locale == null) {
             locale = Locale.ENGLISH.getLanguage();
         }

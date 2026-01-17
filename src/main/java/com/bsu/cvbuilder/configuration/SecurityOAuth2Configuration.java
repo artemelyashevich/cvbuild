@@ -5,6 +5,7 @@ import com.bsu.cvbuilder.security.filter.AuthFilter;
 import com.bsu.cvbuilder.security.exception.CustomAccessDeniedHandler;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.util.HandleSecurityErrorUtil;
+import com.bsu.cvbuilder.util.PathUtil;
 import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,8 +42,8 @@ public class SecurityOAuth2Configuration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth ->
                         auth
-                                //.requestMatchers(PathUtil.PUBLIC_RESOURCES.toArray(new String[0])).permitAll()
-                                .anyRequest().permitAll()
+                                .requestMatchers(PathUtil.PUBLIC_RESOURCES.toArray(new String[0])).permitAll()
+                                .anyRequest().authenticated()
                 )
                 .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2Login -> oauth2Login

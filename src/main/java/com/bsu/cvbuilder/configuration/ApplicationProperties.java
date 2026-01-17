@@ -47,6 +47,7 @@ public class ApplicationProperties {
     public static class Cache {
         private String prefix;
         private Integer ttl;
+        private Integer verification;
     }
 
     @Getter

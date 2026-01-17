@@ -71,6 +71,7 @@ app:
   schedule:
     limit-period: "0 0 * * * *"
   cache:
+    verification: 300 # seconds
     ttl: 30
     prefix: "cvbuild::"
   security:

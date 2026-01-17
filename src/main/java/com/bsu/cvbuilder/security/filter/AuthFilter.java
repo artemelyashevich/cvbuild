@@ -72,9 +72,15 @@ public class AuthFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
+        String path = request.getRequestURI().substring(request.getContextPath().length());
 
-        return PathUtil.PUBLIC_RESOURCES.stream()
+        boolean isPublic = PathUtil.PUBLIC_RESOURCES.stream()
                 .anyMatch(pattern -> pathMatcher.match(pattern, path));
+
+        if (isPublic) {
+            log.debug("Path {} is public, skipping filter", path);
+        }
+
+        return isPublic;
     }
 }
