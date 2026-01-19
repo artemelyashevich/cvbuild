@@ -1,7 +1,8 @@
-package com.bsu.cvbuilder.service.impl;
+package com.bsu.cvbuilder.service.unit;
 
 import com.bsu.cvbuilder.domain.entity.chat.AiChat;
 import com.bsu.cvbuilder.repository.AiChatRepository;
+import com.bsu.cvbuilder.service.impl.ChatServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

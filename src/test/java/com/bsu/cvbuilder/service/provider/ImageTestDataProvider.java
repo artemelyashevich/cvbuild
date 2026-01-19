@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.service.impl.provider;
+package com.bsu.cvbuilder.service.provider;
 
 import com.bsu.cvbuilder.domain.entity.image.ImageMetadata;
 import org.bson.types.ObjectId;

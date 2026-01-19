@@ -32,10 +32,24 @@ services:
     volumes:
       - redis_data:/data
 
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    container_name: jenkins
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    user: root
+
 networks:
   cvbuilder:
     driver: bridge
 
 volumes:
+  jenkins_home:
+    driver: local
   mongo_data:
   redis_data:

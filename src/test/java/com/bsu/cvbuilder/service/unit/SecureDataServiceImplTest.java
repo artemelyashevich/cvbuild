@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.service.impl;
+package com.bsu.cvbuilder.service.unit;
 
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
@@ -8,6 +8,7 @@ import com.bsu.cvbuilder.domain.entity.user.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.SecureDataRepository;
 import com.bsu.cvbuilder.service.JwtService;
+import com.bsu.cvbuilder.service.impl.SecureDataServiceImpl;
 import com.bsu.cvbuilder.util.SecretDecodeUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

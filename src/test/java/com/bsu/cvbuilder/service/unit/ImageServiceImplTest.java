@@ -1,8 +1,9 @@
-package com.bsu.cvbuilder.service.impl;
-ut add
+package com.bsu.cvbuilder.service.unit;
+
 import com.bsu.cvbuilder.domain.entity.image.ImageMetadata;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.ImageMetadataRepository;
+import com.bsu.cvbuilder.service.impl.ImageServiceImpl;
 import com.mongodb.CursorType;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.Function;
@@ -102,7 +103,7 @@ class ImageServiceImplTest {
     }
 
     @ParameterizedTest
-    @MethodSource("com.bsu.cvbuilder.service.impl.provider.ImageTestDataProvider#provideImageBytesData")
+    @MethodSource("com.bsu.cvbuilder.service.provider.ImageTestDataProvider#provideImageBytesData")
     void findById_ValidId_ReturnsImageBytes(byte[] expectedBytes) throws IOException {
         // Arrange
         var mockGridFsFile = mock(GridFSFile.class);
@@ -195,7 +196,7 @@ class ImageServiceImplTest {
     // ==================== upload Tests ====================
 
     @ParameterizedTest
-    @MethodSource("com.bsu.cvbuilder.service.impl.provider.ImageTestDataProvider#provideMultipartFiles")
+    @MethodSource("com.bsu.cvbuilder.service.provider.ImageTestDataProvider#provideMultipartFiles")
     void upload_ValidFile_ReturnsObjectId(MultipartFile file) throws IOException {
         // Arrange
         var objectId = new ObjectId();

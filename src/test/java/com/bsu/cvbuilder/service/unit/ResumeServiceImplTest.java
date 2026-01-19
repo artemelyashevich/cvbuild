@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.service.impl;
+package com.bsu.cvbuilder.service.unit;
 
 import com.bsu.cvbuilder.domain.entity.chat.AiChat;
 import com.bsu.cvbuilder.domain.entity.chat.ChatMessage;
@@ -7,6 +7,7 @@ import com.bsu.cvbuilder.domain.entity.resume.Resume;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.ChatService;
+import com.bsu.cvbuilder.service.impl.ResumeServiceImpl;
 import com.bsu.cvbuilder.web.dto.resume.UpdateResumeRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

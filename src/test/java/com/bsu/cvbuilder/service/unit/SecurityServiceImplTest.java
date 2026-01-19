@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.service.impl;
+package com.bsu.cvbuilder.service.unit;
 
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
@@ -12,6 +12,7 @@ import com.bsu.cvbuilder.service.NotificationService;
 import com.bsu.cvbuilder.service.RedisService;
 import com.bsu.cvbuilder.service.SecureDataService;
 import com.bsu.cvbuilder.service.UserProfileService;
+import com.bsu.cvbuilder.service.impl.SecurityServiceImpl;
 import com.bsu.cvbuilder.util.SecretDecodeUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

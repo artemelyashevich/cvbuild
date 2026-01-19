@@ -1,8 +1,9 @@
-package com.bsu.cvbuilder.service.impl;
+package com.bsu.cvbuilder.service.unit;
 
 import com.bsu.cvbuilder.domain.entity.user.UserStats;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.UserStatsRepository;
+import com.bsu.cvbuilder.service.impl.UserStatsServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

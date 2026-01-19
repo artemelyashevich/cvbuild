@@ -44,10 +44,10 @@ public class AuthServiceImpl implements AuthService {
 
         AuthResponse authResponse = securityService.authenticate(SecurityContextHolder.getContext().getAuthentication());
 
-        applicationEventPublisher.publishEvent(UserLoginEvent.builder()
+        /*applicationEventPublisher.publishEvent(UserLoginEvent.builder()
                         .userProfile(user)
                         .userId(user.getId())
-                .build());
+                .build());*/
         log.debug("Authenticated user: {}", authRequest.email());
         return authResponse;
     }
