@@ -1,10 +1,9 @@
 package com.bsu.cvbuilder.service.listener;
 
+import com.bsu.cvbuilder.domain.entity.user.UserProfile;
 import com.bsu.cvbuilder.domain.entity.user.UserStats;
-import com.bsu.cvbuilder.domain.event.user.UserCreatedEvent;
-import com.bsu.cvbuilder.domain.event.user.UserCreatedResumeEvent;
-import com.bsu.cvbuilder.domain.event.user.UserDownloadedResumeEvent;
-import com.bsu.cvbuilder.domain.event.user.UserGenerateNewMessageEvent;
+import com.bsu.cvbuilder.domain.event.*;
+import com.bsu.cvbuilder.service.UserProfileService;
 import com.bsu.cvbuilder.service.UserStatsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,14 +11,26 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.function.Consumer;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class UserStatisticListener {
+public class UserEventListener {
 
     private final UserStatsService userStatsService;
+    private final UserProfileService userProfileService;
+
+    @Async
+    @EventListener
+    public void handleUserLoginEvent(UserLoginEvent userLoginEvent) {
+        String userId = userLoginEvent.getUserId();
+        UserProfile userProfile = userLoginEvent.getUserProfile();
+        log.debug("Received UserLoginEvent for userId {}", userId);
+        userProfile.setLastLogin(LocalDateTime.now());
+        userProfileService.update(userLoginEvent.getUserProfile());
+    }
 
     @Async
     @EventListener

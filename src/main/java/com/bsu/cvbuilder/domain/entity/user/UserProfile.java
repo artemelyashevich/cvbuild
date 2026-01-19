@@ -2,12 +2,16 @@ package com.bsu.cvbuilder.domain.entity.user;
 
 import com.bsu.cvbuilder.domain.entity.limit.AiLimit;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
-import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.IndexDirection;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -25,9 +29,7 @@ import java.util.Locale;
 @NoArgsConstructor
 @ToString
 @Document(collection = "users")
-@CompoundIndexes({
-        @CompoundIndex(name = "verification_idx", def = "{'emailVerified': 1, 'createdAt': 1}")
-})
+@CompoundIndex(name = "verification_idx", def = "{'emailVerified': 1, 'createdAt': 1}")
 public class UserProfile {
 
     @Id
@@ -48,7 +50,7 @@ public class UserProfile {
 
     @Builder.Default
     @Indexed(name = "email_verified_idx")
-    private Boolean emailVerified =false;
+    private Boolean emailVerified = false;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")

@@ -1,7 +1,6 @@
-package com.bsu.cvbuilder.domain.event.user;
+package com.bsu.cvbuilder.domain.event;
 
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
-import com.bsu.cvbuilder.domain.event.AbstractEvent;
 import lombok.Builder;
 import lombok.Getter;
 

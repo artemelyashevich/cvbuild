@@ -124,6 +124,7 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void checkOtp(String otp) {
         UserProfile profile = findCurrentUser();
         var otpFromCache = redisService.getOtp(buildOtpKey(profile.getEmail()));

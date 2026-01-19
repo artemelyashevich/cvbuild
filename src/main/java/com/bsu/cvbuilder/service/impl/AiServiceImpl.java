@@ -5,7 +5,7 @@ import com.bsu.cvbuilder.annotation.limit.Limited;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.ai.AiRequestDto;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
-import com.bsu.cvbuilder.domain.event.user.UserGenerateNewMessageEvent;
+import com.bsu.cvbuilder.domain.event.UserGenerateNewMessageEvent;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.PromptRegistryService;
 import com.bsu.cvbuilder.service.SecurityService;
