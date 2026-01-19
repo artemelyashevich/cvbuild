@@ -20,7 +20,7 @@ public class VerificationController {
     @PostMapping("/check")
     @ResponseStatus(HttpStatus.OK)
     public void verify(@RequestBody EmailVerificationDto emailVerificationDto) {
-        securityService.verifyEmail(emailVerificationDto.otp());
+        securityService.checkOtp(emailVerificationDto.otp());
     }
 
     @PostMapping

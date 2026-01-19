@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -28,10 +27,8 @@ public class ImageController {
 
     @GetMapping
     public ResponseEntity<List<GridFSFile>> findAll() {
-        var images = new ArrayList<GridFSFile>();
         var data = this.imageService.findAll();
-        data.forEach(images::add);
-        return ResponseEntity.ok(images);
+        return ResponseEntity.ok(data);
     }
 
     @GetMapping(value = "/{id}", produces = MediaType.IMAGE_JPEG_VALUE)

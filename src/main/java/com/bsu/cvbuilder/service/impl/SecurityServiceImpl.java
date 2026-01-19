@@ -41,7 +41,7 @@ public class SecurityServiceImpl implements SecurityService {
     private final ApplicationProperties applicationProperties;
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
-    private final ApplicationContext applicationContext;
+    private final SecureDataService secureDataService;
 
     @Value("${app.security.oauth2.enabled:false}")
     private boolean oauth2Enabled;
@@ -73,41 +73,7 @@ public class SecurityServiceImpl implements SecurityService {
             throw new AppException(message, 500);
         }
 
-        var secureData = secureDataRepository.findByUserId(user.getId()).orElse(
-                SecureData.builder()
-                        .userId(user.getId())
-                        .refreshTokenEncoded(SecretDecodeUtil.encode(
-                                jwtService.generateToken(user, TokenType.REFRESH),
-                                applicationProperties.getSecurity().getDecodeSignature()))
-                        .build()
-        );
-
-        var refreshToken = jwtService.generateToken(user, TokenType.REFRESH);
-
-        if (secureData.getRefreshTokenEncoded() == null) {
-
-
-            var encodedToken = SecretDecodeUtil.encode(
-                    refreshToken,
-                    applicationProperties.getSecurity().getDecodeSignature()
-            );
-
-            secureData.setRefreshTokenEncoded(encodedToken);
-        } else {
-            try {
-                String decryptedToken = SecretDecodeUtil.decode(
-                        secureData.getRefreshTokenEncoded(),
-                        applicationProperties.getSecurity().getDecodeSignature()
-                );
-                checkToken(decryptedToken, TokenType.REFRESH);
-            } catch (AppException e) {
-                secureData.setRefreshTokenEncoded(null);
-                secureDataRepository.save(secureData);
-                throw e;
-            }
-        }
-
-        secureDataRepository.save(secureData);
+        var secureData = secureDataService.prepareData(user);
 
         if (user.getEmail() == null || user.getEmail().isEmpty()) {
             notificationService.sendNotification(
@@ -120,7 +86,10 @@ public class SecurityServiceImpl implements SecurityService {
             );
         }
 
-        return new AuthResponse(jwtService.generateToken(user, TokenType.ACCESS), refreshToken);
+        return new AuthResponse(
+                jwtService.generateToken(user, TokenType.ACCESS),
+                SecretDecodeUtil.decode(secureData.getRefreshTokenEncoded(), applicationProperties.getSecurity().getDecodeSignature())
+        );
     }
 
     @Override
@@ -165,24 +134,13 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     @Override
-    public void verifyEmail(String otp) {
-        checkOtp(otp);
-    }
-
-    @Override
     public void checkToken(String token, TokenType tokenType) {
         jwtService.validateToken(token, tokenType);
     }
 
     @Override
     public void checkSecureData(UserProfile userProfile, AuthRequest authRequest) {
-        SecureData secureData = secureDataRepository.findByUserId(userProfile.getId()).orElseThrow(
-                () -> new AppException("Invalid user profile", 401)
-        );
-        if (!passwordEncoder.matches(authRequest.password(), secureData.getPassword())) {
-            log.debug("Password does not match stored value, email: {}", authRequest.email());
-            throw new AppException("Password mismatch", 401);
-        }
+        secureDataService.checkData(userProfile, authRequest);
     }
 
     @Override
@@ -200,23 +158,23 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     @Override
+    @Transactional
     public AuthResponse refreshAccessToken(String refreshToken) {
         jwtService.validateToken(refreshToken, TokenType.REFRESH);
         String login = jwtService.extractLogin(refreshToken, TokenType.REFRESH);
-        String id = userProfileService.findByEmail(login).getId();
-        var secureData = secureDataRepository.findByUserId(id).orElseThrow(
-                () -> new AppException("Invalid user profile", 401)
-        );
-        if (!secureData.getRefreshTokenEncoded().equals(
-                SecretDecodeUtil.encode(refreshToken, applicationProperties.getSecurity().getDecodeSignature())
-        )) {
-            throw new AppException("Invalid refresh token", 401);
+
+        UserProfile user = userProfileService.findByEmail(login);
+        SecureData secureData = secureDataRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new AppException("Security data not found", 401));
+
+        String currentEncoded = SecretDecodeUtil.encode(refreshToken, applicationProperties.getSecurity().getDecodeSignature());
+        if (!currentEncoded.equals(secureData.getRefreshTokenEncoded())) {
+            throw new AppException("Refresh token mismatch or revoked", 401);
         }
-        var ctx = SecurityContextHolder.createEmptyContext();
-        OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(login);
-        ctx.setAuthentication(authentication);
-        SecurityContextHolder.setContext(ctx);
-        return applicationContext.getBean(SecurityService.class).authenticate(authentication);
+
+        String newAccessToken = jwtService.generateToken(user, TokenType.ACCESS);
+
+        return new AuthResponse(newAccessToken, refreshToken);
     }
 
     private String extractLogin(Authentication authentication) {

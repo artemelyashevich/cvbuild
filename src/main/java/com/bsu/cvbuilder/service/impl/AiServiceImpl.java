@@ -26,104 +26,97 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AiServiceImpl implements AiService {
 
+    private static final String PROMPT_INTERVIEWER = "interviewer";
+    private static final String PROMPT_FINAL = "final";
+    private static final String PROMPT_EXTRACTOR = "extractor";
+    private static final String PROMPT_ANALYZER = "analyzer";
+    private static final String COMPLETED_SIGNAL = "COMPLETED";
+
     private final ChatClient chatClient;
     private final PromptRegistryService promptRegistryService;
     private final ApplicationProperties applicationProperties;
     private final SecurityService securityService;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Limited(value = LimitType.AI_MESSAGE, capacity = 20)
-    public String call(AiRequestDto aiRequestDto) {
-        log.debug("Attempting call AI: {}", aiRequestDto.chatId());
+    public String call(AiRequestDto dto) {
+        log.debug("AI Call [INTERVIEWER] for chatId: {}", dto.chatId());
 
-        UserProfile user = securityService.findCurrentUser();
-
-        String prompt = promptRegistryService.getPrompt("interviewer");
+        String systemPrompt = promptRegistryService.getPrompt(PROMPT_INTERVIEWER);
 
         String response = chatClient.prompt()
-                .advisors(
-                        advisorSpec -> advisorSpec.param(
-                                ChatMemory.CONVERSATION_ID,
-                                aiRequestDto.chatId()
-                        )
-                )
-                .system(s -> s.text(prompt))
-                .user(u -> u.text(aiRequestDto.content()))
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, dto.chatId()))
+                .system(systemPrompt)
+                .user(dto.content())
                 .call()
                 .content();
 
-        applicationEventPublisher.publishEvent(UserGenerateNewMessageEvent.builder()
-                .userId(user.getId())
-                .build());
-
-        log.info("Response from AI [INTERVIEWER] generated");
-        if (response != null && response.contains("COMPLETED")) {
-            log.debug("Response from AI [INTERVIEWER] generated: COMPLETED");
-            String finalPrompt = promptRegistryService.getPrompt("final");
-            PromptTemplate promptTemplate = PromptTemplate.builder()
-                    .template(finalPrompt)
-                    .build();
-            String finalResponse = chatClient.prompt()
-                    .user(u -> u.text(promptTemplate.render()))
-                    .call()
-                    .content();
-            log.info("Response from AI [FINAL] generated");
-            return finalResponse;
+        if (response == null) {
+            log.warn("AI returned empty response for chatId: {}", dto.chatId());
+            return "Извините, я не смог обработать ваш запрос. Попробуйте еще раз.";
         }
+
+        publishUsageEvent();
+
+        if (response.contains(COMPLETED_SIGNAL)) {
+            return handleFinalStep(dto.chatId());
+        }
+
         return response;
+    }
+
+    private String handleFinalStep(UUID chatId) {
+        log.info("Interviewer phase completed, generating final summary for chatId: {}", chatId);
+        String finalPromptText = promptRegistryService.getPrompt(PROMPT_FINAL);
+
+        return chatClient.prompt()
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId))
+                .user(finalPromptText)
+                .call()
+                .content();
     }
 
     @Override
     public ChatClient.CallResponseSpec callExtractor(String history, UUID chatId) {
-        log.debug("Attempting call AI: EXTRACTOR");
-        String extractorPrompt = promptRegistryService.getPrompt("extractor");
-        ChatClient.CallResponseSpec spec = chatClient.prompt()
+        log.debug("AI Call [EXTRACTOR] for chatId: {}", chatId);
+        String extractorPrompt = promptRegistryService.getPrompt(PROMPT_EXTRACTOR);
+
+        return chatClient.prompt()
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId))
                 .user(u -> u.text(extractorPrompt.formatted(history)))
-                .options(OllamaOptions.builder()
-                        .format("json")
-                        .temperature(applicationProperties.getChat().getExtractionTemperature())
-                        .numPredict(2000)
-                        .build())
-                .advisors(
-                        advisorSpec -> advisorSpec.param(
-                                ChatMemory.CONVERSATION_ID,
-                                chatId
-                        )
-                )
+                .options(defaultOptions())
                 .call();
-        log.info("Ai [EXTRACTOR] generated]");
-        return spec;
     }
 
     @Override
     public String callAnalyzer(String text, UUID chatId) {
-        log.debug("Attempting call AI: ANALYZER");
-        String analyzerPrompt = promptRegistryService.getPrompt("analyzer");
-        PromptTemplate analyzerTemplate = PromptTemplate.builder()
-                .template(analyzerPrompt)
+        log.debug("AI Call [ANALYZER] for chatId: {}", chatId);
+
+        String analyzerPrompt = promptRegistryService.getPrompt(PROMPT_ANALYZER);
+        PromptTemplate template = new PromptTemplate(analyzerPrompt);
+        String renderedPrompt = template.render(Map.of(
+                "generated_resume", text,
+                "job_description", ""
+        ));
+
+        return chatClient.prompt()
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId))
+                .user(renderedPrompt)
+                .options(defaultOptions())
+                .call()
+                .content();
+    }
+
+    private OllamaOptions defaultOptions() {
+        return OllamaOptions.builder()
+                .temperature(applicationProperties.getChat().getExtractionTemperature())
+                .numPredict(2000)
                 .build();
-        String rendered = analyzerTemplate.render(
-                Map.of(
-                        "generated_resume", text,
-                        "job_description", ""
-                )
-        );
-        ChatClient.CallResponseSpec spec = chatClient.prompt()
-                .user(rendered)
-                .options(OllamaOptions.builder()
-                        .temperature(applicationProperties.getChat().getExtractionTemperature())
-                        .numPredict(2000)
-                        .build()
-                )
-                .advisors(
-                        advisorSpec -> advisorSpec.param(
-                                ChatMemory.CONVERSATION_ID,
-                                chatId
-                        )
-                )
-                .call();
-        log.info("Ai [ANALYZER] generated]");
-        return spec.content();
+    }
+
+    private void publishUsageEvent() {
+        UserProfile user = securityService.findCurrentUser();
+        eventPublisher.publishEvent(new UserGenerateNewMessageEvent(user.getId()));
     }
 }

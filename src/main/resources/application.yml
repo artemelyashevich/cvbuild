@@ -65,6 +65,8 @@ server:
   port: 8888
 
 app:
+  ai:
+    prompts-path: "classpath:/prompt/*.txt"
   limit:
     max-messages: 20 # 20 messages per 1 day
     messages-ban-duration: 1 # 1 day

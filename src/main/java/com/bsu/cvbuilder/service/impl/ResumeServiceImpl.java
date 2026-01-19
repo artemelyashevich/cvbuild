@@ -2,9 +2,8 @@ package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.annotation.limit.LimitType;
 import com.bsu.cvbuilder.annotation.limit.Limited;
-import com.bsu.cvbuilder.domain.entity.chat.MessageRole;
-import com.bsu.cvbuilder.domain.entity.resume.Resume;
 import com.bsu.cvbuilder.domain.entity.chat.AiChat;
+import com.bsu.cvbuilder.domain.entity.resume.Resume;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.ChatService;
@@ -13,7 +12,6 @@ import com.bsu.cvbuilder.web.dto.resume.UpdateResumeRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.converter.BeanOutputConverter;
-import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -21,8 +19,10 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -34,80 +34,88 @@ public class ResumeServiceImpl implements ResumeService {
     private final AiService aiService;
     private final ChatService chatService;
     private final MongoTemplate mongoTemplate;
-    private final ApplicationContext applicationContext;
 
     private final BeanOutputConverter<Resume> converter = new BeanOutputConverter<>(Resume.class);
 
     @Override
+    @Transactional(readOnly = true)
     public Page<Resume> findAll(Pageable pageable) {
-        log.debug("Finding all resumes");
+        log.debug("Fetching page of resumes: {}", pageable);
         Query query = new Query().with(pageable);
-        List<Resume> all = mongoTemplate.find(query, Resume.class);
-        Page<Resume> resumes = PageableExecutionUtils.getPage(
-                all,
+
+        List<Resume> list = mongoTemplate.find(query, Resume.class);
+
+        return PageableExecutionUtils.getPage(
+                list,
                 pageable,
                 () -> mongoTemplate.count(Query.of(query).limit(-1).skip(-1), Resume.class)
         );
-        log.info("Find all resumes: {}", resumes.getTotalElements());
-        return resumes;
     }
 
     @Override
     @Limited(value = LimitType.RESUME_GENERATE, capacity = 5)
     public Resume findByChatId(UUID chatId) {
-        log.debug("Finding resume by chat id");
-        var resume = mongoTemplate.findOne(new Query(Criteria.where("chatId").is(chatId)), Resume.class);
+        log.debug("Finding resume for chat: {}", chatId);
+
+        String chatIdStr = chatId.toString();
+        Resume resume = mongoTemplate.findOne(
+                Query.query(Criteria.where("chatId").is(chatIdStr)),
+                Resume.class
+        );
+
         if (resume == null) {
-            log.debug("Unable to find resume by chat id");
+            log.info("Resume not found for chat {}, triggering AI generation", chatId);
             return generateAndSave(chatId);
         }
-        log.info("Found resume by chat id");
+
         return resume;
     }
 
     @Override
     public Resume findById(String id) {
-        log.debug("Attempting to find resume by id {}", id);
-        var resume = mongoTemplate.findById(id, Resume.class);
-        if (resume == null) {
-            log.debug("Resume with id {} not found", id);
-            throw new AppException("There are no resume with such id: %s".formatted(id), 404);
-        }
-        log.info("Resume with id {} found", id);
-        return resume;
+        return Optional.ofNullable(mongoTemplate.findById(id, Resume.class))
+                .orElseThrow(() -> new AppException("Resume not found with id: " + id, 404));
     }
 
     @Override
-    public Resume update(String resumeId, UpdateResumeRequest updateResumeRequest) {
-        log.debug("Attempting to update resume with id {}", resumeId);
-        Resume resume = applicationContext.getBean(ResumeService.class).findById(resumeId);
-        resume.setBlocks(updateResumeRequest.blocks());
-        Resume updatedResume = mongoTemplate.save(resume);
-        log.info("Resume with id {} updated", resumeId);
-        return updatedResume;
+    @Transactional
+    public Resume update(String resumeId, UpdateResumeRequest updateRequest) {
+        log.debug("Updating resume: {}", resumeId);
+        Resume resume = findById(resumeId);
+
+        resume.setBlocks(updateRequest.blocks());
+
+        return mongoTemplate.save(resume);
     }
 
     private Resume generateAndSave(UUID chatId) {
-        log.debug("Starting AI extraction for chatId={}", chatId);
-        AiChat history = chatService.getChatById(chatId);
+        AiChat chat = chatService.getChatById(chatId);
 
-        String cleanedHistory = history.getMessages().stream()
-                .filter(m -> !MessageRole.ASSISTANT.equals(m.getRole()))
-                .map(m -> m.getRole() + ": " + m.getContent())
+        String contextHistory = chat.getMessages().stream()
+                .map(m -> String.format("%s: %s", m.getRole(), m.getContent()))
                 .collect(Collectors.joining("\n"));
 
+        String promptWithFormat = contextHistory + "\n\n" + converter.getFormat();
+
         try {
-            var data = aiService.callExtractor(cleanedHistory, chatId);
-            Resume resume = data.entity(converter);
-            if (resume != null) {
-                resume.setChatId(chatId.toString());
-                mongoTemplate.save(resume);
+            log.debug("Calling AI Extractor for chat {}", chatId);
+            var responseSpec = aiService.callExtractor(promptWithFormat, chatId);
+
+            Resume extractedResume = responseSpec.entity(converter);
+
+            if (extractedResume == null) {
+                throw new AppException("AI returned empty resume data", 500);
             }
-            log.info("Finished AI [FORM] extraction for chatId={}", chatId);
-            return resume;
+
+            extractedResume.setChatId(chatId.toString());
+            Resume saved = mongoTemplate.save(extractedResume);
+
+            log.info("Successfully generated and saved resume for chat {}", chatId);
+            return saved;
+
         } catch (Exception e) {
-            log.error("Failed to extract resume for chat {}: {}", chatId, e.getMessage());
-            throw new AppException("AI Generation failed", e, 500);
+            log.error("Failed to generate resume for chat {}: {}", chatId, e.getMessage());
+            throw new AppException("Failed to generate resume via AI. Please try to chat more.", e, 500);
         }
     }
 }

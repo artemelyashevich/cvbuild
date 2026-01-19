@@ -7,11 +7,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.URI;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -20,29 +21,77 @@ public class JobParserServiceImpl implements JobParserService {
 
     private final ApplicationProperties applicationProperties;
 
+    private static final List<String> COMMON_SELECTORS = List.of(
+            ".vacancy-description",
+            ".job-description",
+            "[data-qa=vacancy-description]",
+            ".description__text",
+            "section.description"
+    );
+
     @Override
     public String parse(String url) {
-        boolean isTrustPath = applicationProperties.getAnalyzer().getTrustUrls().stream().anyMatch(url::contains);
-        if (!isTrustPath) {
-            throw new AppException(
-                    "This is no trust url, there are trust urls: %s".formatted(
-                            String.join(", ", applicationProperties.getAnalyzer().getTrustUrls())
-                    ), 400
-            );
-        }
-        StringBuilder builder = new StringBuilder();
+        validateUrl(url);
+
         try {
+            log.debug("Connecting to URL: {}", url);
+
             Document doc = Jsoup.connect(url)
                     .userAgent(applicationProperties.getAnalyzer().getUserAgent())
+                    .timeout(10000) // 10 s
+                    .followRedirects(true)
                     .get();
 
-            Elements jobCards = doc.select(".vacancy-description");
-            for (Element card : jobCards) {
-                builder.append(card.text());
+            String description = extractDescription(doc);
+
+            if (description.isBlank()) {
+                log.warn("Could not find job description using known selectors for URL: {}", url);
+                description = doc.body().text();
             }
+
+            log.info("Successfully parsed job description from: {}, length: {}", url, description.length());
+            return description;
+
         } catch (IOException e) {
-            throw new AppException("Failed to parse job url: " + url, 500);
+            log.error("Error fetching URL {}: {}", url, e.getMessage());
+            throw new AppException("Failed to connect or parse job URL: " + url, 500);
         }
-        return builder.toString();
+    }
+
+    private void validateUrl(String urlString) {
+        try {
+            String host = URI.create(urlString).getHost();
+            if (host == null) {
+                throw new AppException("Invalid URL: " + urlString, 400);
+            }
+
+            List<String> trustDomains = applicationProperties.getAnalyzer().getTrustUrls();
+            boolean isTrusted = trustDomains.stream().anyMatch(host::endsWith);
+
+            if (!isTrusted) {
+                log.warn("Untrusted URL attempt: {}", urlString);
+                throw new AppException("Domain " + host + " is not in the trust list. Trusted: " +
+                        String.join(", ", trustDomains), 400);
+            }
+        } catch (Exception e) {
+            if (e instanceof AppException ex) {
+                throw ex;
+            }
+            throw new AppException("Invalid URL format: " + urlString, 400);
+        }
+    }
+
+    private String extractDescription(Document doc) {
+        StringBuilder builder = new StringBuilder();
+
+        for (String selector : COMMON_SELECTORS) {
+            Elements elements = doc.select(selector);
+            if (!elements.isEmpty()) {
+                elements.forEach(el -> builder.append(el.text()).append("\n"));
+                break;
+            }
+        }
+
+        return builder.toString().trim();
     }
 }

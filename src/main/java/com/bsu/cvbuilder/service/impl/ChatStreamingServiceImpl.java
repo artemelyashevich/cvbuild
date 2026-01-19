@@ -7,50 +7,58 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatStreamingServiceImpl implements ChatStreamingService {
 
+    private static final String PROMPT_INTERVIEWER = "interviewer";
+    private static final String PROMPT_FINAL = "final";
+    private static final String COMPLETED_SIGNAL = "COMPLETED";
+
     private final ChatClient chatClient;
     private final PromptRegistryService promptRegistryService;
 
     @Override
-    public Flux<String> process(AiRequestDto aiRequestDto) {
-        log.debug("Attempting start streaming with chat: {}", aiRequestDto.chatId());
-        StringBuilder fullResponseAccumulator = new StringBuilder();
-        String systemPrompt = promptRegistryService.getPrompt("interviewer");
+    public Flux<String> process(AiRequestDto dto) {
+        log.debug("Starting AI stream for chat: {}", dto.chatId());
 
-        Flux<String> res = chatClient.prompt()
-                .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID, aiRequestDto.chatId()))
+        StringBuilder responseAccumulator = new StringBuilder();
+        String systemPrompt = promptRegistryService.getPrompt(PROMPT_INTERVIEWER);
+
+        return chatClient.prompt()
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, dto.chatId()))
                 .system(systemPrompt)
-                .user(aiRequestDto.content())
+                .user(dto.content())
                 .stream()
                 .content()
-                .doOnNext(fullResponseAccumulator::append)
+                .doOnNext(responseAccumulator::append)
                 .concatWith(Flux.defer(() -> {
-                    String finalFullText = fullResponseAccumulator.toString();
-
-                    if (finalFullText.contains("COMPLETED")) {
-                        log.debug("Attempting complete streaming");
-                        String finalPrompt = promptRegistryService.getPrompt("final");
-                        PromptTemplate promptTemplate = PromptTemplate.builder()
-                                .template(finalPrompt)
-                                .build();
-                        Flux<String> result = chatClient.prompt()
-                                .user(promptTemplate.render())
-                                .stream()
-                                .content();
-                        log.info("COMPLETED");
-                        return result;
+                    if (responseAccumulator.toString().contains(COMPLETED_SIGNAL)) {
+                        return executeFinalStep(dto.chatId());
                     }
                     return Flux.empty();
-                }));
-        log.info("Stream complete with chat: {}", aiRequestDto.chatId());
-        return res;
+                }))
+                .doOnError(e -> log.error("Error during AI streaming for chat {}: {}", dto.chatId(), e.getMessage()))
+                .doOnComplete(() -> log.info("Stream finished successfully for chat: {}", dto.chatId()));
+    }
+
+    private Flux<String> executeFinalStep(UUID chatId) {
+        log.debug("Signal '{}' detected. Triggering final AI summary for chat: {}", COMPLETED_SIGNAL, chatId);
+
+        String finalPrompt = promptRegistryService.getPrompt(PROMPT_FINAL);
+
+        return chatClient.prompt()
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId))
+                .user(finalPrompt)
+                .stream()
+                .content()
+                .doOnSubscribe(s -> log.debug("Final summary stream started"));
     }
 }

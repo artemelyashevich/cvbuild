@@ -17,8 +17,6 @@ public interface SecurityService {
 
     void verifyEmailRequest();
 
-    void verifyEmail(String otp);
-
     void checkToken(String token, TokenType tokenType);
 
     void checkSecureData(UserProfile userProfile, AuthRequest authRequest);

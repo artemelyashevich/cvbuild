@@ -21,7 +21,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     private final Map<String, NotificationStrategy> notificationStrategyMap;
 
-    //@Async
+    @Async
     @Override
     public void sendNotification(NotificationDto notificationDto) {
         NotificationStrategy strategy = notificationStrategyMap.get(notificationDto.getEngine().name().toLowerCase());
