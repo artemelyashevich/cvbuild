@@ -1,33 +1,45 @@
 pipeline {
     agent any
+    options {
+        skipDefaultCheckout()
+    }
+    tools {
+        maven "mvn"
+    }
+
 
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                git branch: 'main', credentialsId: 'Git token', url: 'https://github.com/artemelyashevich/cvbuild.git'
             }
         }
-
         stage('Build') {
-            steps {
-                sh 'chmod +x mvnw'
-                sh './mvnw clean package -DskipTests'
+            parallel {
+                stage('Java') {
+                    steps {
+                        dir('expense-tracker-service') {
+                            sh 'mvn clean install'
+                        }
+                    }
+                }
             }
         }
 
         stage('Test') {
             steps {
-                sh './mvnw test'
+                script {
+                    sh 'cd expense-tracker-service && mvn test'
+                }
             }
         }
     }
-
     post {
-        always {
-            junit '**/target/surefire-reports/*.xml'
-        }
         success {
-            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+            echo 'Build was successful!'
+        }
+        failure {
+            echo 'Build failed. Check logs.'
         }
     }
 }

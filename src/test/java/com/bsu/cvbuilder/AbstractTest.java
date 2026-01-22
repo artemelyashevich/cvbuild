@@ -27,7 +27,7 @@ import org.testcontainers.utility.DockerImageName;
 
 @Slf4j
 @Testcontainers
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import(RedisAutoConfiguration.class)
 @EnableConfigurationProperties(ApplicationProperties.class)
 @TestPropertySource(properties = {

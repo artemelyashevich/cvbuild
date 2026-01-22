@@ -7,6 +7,7 @@ import com.bsu.cvbuilder.service.impl.LimitServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
@@ -14,7 +15,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class LimitServiceImplIntegrationTest extends AbstractTest {
 
+    @Autowired
     private LimitServiceImpl limitService;
+
+    @Autowired
     private StringRedisTemplate redisTemplate;
 
     @BeforeEach
