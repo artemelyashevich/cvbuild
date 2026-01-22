@@ -5,7 +5,7 @@ import lombok.Getter;
 public class AppException extends RuntimeException {
 
     @Getter
-    private Integer statusCode;
+    private final Integer statusCode;
 
     public AppException(Integer statusCode) {
         this.statusCode = statusCode;

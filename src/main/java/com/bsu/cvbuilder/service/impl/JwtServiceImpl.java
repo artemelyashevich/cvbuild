@@ -66,6 +66,11 @@ public class JwtServiceImpl implements JwtService {
         getClaims(token, tokenType);
     }
 
+    @Override
+    public Date extractExpiration(String token) {
+        return extractClaim(token, TokenType.ACCESS, Claims::getExpiration);
+    }
+
     private <T> T extractClaim(String token, TokenType tokenType, Function<Claims, T> claimsResolver) {
         final Claims claims = getClaims(token, tokenType);
         return claimsResolver.apply(claims);

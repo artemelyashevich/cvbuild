@@ -7,6 +7,8 @@ import com.bsu.cvbuilder.domain.entity.security.SecureData;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
 import org.springframework.security.core.Authentication;
 
+import java.util.Date;
+
 public interface SecurityService {
 
     UserProfile findCurrentUser();
@@ -26,4 +28,6 @@ public interface SecurityService {
     void loadSecureData(SecureData secureData);
 
     AuthResponse refreshAccessToken(String refreshToken);
+
+    Date getJwtExpiration(String token);
 }

@@ -1,22 +1,21 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
-import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
-import com.bsu.cvbuilder.domain.dto.auth.RefreshRequest;
-import com.bsu.cvbuilder.domain.dto.auth.RegisterAuthDto;
+import com.bsu.cvbuilder.domain.dto.auth.*;
 import com.bsu.cvbuilder.domain.entity.security.SecureData;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
-import com.bsu.cvbuilder.domain.event.UserLoginEvent;
 import com.bsu.cvbuilder.service.AuthService;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
 
 import static com.bsu.cvbuilder.util.OAuthUtil.getOAuth2AuthenticationToken;
 
@@ -28,6 +27,8 @@ public class AuthServiceImpl implements AuthService {
     private final SecurityService securityService;
     private final UserProfileService userProfileService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final SecurityProvider securityProvider;
 
     @Override
     public AuthResponse authenticate(AuthRequest authRequest) {
@@ -72,5 +73,19 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse refreshToken(RefreshRequest refreshRequest) {
         return securityService.refreshAccessToken(refreshRequest.refreshToken());
+    }
+
+    @Override
+    public void logout() {
+        String token = securityProvider.getToken();
+        long expiration = securityService.getJwtExpiration(token).getTime();
+        long now = System.currentTimeMillis();
+        long duration = expiration - now;
+
+        if (duration > 0) {
+            redisTemplate.opsForValue().set(token, "revoked", Duration.ofMillis(duration));
+        }
+        SecurityContextHolder.clearContext();
+        SecurityContextHolder.getContext().setAuthentication(null);
     }
 }

@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.util.Date;
 import java.util.Map;
 
 @Slf4j
@@ -39,6 +41,7 @@ public class SecurityServiceImpl implements SecurityService {
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
     private final SecureDataService secureDataService;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Value("${app.security.oauth2.enabled:false}")
     private boolean oauth2Enabled;
@@ -132,6 +135,10 @@ public class SecurityServiceImpl implements SecurityService {
 
     @Override
     public void checkToken(String token, TokenType tokenType) {
+        Boolean isBlacklisted = redisTemplate.hasKey(token);
+        if (isBlacklisted) {
+            throw new AppException("This token is banned", 401);
+        }
         jwtService.validateToken(token, tokenType);
     }
 
@@ -172,6 +179,11 @@ public class SecurityServiceImpl implements SecurityService {
         String newAccessToken = jwtService.generateToken(user, TokenType.ACCESS);
 
         return new AuthResponse(newAccessToken, refreshToken);
+    }
+
+    @Override
+    public Date getJwtExpiration(String token) {
+        return jwtService.extractExpiration(token);
     }
 
     private String extractLogin(Authentication authentication) {

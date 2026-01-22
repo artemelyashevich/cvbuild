@@ -12,4 +12,6 @@ public interface AuthService {
     AuthResponse register(RegisterAuthDto authRequest);
 
     AuthResponse refreshToken(RefreshRequest refreshRequest);
+
+    void logout();
 }

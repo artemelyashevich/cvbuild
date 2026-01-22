@@ -5,6 +5,7 @@ import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
 import com.bsu.cvbuilder.domain.dto.auth.RefreshRequest;
 import com.bsu.cvbuilder.domain.dto.auth.RegisterAuthDto;
 import com.bsu.cvbuilder.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -32,5 +33,11 @@ public class AuthController {
     @ResponseStatus(HttpStatus.CREATED)
     public AuthResponse refresh(@RequestBody RefreshRequest request) {
         return authService.refreshToken(request);
+    }
+
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void logout() {
+        authService.logout();
     }
 }
