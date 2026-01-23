@@ -4,6 +4,7 @@ import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.auth.TokenType;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
+import com.bsu.cvbuilder.exception.AuthTokenException;
 import com.bsu.cvbuilder.service.JwtService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -88,7 +89,7 @@ public class JwtServiceImpl implements JwtService {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (ExpiredJwtException e) {
-            throw new AppException("Token expired", 401);
+            throw new AuthTokenException("Token expired", true);
         } catch (JwtException | IllegalArgumentException e) {
             log.error("JWT validation failed: {}", e.getMessage());
             throw new AppException("Invalid token: " + e.getMessage(), 401);

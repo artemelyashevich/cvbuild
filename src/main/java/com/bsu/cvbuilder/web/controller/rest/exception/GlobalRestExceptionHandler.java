@@ -1,19 +1,71 @@
 package com.bsu.cvbuilder.web.controller.rest.exception;
 
+import com.bsu.cvbuilder.domain.dto.exception.ExceptionBodyDto;
 import com.bsu.cvbuilder.exception.AppException;
+import com.bsu.cvbuilder.exception.AuthTokenException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.MethodNotAllowedException;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalRestExceptionHandler {
 
+    private static final String NOT_SUPPORTED_MESSAGE = "Http method with this URL not found.";
+    private static final String FAILED_VALIDATION_MESSAGE = "Validation failed.";
+    private static final String UNEXPECTED_ERROR_MESSAGE = "Something went wrong.";
+
+    @ExceptionHandler(MethodNotAllowedException.class)
+    public ResponseEntity<ExceptionBodyDto> handleMethodNotAllowedException(MethodNotAllowedException ex) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(handleException(ex, NOT_SUPPORTED_MESSAGE));
+    }
+
+    @ExceptionHandler(AuthTokenException.class)
+    public ResponseEntity<Map<String, String>> handleAuthTokenException(AuthTokenException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of(
+                        "message", ex.getMessage(),
+                        "isExpired", ex.getIsExpired().toString()
+                ));
+    }
+
     @ExceptionHandler(AppException.class)
-    public ResponseEntity<Map<String, String>> handleAppException(AppException e) {
-        return ResponseEntity.status(e.getStatusCode()).body(
-                Map.of("message", e.getMessage())
-        );
+    public ResponseEntity<ExceptionBodyDto> handleAppException(AppException e) {
+        return ResponseEntity.status(e.getStatusCode()).body(handleException(e, null));
+    }
+
+    @SuppressWarnings("all")
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ExceptionBodyDto> handleValidation(final MethodArgumentNotValidException exception) {
+        var errors = exception.getBindingResult()
+                .getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                                FieldError::getField,
+                                fieldError -> fieldError.getDefaultMessage(),
+                                (exist, newMessage) -> exist + " " + newMessage
+                        )
+                );
+        ExceptionBodyDto body = handleException(exception, FAILED_VALIDATION_MESSAGE);
+        body.setErrors(errors);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ExceptionBodyDto> handleException(final Exception exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(this.handleException(exception, UNEXPECTED_ERROR_MESSAGE));
+    }
+
+    private ExceptionBodyDto handleException(final Exception exception, final String defaultMessage) {
+        var message = exception.getMessage() == null ? defaultMessage : exception.getMessage();
+        log.warn("{} '{}'.", defaultMessage, message);
+        return new ExceptionBodyDto(message);
     }
 }

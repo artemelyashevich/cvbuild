@@ -3,6 +3,7 @@ package com.bsu.cvbuilder.security.filter;
 import com.bsu.cvbuilder.domain.dto.auth.SecurityProvider;
 import com.bsu.cvbuilder.domain.dto.auth.TokenType;
 import com.bsu.cvbuilder.exception.AppException;
+import com.bsu.cvbuilder.exception.AuthTokenException;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.util.HandleSecurityErrorUtil;
 import com.bsu.cvbuilder.util.PathUtil;
@@ -13,7 +14,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Component;
@@ -21,7 +21,6 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
 
 import static com.bsu.cvbuilder.util.OAuthUtil.getOAuth2AuthenticationToken;
 
@@ -64,7 +63,7 @@ public class AuthFilter extends OncePerRequestFilter {
                 securityService.findCurrentUser();
             }
             securityProvider.setToken(authToken);
-        } catch (AppException e) {
+        } catch (AppException | AuthTokenException e) {
             log.warn(e.getMessage());
             HandleSecurityErrorUtil.handleError(response, e).getWriter().flush();
             return;
