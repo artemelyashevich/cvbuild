@@ -25,11 +25,10 @@ public class OAuthUtil {
                 attributes,
                 "login"
         );
-        OAuth2AuthenticationToken authentication = new OAuth2AuthenticationToken(
+        return new OAuth2AuthenticationToken(
                 oAuth2User,
                 oAuth2User.getAuthorities(),
                 REGISTRATION_ID
         );
-        return authentication;
     }
 }
