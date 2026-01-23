@@ -186,6 +186,11 @@ public class SecurityServiceImpl implements SecurityService {
         return jwtService.extractExpiration(token);
     }
 
+    @Override
+    public void resetPassword(ResetPasswordDto resetPasswordDto) {
+
+    }
+
     private String extractLogin(Authentication authentication) {
         var authToken = validateAuthentication(authentication);
         var principal = extractPrincipal(authToken);

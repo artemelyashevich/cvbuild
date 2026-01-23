@@ -12,6 +12,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Getter
@@ -20,7 +21,7 @@ import java.time.LocalDateTime;
 @Document("userStats")
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserStats {
+public class UserStats implements Serializable {
 
     @Id
     private String id;
@@ -29,23 +30,25 @@ public class UserStats {
 
     @Builder.Default
     private Integer resumesCreated = 0;
-    
+
     @Builder.Default
     private Integer aiRequestsUsed = 0;
-    
+
     @Builder.Default
     private Integer totalDownloads = 0;
-    
+
     @Builder.Default
     private Integer totalViews = 0;
 
     @Builder.Default
     private MonthlyUsage currentMonthUsage = new MonthlyUsage();
 
+    @Getter
+    @Setter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class MonthlyUsage {
+    public static class MonthlyUsage implements Serializable {
         @Builder.Default
         private Integer aiRequests = 0;
 

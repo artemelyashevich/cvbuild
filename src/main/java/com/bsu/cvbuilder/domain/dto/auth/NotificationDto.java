@@ -1,16 +1,13 @@
 package com.bsu.cvbuilder.domain.dto.auth;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.Map;
 
 @Getter
 @Setter
 @Builder
+@ToString
 @AllArgsConstructor
 @NoArgsConstructor
 public class NotificationDto {
@@ -21,5 +18,6 @@ public class NotificationDto {
 
     private String templateName;
 
+    @ToString.Exclude
     private Map<String, Object> parameters;
 }

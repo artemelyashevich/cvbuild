@@ -1,10 +1,8 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
-import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
-import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
-import com.bsu.cvbuilder.domain.dto.auth.RefreshRequest;
-import com.bsu.cvbuilder.domain.dto.auth.RegisterAuthDto;
+import com.bsu.cvbuilder.domain.dto.auth.*;
 import com.bsu.cvbuilder.service.AuthService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Authentication")
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -36,6 +35,12 @@ public class AuthController {
     @ResponseStatus(HttpStatus.CREATED)
     public AuthResponse refresh(@RequestBody RefreshRequest request) {
         return authService.refreshToken(request);
+    }
+
+    @PostMapping("/reset-password")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AuthResponse resetPassword(@RequestBody ResetPasswordDto resetPasswordDto) {
+        return authService.resetPassword(resetPasswordDto);
     }
 
     @PostMapping("/logout")

@@ -27,16 +27,18 @@ import java.util.Locale;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
+@ToString(onlyExplicitlyIncluded = true)
 @Document(collection = "users")
 @CompoundIndex(name = "verification_idx", def = "{'emailVerified': 1, 'createdAt': 1}")
 public class UserProfile {
 
     @Id
+    @ToString.Include
     private String id;
 
     private String email;
 
+    @ToString.Include
     private String login;
 
     private String firstName;
@@ -46,6 +48,7 @@ public class UserProfile {
     private String avatarUrl;
 
     @Builder.Default
+    @ToString.Include
     private Role role = Role.USER;
 
     @Builder.Default

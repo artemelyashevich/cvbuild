@@ -45,7 +45,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     public UserProfile findByLogin(String login) {
         log.debug("Finding user profile by login: {}", login);
         return userProfileRepository.findByLogin(login)
-                .orElseThrow(notFound("login", login));
+                .orElseGet(() -> this.findByEmail(login));
     }
 
     @Override
@@ -67,8 +67,8 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Transactional
     @Caching(put = {
             @CachePut(value = CACHE_ID, key = "#result.id"),
-            @CachePut(value = CACHE_EMAIL, key = "#result.email"),
-            @CachePut(value = CACHE_LOGIN, key = "#result.login", unless = "#result.login == null")
+            @CachePut(value = CACHE_EMAIL, key = "#result.email", condition = "#result.email != null"),
+            @CachePut(value = CACHE_LOGIN, key = "#result.login", condition = "#result.login != null")
     })
     public UserProfile create(UserProfile userProfile) {
         log.debug("Creating user profile: {}", userProfile.getEmail());

@@ -6,6 +6,9 @@ import com.bsu.cvbuilder.repository.UserStatsRepository;
 import com.bsu.cvbuilder.service.UserStatsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,9 +19,14 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class UserStatsServiceImpl implements UserStatsService {
 
+    private static final String CACHE_ID = "user_id_stat";
+
     private final UserStatsRepository userStatsRepository;
 
     @Override
+    @Caching(put = {
+            @CachePut(value = CACHE_ID, key = "#userStats.userId")
+    })
     public UserStats save(UserStats userStats) {
         log.debug("Saving UserStats for user with id: {}", userStats.getUserId());
         UserStats savedUserStats = userStatsRepository.save(userStats);
@@ -27,6 +35,7 @@ public class UserStatsServiceImpl implements UserStatsService {
     }
 
     @Override
+    @Cacheable(value = CACHE_ID, key = "#id")
     public UserStats findByUserId(String id) {
         log.debug("Finding UserStats for user with id: {}", id);
         UserStats userStats = userStatsRepository.findByUserId(id).orElseThrow(

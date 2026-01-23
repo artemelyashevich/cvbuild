@@ -2,6 +2,7 @@ package com.bsu.cvbuilder.service;
 
 import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
 import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
+import com.bsu.cvbuilder.domain.dto.auth.ResetPasswordDto;
 import com.bsu.cvbuilder.domain.dto.auth.TokenType;
 import com.bsu.cvbuilder.domain.entity.security.SecureData;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
@@ -30,4 +31,6 @@ public interface SecurityService {
     AuthResponse refreshAccessToken(String refreshToken);
 
     Date getJwtExpiration(String token);
+
+    void resetPassword(ResetPasswordDto resetPasswordDto);
 }

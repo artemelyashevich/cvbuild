@@ -1,9 +1,6 @@
 package com.bsu.cvbuilder.service;
 
-import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
-import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
-import com.bsu.cvbuilder.domain.dto.auth.RefreshRequest;
-import com.bsu.cvbuilder.domain.dto.auth.RegisterAuthDto;
+import com.bsu.cvbuilder.domain.dto.auth.*;
 
 public interface AuthService {
 
@@ -14,4 +11,6 @@ public interface AuthService {
     AuthResponse refreshToken(RefreshRequest refreshRequest);
 
     void logout();
+
+    AuthResponse resetPassword(ResetPasswordDto resetPasswordDto);
 }

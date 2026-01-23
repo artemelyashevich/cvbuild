@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 public record UserResponseDto(
         String id,
         String email,
+        String login,
         String firstName,
         String lastName,
         String avatarUrl,
