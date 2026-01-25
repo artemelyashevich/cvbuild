@@ -6,12 +6,12 @@ import com.bsu.cvbuilder.repository.UserStatsRepository;
 import com.bsu.cvbuilder.service.UserStatsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -24,11 +24,13 @@ public class UserStatsServiceImpl implements UserStatsService {
     private final UserStatsRepository userStatsRepository;
 
     @Override
-    @Caching(put = {
-            @CachePut(value = CACHE_ID, key = "#userStats.userId")
-    })
+    @CacheEvict(value = CACHE_ID, allEntries = true)
     public UserStats save(UserStats userStats) {
         log.debug("Saving UserStats for user with id: {}", userStats.getUserId());
+        if (userStatsRepository.existsById(userStats.getUserId())) {
+            log.debug("UserStats with id: {} already exists", userStats.getUserId());
+            return userStatsRepository.findById(userStats.getUserId()).orElse(null);
+        }
         UserStats savedUserStats = userStatsRepository.save(userStats);
         log.debug("Saved UserStats for user with id: {}", savedUserStats.getUserId());
         return savedUserStats;
@@ -50,10 +52,40 @@ public class UserStatsServiceImpl implements UserStatsService {
     }
 
     @Transactional
+    @CacheEvict(value = CACHE_ID, allEntries = true)
     public void incrementStats(String userId, Consumer<UserStats> updater) {
         UserStats stats = userStatsRepository.findByUserId(userId)
-                .orElseGet(() -> UserStats.builder().userId(userId).build());
+                .orElseGet(() -> UserStats.builder()
+                        .userId(userId)
+                        .currentMonthUsage(new UserStats.MonthlyUsage()) // Инициализация
+                        .build());
+
+        checkAndResetMonthlyStats(stats);
+
         updater.accept(stats);
         userStatsRepository.save(stats);
+    }
+
+    private void checkAndResetMonthlyStats(UserStats stats) {
+        LocalDateTime now = LocalDateTime.now();
+        UserStats.MonthlyUsage monthly = stats.getCurrentMonthUsage();
+
+        if (monthly == null) {
+            stats.setCurrentMonthUsage(new UserStats.MonthlyUsage());
+            return;
+        }
+
+        if (monthly.getPeriodStart().getMonth() != now.getMonth() ||
+                monthly.getPeriodStart().getYear() != now.getYear()) {
+
+            log.info("Resetting monthly stats for user {} for new month {}", stats.getUserId(), now.getMonth());
+
+            stats.setCurrentMonthUsage(UserStats.MonthlyUsage.builder()
+                    .periodStart(now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0))
+                    .aiRequests(0)
+                    .resumesCreated(0)
+                    .jobAnalyses(0)
+                    .build());
+        }
     }
 }

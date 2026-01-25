@@ -3,7 +3,9 @@ package com.bsu.cvbuilder.service.impl;
 import com.bsu.cvbuilder.domain.entity.image.ImageMetadata;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.ImageMetadataRepository;
+import com.bsu.cvbuilder.repository.UserProfileRepository;
 import com.bsu.cvbuilder.service.ImageService;
+import com.bsu.cvbuilder.service.UserProfileService;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,11 +64,19 @@ public class ImageServiceImpl implements ImageService {
     public byte[] findById(final String id) {
         log.debug("Downloading image: {}", id);
 
-        GridFSFile gridFsFile = Optional.of(
+        // 1. Используем ofNullable, чтобы не упасть на null
+        GridFSFile gridFsFile = Optional.ofNullable(
                 gridFsTemplate.findOne(Query.query(Criteria.where("_id").is(id)))
         ).orElseThrow(() -> new AppException("Image not found: " + id, 404));
 
+        // 2. Получаем ресурс
         GridFsResource resource = gridFsTemplate.getResource(gridFsFile);
+
+        // 3. Проверяем, существует ли физический контент (ресурс)
+        if (!resource.exists()) {
+            log.error("GridFS file metadata exists but content is missing for id: {}", id);
+            throw new AppException("Image content not found", 404);
+        }
 
         try (var inputStream = resource.getInputStream()) {
             return inputStream.readAllBytes();

@@ -33,4 +33,6 @@ public interface SecurityService {
     Date getJwtExpiration(String token);
 
     void resetPassword(ResetPasswordDto resetPasswordDto);
+
+    void logout();
 }

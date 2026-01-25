@@ -1,9 +1,11 @@
 package com.bsu.cvbuilder.service.impl;
 
+import com.bsu.cvbuilder.domain.entity.image.ImageMetadata;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
 import com.bsu.cvbuilder.domain.event.UserCreatedEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.UserProfileRepository;
+import com.bsu.cvbuilder.service.ImageService;
 import com.bsu.cvbuilder.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +14,14 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.function.Supplier;
@@ -25,6 +33,8 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     private final UserProfileRepository userProfileRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final ImageService imageService;
+    private final MongoTemplate mongoTemplate;
 
     private static final String CACHE_ID = "user_id";
     private static final String CACHE_EMAIL = "user_email";
@@ -102,8 +112,8 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Transactional
     @Caching(evict = {
             @CacheEvict(value = CACHE_ID, key = "#profile.id"),
-            @CacheEvict(value = CACHE_EMAIL, key = "#profile.email"),
-            @CacheEvict(value = CACHE_LOGIN, key = "#profile.login", allEntries = true)
+            @CacheEvict(value = CACHE_EMAIL, key = "#profile.email", condition = "#result.email != null"),
+            @CacheEvict(value = CACHE_LOGIN, key = "#profile.login", condition = "#result.login != null")
     })
     public UserProfile update(UserProfile profile) {
         log.debug("Updating user profile: {}", profile.getId());
@@ -117,6 +127,16 @@ public class UserProfileServiceImpl implements UserProfileService {
         existingUser.setLastName(profile.getLastName());
 
         return userProfileRepository.save(existingUser);
+    }
+
+
+    public UserProfile uploadAvatar(MultipartFile file, String id) {
+        ImageMetadata imageMetadata = imageService.create(file, id);
+
+        UserProfile userProfile = userProfileRepository.findById(id).orElseThrow(notFound("id", id));
+        userProfile.setAvatarUrl(imageMetadata.getId());
+
+        return userProfileRepository.save(userProfile);
     }
 
     private Supplier<AppException> notFound(String field, Object value) {

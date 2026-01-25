@@ -45,6 +45,7 @@ public class UserProfile {
 
     private String lastName;
 
+    @ToString.Include
     private String avatarUrl;
 
     @Builder.Default

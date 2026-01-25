@@ -1,9 +1,16 @@
 package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
-import com.bsu.cvbuilder.domain.dto.auth.*;
+import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
+import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
+import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
+import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
+import com.bsu.cvbuilder.domain.dto.auth.ResetPasswordDto;
+import com.bsu.cvbuilder.domain.dto.auth.TokenType;
 import com.bsu.cvbuilder.domain.entity.security.SecureData;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.event.UserLoginEvent;
+import com.bsu.cvbuilder.domain.event.UserLogoutEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.SecureDataRepository;
 import com.bsu.cvbuilder.service.*;
@@ -11,6 +18,7 @@ import com.bsu.cvbuilder.util.SecretDecodeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -42,6 +50,7 @@ public class SecurityServiceImpl implements SecurityService {
     private final NotificationService notificationService;
     private final SecureDataService secureDataService;
     private final RedisTemplate<String, String> redisTemplate;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Value("${app.security.oauth2.enabled:false}")
     private boolean oauth2Enabled;
@@ -75,21 +84,17 @@ public class SecurityServiceImpl implements SecurityService {
 
         var secureData = secureDataService.prepareData(user);
 
-        if (user.getEmail() == null || user.getEmail().isEmpty()) {
-            notificationService.sendNotification(
-                    NotificationDto.builder()
-                            .parameters(Map.of("message", "Please, provide and verify your email"))
-                            .engine(NotificationEngine.WS)
-                            .receiver(user.getLogin())
-                            .templateName("")
-                            .build()
-            );
-        }
 
-        return new AuthResponse(
+        var response = new AuthResponse(
                 jwtService.generateToken(user, TokenType.ACCESS),
                 SecretDecodeUtil.decode(secureData.getRefreshTokenEncoded(), applicationProperties.getSecurity().getDecodeSignature())
         );
+
+        applicationEventPublisher.publishEvent(UserLoginEvent.builder()
+                        .userId(user.getId())
+                        .userProfile(user)
+                .build());
+        return response;
     }
 
     @Override
@@ -191,6 +196,16 @@ public class SecurityServiceImpl implements SecurityService {
 
     }
 
+    @Override
+    public void logout() {
+        UserProfile userProfile = findCurrentUser();
+        applicationEventPublisher.publishEvent(UserLogoutEvent.builder()
+                        .userId(userProfile.getId())
+                .build()
+        );
+        SecurityContextHolder.clearContext();
+    }
+
     private String extractLogin(Authentication authentication) {
         var authToken = validateAuthentication(authentication);
         var principal = extractPrincipal(authToken);
@@ -198,6 +213,9 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     private AbstractAuthenticationToken validateAuthentication(Authentication authentication) {
+        if (authentication == null) {
+            throw new AppException("Invalid authentication", 401);
+        }
         if (oauth2Enabled) {
             if (authentication instanceof UsernamePasswordAuthenticationToken authToken) {
                 return authToken;

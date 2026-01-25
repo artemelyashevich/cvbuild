@@ -6,6 +6,7 @@ import com.bsu.cvbuilder.domain.dto.auth.TokenType;
 import com.bsu.cvbuilder.domain.entity.security.SecureData;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
+import com.bsu.cvbuilder.exception.AuthTokenException;
 import com.bsu.cvbuilder.repository.SecureDataRepository;
 import com.bsu.cvbuilder.service.JwtService;
 import com.bsu.cvbuilder.service.SecureDataService;
@@ -37,15 +38,12 @@ public class SecureDataServiceImpl implements SecureDataService {
         );
 
         var refreshToken = jwtService.generateToken(user, TokenType.REFRESH);
+        var encodedToken = SecretDecodeUtil.encode(
+                refreshToken,
+                applicationProperties.getSecurity().getDecodeSignature()
+        );
 
         if (secureData.getRefreshTokenEncoded() == null) {
-
-
-            var encodedToken = SecretDecodeUtil.encode(
-                    refreshToken,
-                    applicationProperties.getSecurity().getDecodeSignature()
-            );
-
             secureData.setRefreshTokenEncoded(encodedToken);
         } else {
             try {
@@ -54,10 +52,9 @@ public class SecureDataServiceImpl implements SecureDataService {
                         applicationProperties.getSecurity().getDecodeSignature()
                 );
                 jwtService.validateToken(decryptedToken, TokenType.REFRESH);
-            } catch (AppException e) {
-                secureData.setRefreshTokenEncoded(null);
+            } catch (AppException | AuthTokenException e) {
+                secureData.setRefreshTokenEncoded(encodedToken);
                 secureDataRepository.save(secureData);
-                throw e;
             }
         }
 

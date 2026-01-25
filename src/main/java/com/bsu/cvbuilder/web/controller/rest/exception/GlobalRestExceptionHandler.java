@@ -19,14 +19,8 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalRestExceptionHandler {
 
-    private static final String NOT_SUPPORTED_MESSAGE = "Http method with this URL not found.";
     private static final String FAILED_VALIDATION_MESSAGE = "Validation failed.";
     private static final String UNEXPECTED_ERROR_MESSAGE = "Something went wrong.";
-
-    @ExceptionHandler(MethodNotAllowedException.class)
-    public ResponseEntity<ExceptionBodyDto> handleMethodNotAllowedException(MethodNotAllowedException ex) {
-        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(handleException(ex, NOT_SUPPORTED_MESSAGE));
-    }
 
     @ExceptionHandler(AuthTokenException.class)
     public ResponseEntity<Map<String, String>> handleAuthTokenException(AuthTokenException ex) {

@@ -7,6 +7,7 @@ import java.util.UUID;
 @Builder
 public record AiRequestDto(
         UUID chatId,
+        String userId,
         String content,
         AiRequestType aiRequestType
 ) {

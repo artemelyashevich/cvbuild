@@ -59,7 +59,6 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
                             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                                     login, null, new ArrayList<>()
                             );
-
                             accessor.setUser(auth);
                         } catch (Exception e) {
                             return null;

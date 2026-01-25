@@ -1,15 +1,21 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.domain.dto.auth.*;
+import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
+import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
+import com.bsu.cvbuilder.domain.dto.auth.RefreshRequest;
+import com.bsu.cvbuilder.domain.dto.auth.RegisterAuthDto;
+import com.bsu.cvbuilder.domain.dto.auth.ResetPasswordDto;
+import com.bsu.cvbuilder.domain.dto.auth.SecurityProvider;
 import com.bsu.cvbuilder.domain.entity.security.SecureData;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.event.UserLogoutEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.AuthService;
-import com.bsu.cvbuilder.service.JwtService;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -29,7 +35,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserProfileService userProfileService;
     private final RedisTemplate<String, String> redisTemplate;
     private final SecurityProvider securityProvider;
-    private final JwtService jwtService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public AuthResponse authenticate(AuthRequest authRequest) {
@@ -78,6 +84,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout() {
+        UserProfile currentUser = securityService.findCurrentUser();
         String token = securityProvider.getToken();
         long expiration = securityService.getJwtExpiration(token).getTime();
         long now = System.currentTimeMillis();
@@ -88,6 +95,9 @@ public class AuthServiceImpl implements AuthService {
         }
         SecurityContextHolder.clearContext();
         SecurityContextHolder.getContext().setAuthentication(null);
+        eventPublisher.publishEvent(UserLogoutEvent.builder()
+                        .userId(currentUser.getId())
+                .build());
     }
 
     @Override

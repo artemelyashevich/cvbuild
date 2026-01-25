@@ -2,15 +2,15 @@ package com.bsu.cvbuilder.web.controller.rest;
 
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.service.UserProfileService;
+import com.bsu.cvbuilder.web.dto.user.UpdateUserRequest;
 import com.bsu.cvbuilder.web.dto.user.UserResponseDto;
 import com.bsu.cvbuilder.web.mapper.impl.UserResponseDtoMapper;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.mapstruct.factory.Mappers;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "User Profile")
 @RestController
@@ -31,5 +31,18 @@ public class UserProfileController {
     @GetMapping("/current")
     public UserResponseDto findCurrentUser() {
         return responseMapper.toDto(securityService.findCurrentUser());
+    }
+
+    @PatchMapping
+    public UserResponseDto update(@Validated @RequestBody UpdateUserRequest request) {
+        var profile = securityService.findCurrentUser();
+        profile.setFirstName(request.getFirstName());
+        profile.setLastName(request.getLastName());
+        return responseMapper.toDto(userProfileService.update(profile));
+    }
+
+    @PostMapping("/avatar/{userId}")
+    public UserResponseDto uploadAvatar(@PathVariable String userId, @RequestParam("file") MultipartFile file) {
+        return responseMapper.toDto(userProfileService.uploadAvatar(file, userId));
     }
 }

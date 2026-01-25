@@ -45,6 +45,21 @@ public class ImageController {
         var data = this.imageService.findByOwnerId(userId);
         return ResponseEntity.ok(data);
     }
+    
+    @PostMapping("/avatar/{userId}")
+    public ResponseEntity<String> uploadAvatar(
+            @PathVariable String userId,
+            @RequestParam("file") MultipartFile file,
+            UriComponentsBuilder uriComponentsBuilder
+    ) {
+        var metadata = this.imageService.create(file, userId);
+        return ResponseEntity
+                .created(
+                        uriComponentsBuilder.path("/api/v1/images/{id}")
+                                .build(metadata.getId())
+                )
+                .body(metadata.getId());
+    }
 
     @PostMapping("/{userId}")
     public ResponseEntity<String> create(

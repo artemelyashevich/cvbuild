@@ -1,12 +1,14 @@
 package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.domain.dto.ai.AiRequestDto;
+import com.bsu.cvbuilder.domain.event.UserGenerateNewMessageEvent;
 import com.bsu.cvbuilder.service.ChatStreamingService;
 import com.bsu.cvbuilder.service.PromptRegistryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -23,14 +25,14 @@ public class ChatStreamingServiceImpl implements ChatStreamingService {
 
     private final ChatClient chatClient;
     private final PromptRegistryService promptRegistryService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public Flux<String> process(AiRequestDto dto) {
         log.debug("Starting AI stream for chat: {}", dto.chatId());
-
         StringBuilder responseAccumulator = new StringBuilder();
         String systemPrompt = promptRegistryService.getPrompt(PROMPT_INTERVIEWER);
-
+        applicationEventPublisher.publishEvent(UserGenerateNewMessageEvent.builder().userId(dto.userId()).build());
         return chatClient.prompt()
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, dto.chatId()))
                 .system(systemPrompt)
