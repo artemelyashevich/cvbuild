@@ -73,6 +73,10 @@ public class UserProfile {
     private UserPreferences userPreferences;
 
     @Builder.Default
+    @ToString.Include
+    private boolean isAgree = false;
+
+    @Builder.Default
     private List<AiLimit> aiLimits = new ArrayList<>();
 
     @Builder.Default

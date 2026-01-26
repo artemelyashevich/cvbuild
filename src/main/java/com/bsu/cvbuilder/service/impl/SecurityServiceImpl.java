@@ -1,12 +1,7 @@
 package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
-import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
-import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
-import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
-import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
-import com.bsu.cvbuilder.domain.dto.auth.ResetPasswordDto;
-import com.bsu.cvbuilder.domain.dto.auth.TokenType;
+import com.bsu.cvbuilder.domain.dto.auth.*;
 import com.bsu.cvbuilder.domain.entity.security.SecureData;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
 import com.bsu.cvbuilder.domain.event.UserLoginEvent;
@@ -15,6 +10,7 @@ import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.SecureDataRepository;
 import com.bsu.cvbuilder.service.*;
 import com.bsu.cvbuilder.util.SecretDecodeUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,6 +47,7 @@ public class SecurityServiceImpl implements SecurityService {
     private final SecureDataService secureDataService;
     private final RedisTemplate<String, String> redisTemplate;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final SecurityProvider securityProvider;
 
     @Value("${app.security.oauth2.enabled:false}")
     private boolean oauth2Enabled;
@@ -207,6 +204,9 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     private String extractLogin(Authentication authentication) {
+        if (authentication == null) {
+            authentication = securityProvider.getAuthentication();
+        }
         var authToken = validateAuthentication(authentication);
         var principal = extractPrincipal(authToken);
         return principal.getAttribute("login");

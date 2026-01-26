@@ -21,6 +21,7 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import static com.bsu.cvbuilder.util.OAuthUtil.getOAuth2AuthenticationToken;
 
@@ -42,7 +43,15 @@ public class AuthFilter extends OncePerRequestFilter {
         try {
             var authHeader = request.getHeader("Authorization");
 
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            if (authHeader == null) {
+                authHeader = "Bearer " + Arrays.stream(request.getCookies())
+                        .filter(cookie -> cookie.getName().equals("access_token"))
+                        .findFirst()
+                        .orElseThrow(() -> new AppException(401))
+                        .getValue();
+            }
+
+            if (!authHeader.startsWith("Bearer ")) {
                 throw new AppException("There are no access token", 401);
             }
 

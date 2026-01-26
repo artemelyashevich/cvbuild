@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.service.impl;
 
+import com.bsu.cvbuilder.annotation.agreement.AgreementRequire;
 import com.bsu.cvbuilder.domain.dto.ai.AiRequestDto;
 import com.bsu.cvbuilder.domain.event.UserGenerateNewMessageEvent;
 import com.bsu.cvbuilder.service.ChatStreamingService;
@@ -28,6 +29,7 @@ public class ChatStreamingServiceImpl implements ChatStreamingService {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
+   // @AgreementRequire
     public Flux<String> process(AiRequestDto dto) {
         log.debug("Starting AI stream for chat: {}", dto.chatId());
         StringBuilder responseAccumulator = new StringBuilder();
