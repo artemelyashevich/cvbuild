@@ -28,6 +28,7 @@ public class History {
     private String id;
 
     private String userId;
+    private String login;
 
     @Builder.Default
     private Map<String, String> events = new HashMap<>();

@@ -24,16 +24,15 @@ public class UserStatsServiceImpl implements UserStatsService {
     private final UserStatsRepository userStatsRepository;
 
     @Override
-    @CacheEvict(value = CACHE_ID, allEntries = true)
+    @CacheEvict(value = CACHE_ID)
     public UserStats save(UserStats userStats) {
-        log.debug("Saving UserStats for user with id: {}", userStats.getUserId());
-        if (userStatsRepository.existsById(userStats.getUserId())) {
-            log.debug("UserStats with id: {} already exists", userStats.getUserId());
-            return userStatsRepository.findById(userStats.getUserId()).orElse(null);
-        }
-        UserStats savedUserStats = userStatsRepository.save(userStats);
-        log.debug("Saved UserStats for user with id: {}", savedUserStats.getUserId());
-        return savedUserStats;
+        log.debug("Ensuring UserStats exists for user: {}", userStats.getUserId());
+
+        return userStatsRepository.findById(userStats.getUserId())
+                .orElseGet(() -> {
+                    log.info("Creating new UserStats for user: {}", userStats.getUserId());
+                    return userStatsRepository.save(userStats);
+                });
     }
 
     @Override
@@ -57,7 +56,7 @@ public class UserStatsServiceImpl implements UserStatsService {
         UserStats stats = userStatsRepository.findByUserId(userId)
                 .orElseGet(() -> UserStats.builder()
                         .userId(userId)
-                        .currentMonthUsage(new UserStats.MonthlyUsage()) // Инициализация
+                        .currentMonthUsage(new UserStats.MonthlyUsage())
                         .build());
 
         checkAndResetMonthlyStats(stats);

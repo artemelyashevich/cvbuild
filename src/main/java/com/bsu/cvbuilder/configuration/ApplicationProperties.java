@@ -53,6 +53,7 @@ public class ApplicationProperties {
     @Getter
     @Setter
     public static class Security {
+        private String oauthRedirectUrl;
         private String allowedOrigins;
         private String allowedMethods;
         private String allowedHeaders;

@@ -31,11 +31,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ResumeServiceImpl implements ResumeService {
 
+    private static final BeanOutputConverter<Resume> converter = new BeanOutputConverter<>(Resume.class);
+
     private final AiService aiService;
     private final ChatService chatService;
     private final MongoTemplate mongoTemplate;
-
-    private final BeanOutputConverter<Resume> converter = new BeanOutputConverter<>(Resume.class);
 
     @Override
     @Transactional(readOnly = true)

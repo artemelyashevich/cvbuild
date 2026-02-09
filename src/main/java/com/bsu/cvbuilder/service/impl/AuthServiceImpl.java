@@ -1,28 +1,33 @@
 package com.bsu.cvbuilder.service.impl;
 
+import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
 import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
 import com.bsu.cvbuilder.domain.dto.auth.RefreshRequest;
 import com.bsu.cvbuilder.domain.dto.auth.RegisterAuthDto;
 import com.bsu.cvbuilder.domain.dto.auth.ResetPasswordDto;
 import com.bsu.cvbuilder.domain.dto.auth.SecurityProvider;
+import com.bsu.cvbuilder.domain.dto.auth.TokenType;
 import com.bsu.cvbuilder.domain.entity.security.SecureData;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.event.AbstractEvent;
 import com.bsu.cvbuilder.domain.event.UserLogoutEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.AuthService;
+import com.bsu.cvbuilder.service.BlackListService;
+import com.bsu.cvbuilder.service.JwtService;
+import com.bsu.cvbuilder.service.SecureDataService;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.service.UserProfileService;
+import com.bsu.cvbuilder.service.mapper.UserMapper;
+import com.bsu.cvbuilder.util.SecretDecodeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 
 import static com.bsu.cvbuilder.util.OAuthUtil.getOAuth2AuthenticationToken;
 
@@ -31,11 +36,14 @@ import static com.bsu.cvbuilder.util.OAuthUtil.getOAuth2AuthenticationToken;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
+    private final UserMapper userMapper;
     private final SecurityService securityService;
     private final UserProfileService userProfileService;
-    private final RedisTemplate<String, String> redisTemplate;
     private final SecurityProvider securityProvider;
-    private final ApplicationEventPublisher eventPublisher;
+    private final JwtService jwtService;
+    private final BlackListService blackListService;
+    private final SecureDataService secureDataService;
+    private final ApplicationProperties applicationProperties;
 
     @Override
     public AuthResponse authenticate(AuthRequest authRequest) {
@@ -43,7 +51,7 @@ public class AuthServiceImpl implements AuthService {
 
         UserProfile user = userProfileService.findByEmail(authRequest.email());
 
-        securityService.checkSecureData(user, authRequest);
+        secureDataService.checkData(user, authRequest);
 
         var ctx = SecurityContextHolder.createEmptyContext();
         OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(authRequest.email());
@@ -52,10 +60,6 @@ public class AuthServiceImpl implements AuthService {
 
         AuthResponse authResponse = securityService.authenticate(SecurityContextHolder.getContext().getAuthentication());
 
-        /*applicationEventPublisher.publishEvent(UserLoginEvent.builder()
-                        .userProfile(user)
-                        .userId(user.getId())
-                .build());*/
         log.debug("Authenticated user: {}", authRequest.email());
         return authResponse;
     }
@@ -64,13 +68,10 @@ public class AuthServiceImpl implements AuthService {
     @Transactional(rollbackFor = Exception.class)
     public AuthResponse register(RegisterAuthDto authRequest) {
         log.debug("Attempting register user with email: {}", authRequest.email());
-        UserProfile userProfile = userProfileService.create(UserProfile.builder()
-                .firstName(authRequest.firstName())
-                .lastName(authRequest.lastName())
-                .login(authRequest.email())
-                .email(authRequest.email())
-                .build());
-        securityService.loadSecureData(SecureData.builder()
+        UserProfile candidate = userMapper.toUserProfile(authRequest);
+        candidate.setLogin(authRequest.email());
+        UserProfile userProfile = userProfileService.create(candidate);
+        secureDataService.loadSecureData(SecureData.builder()
                 .password(authRequest.password())
                 .userId(userProfile.getId())
                 .build());
@@ -79,25 +80,29 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse refreshToken(RefreshRequest refreshRequest) {
-        return securityService.refreshAccessToken(refreshRequest.refreshToken());
+        String refreshToken = refreshRequest.refreshToken();
+        jwtService.validateToken(refreshToken, TokenType.REFRESH);
+        String login = jwtService.extractLogin(refreshToken, TokenType.REFRESH);
+
+        UserProfile user = userProfileService.findByEmail(login);
+        SecureData secureData = secureDataService.findByUserId(user.getId());
+
+        String currentEncoded = SecretDecodeUtil.encode(refreshToken, applicationProperties.getSecurity().getDecodeSignature());
+        if (!currentEncoded.equals(secureData.getRefreshTokenEncoded())) {
+            throw new AppException("Refresh token mismatch or revoked", 401);
+        }
+
+        String newAccessToken = jwtService.generateToken(user, TokenType.ACCESS);
+
+        return new AuthResponse(newAccessToken, refreshToken);
     }
 
     @Override
     public void logout() {
-        UserProfile currentUser = securityService.findCurrentUser();
         String token = securityProvider.getToken();
-        long expiration = securityService.getJwtExpiration(token).getTime();
-        long now = System.currentTimeMillis();
-        long duration = expiration - now;
-
-        if (duration > 0) {
-            redisTemplate.opsForValue().set(token, "revoked", Duration.ofMillis(duration));
-        }
+        blackListService.banToken(token);
         SecurityContextHolder.clearContext();
-        SecurityContextHolder.getContext().setAuthentication(null);
-        eventPublisher.publishEvent(UserLogoutEvent.builder()
-                        .userId(currentUser.getId())
-                .build());
+        publishLogoutEvent(token);
     }
 
     @Override
@@ -109,8 +114,18 @@ public class AuthServiceImpl implements AuthService {
             throw new AppException("Password do not match", 400);
         }
 
-        securityService.resetPassword(resetPasswordDto);
-
         return null;
+    }
+
+    private void publishLogoutEvent(String token) {
+        try {
+            String login = jwtService.extractLogin(token, TokenType.ACCESS);
+            AbstractEvent logoutEvent = UserLogoutEvent.builder()
+                    .userId(null)
+                    .build();
+            logoutEvent.setLogin(login);
+        } catch (Exception e) {
+            log.warn("Could not publish logout event: user profile not found");
+        }
     }
 }

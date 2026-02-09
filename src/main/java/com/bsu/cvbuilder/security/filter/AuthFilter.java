@@ -9,15 +9,18 @@ import com.bsu.cvbuilder.util.HandleSecurityErrorUtil;
 import com.bsu.cvbuilder.util.PathUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -30,6 +33,9 @@ import static com.bsu.cvbuilder.util.OAuthUtil.getOAuth2AuthenticationToken;
 @RequiredArgsConstructor
 public class AuthFilter extends OncePerRequestFilter {
 
+    private static final String BEARER_PREFIX = "Bearer ";
+    private static final String ACCESS_TOKEN_COOKIE = "access_token";
+
     private final SecurityService securityService;
     private final SecurityProvider securityProvider;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
@@ -40,59 +46,64 @@ public class AuthFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
+
         try {
-            var authHeader = request.getHeader("Authorization");
+            String token = resolveToken(request);
 
-            if (authHeader == null) {
-                authHeader = "Bearer " + Arrays.stream(request.getCookies())
-                        .filter(cookie -> cookie.getName().equals("access_token"))
-                        .findFirst()
-                        .orElseThrow(() -> new AppException(401))
-                        .getValue();
+            if (StringUtils.hasText(token)) {
+                authenticateRequest(token);
             }
-
-            if (!authHeader.startsWith("Bearer ")) {
-                throw new AppException("There are no access token", 401);
-            }
-
-            var authToken = authHeader.substring(7);
-
-            if (authToken.isBlank()) {
-                throw new AppException("Empty access token", 401);
-            }
-
-            securityService.checkToken(authToken, TokenType.ACCESS);
-
-            if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                var ctx = SecurityContextHolder.createEmptyContext();
-                var login = securityService.extractSubject(authToken);
-                OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(login);
-                ctx.setAuthentication(authentication);
-                SecurityContextHolder.setContext(ctx);
-                securityService.findCurrentUser();
-            }
-            securityProvider.setToken(authToken);
         } catch (AppException | AuthTokenException e) {
-            log.warn(e.getMessage());
-            HandleSecurityErrorUtil.handleError(response, e).getWriter().flush();
+            log.warn("Authentication failed: {}", e.getMessage());
+            HandleSecurityErrorUtil.handleError(response, e);
             return;
         }
 
         filterChain.doFilter(request, response);
-
     }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI().substring(request.getContextPath().length());
 
-        boolean isPublic = PathUtil.PUBLIC_RESOURCES.stream()
-                .anyMatch(pattern -> pathMatcher.match(pattern, path));
+        boolean isPublic =  Arrays.stream(PathUtil.PUBLIC_RESOURCES)
+                .anyMatch(p -> pathMatcher.match(p, request.getServletPath()));
 
         if (isPublic) {
             log.debug("Path {} is public, skipping filter", path);
         }
 
         return isPublic;
+    }
+
+    private String resolveToken(HttpServletRequest request) {
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (StringUtils.hasText(authHeader) && authHeader.startsWith(BEARER_PREFIX)) {
+            return authHeader.substring(BEARER_PREFIX.length());
+        }
+
+        if (request.getCookies() != null) {
+            return Arrays.stream(request.getCookies())
+                    .filter(cookie -> ACCESS_TOKEN_COOKIE.equals(cookie.getName()))
+                    .map(Cookie::getValue)
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        return null;
+    }
+
+    private void authenticateRequest(String token) {
+        securityService.checkToken(token, TokenType.ACCESS);
+
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            String login = securityService.extractSubject(token);
+            OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(login);
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
+
+        securityProvider.setAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        securityProvider.setToken(token);
     }
 }

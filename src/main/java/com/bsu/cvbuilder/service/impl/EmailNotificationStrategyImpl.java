@@ -1,6 +1,7 @@
 package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
+import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.NotificationStrategy;
 import jakarta.mail.MessagingException;
@@ -56,5 +57,10 @@ public class EmailNotificationStrategyImpl implements NotificationStrategy {
         }
 
         log.info("Email has been sent.");
+    }
+
+    @Override
+    public NotificationEngine getSupportedEngine() {
+        return NotificationEngine.EMAIL;
     }
 }

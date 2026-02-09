@@ -7,6 +7,8 @@ import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.UserProfileRepository;
 import com.bsu.cvbuilder.service.ImageService;
 import com.bsu.cvbuilder.service.UserProfileService;
+import com.bsu.cvbuilder.service.mapper.UserMapper;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -14,11 +16,6 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.mongodb.core.FindAndModifyOptions;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,14 +28,14 @@ import java.util.function.Supplier;
 @RequiredArgsConstructor
 public class UserProfileServiceImpl implements UserProfileService {
 
-    private final UserProfileRepository userProfileRepository;
-    private final ApplicationEventPublisher eventPublisher;
-    private final ImageService imageService;
-    private final MongoTemplate mongoTemplate;
-
     private static final String CACHE_ID = "user_id";
     private static final String CACHE_EMAIL = "user_email";
     private static final String CACHE_LOGIN = "user_login";
+
+    private final UserProfileRepository userProfileRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    private final ImageService imageService;
+    private final UserMapper userMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -55,7 +52,8 @@ public class UserProfileServiceImpl implements UserProfileService {
     public UserProfile findByLogin(String login) {
         log.debug("Finding user profile by login: {}", login);
         return userProfileRepository.findByLogin(login)
-                .orElseGet(() -> this.findByEmail(login));
+                .or(() -> userProfileRepository.findByEmail(login))
+                .orElseThrow(notFound("login/email", login));
     }
 
     @Override
@@ -82,26 +80,26 @@ public class UserProfileServiceImpl implements UserProfileService {
     })
     public UserProfile create(UserProfile userProfile) {
         log.debug("Creating user profile: {}", userProfile.getEmail());
-
         UserProfile saved = userProfileRepository.save(userProfile);
         eventPublisher.publishEvent(new UserCreatedEvent(saved));
-
         return saved;
     }
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CACHE_ID, key = "#result.id"),
+            @CacheEvict(value = CACHE_EMAIL, key = "#result.email", condition = "#result.email != null"),
+            @CacheEvict(value = CACHE_LOGIN, key = "#result.login", condition = "#result.login != null")
+    })
     public UserProfile login(String login) {
         log.debug("User login attempt: {}", login);
 
         UserProfile user = userProfileRepository.findByLogin(login)
+                .or(() -> userProfileRepository.findByEmail(login))
                 .orElseGet(() -> {
-                    log.info("User not found, creating new profile for login: {}", login);
-                    return userProfileRepository.save(UserProfile.builder()
-                            .login(login)
-                            .lastLogin(LocalDateTime.now())
-                            .build()
-                    );
+                    log.info("User not found, preparing new profile for: {}", login);
+                    return UserProfile.builder().login(login).build();
                 });
 
         user.setLastLogin(LocalDateTime.now());
@@ -112,28 +110,27 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Transactional
     @Caching(evict = {
             @CacheEvict(value = CACHE_ID, key = "#profile.id"),
-            @CacheEvict(value = CACHE_EMAIL, key = "#profile.email", condition = "#result.email != null"),
-            @CacheEvict(value = CACHE_LOGIN, key = "#profile.login", condition = "#result.login != null")
+            @CacheEvict(value = CACHE_EMAIL, key = "#result.email", condition = "#result.email != null"),
+            @CacheEvict(value = CACHE_LOGIN, key = "#result.login", condition = "#result.login != null")
     })
     public UserProfile update(UserProfile profile) {
         log.debug("Updating user profile: {}", profile.getId());
-
-        UserProfile existingUser = userProfileRepository.findById(profile.getId())
-                .orElseThrow(notFound("id", profile.getId()));
-
-        existingUser.setAiLimits(profile.getAiLimits());
-        existingUser.setLastLogin(profile.getLastLogin());
-        existingUser.setFirstName(profile.getFirstName());
-        existingUser.setLastName(profile.getLastName());
-
+        UserProfile existingUser = findById(profile.getId());
+        userMapper.updateEntity(profile, existingUser);
         return userProfileRepository.save(existingUser);
     }
 
-
+    @Override
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CACHE_ID, key = "#id"),
+            @CacheEvict(value = CACHE_EMAIL, key = "#result.email", condition = "#result.email != null"),
+            @CacheEvict(value = CACHE_LOGIN, key = "#result.login", condition = "#result.login != null")
+    })
     public UserProfile uploadAvatar(MultipartFile file, String id) {
-        ImageMetadata imageMetadata = imageService.create(file, id);
+        UserProfile userProfile = findById(id);
 
-        UserProfile userProfile = userProfileRepository.findById(id).orElseThrow(notFound("id", id));
+        ImageMetadata imageMetadata = imageService.create(file, id);
         userProfile.setAvatarUrl(imageMetadata.getId());
 
         return userProfileRepository.save(userProfile);
@@ -141,9 +138,8 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     private Supplier<AppException> notFound(String field, Object value) {
         return () -> {
-            String msg = String.format("UserProfile with %s %s not found", field, value);
-            log.warn(msg);
-            return new AppException(msg, 404);
+            log.warn("UserProfile with {} {} not found", field, value);
+            return new AppException(String.format("User with %s %s not found", field, value), 404);
         };
     }
 }

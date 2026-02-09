@@ -77,6 +77,7 @@ app:
     ttl: 30
     prefix: "cvbuild::"
   security:
+    oauth-redirect-url: "http://localhost:3000/profile"
     allowed-origins: "http://localhost:3000"
     allowed-methods: "*"
     allowed-headers: "*"

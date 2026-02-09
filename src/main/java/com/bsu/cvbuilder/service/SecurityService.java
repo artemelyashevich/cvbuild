@@ -1,14 +1,9 @@
 package com.bsu.cvbuilder.service;
 
-import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
 import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
-import com.bsu.cvbuilder.domain.dto.auth.ResetPasswordDto;
 import com.bsu.cvbuilder.domain.dto.auth.TokenType;
-import com.bsu.cvbuilder.domain.entity.security.SecureData;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
 import org.springframework.security.core.Authentication;
-
-import java.util.Date;
 
 public interface SecurityService {
 
@@ -22,17 +17,5 @@ public interface SecurityService {
 
     void checkToken(String token, TokenType tokenType);
 
-    void checkSecureData(UserProfile userProfile, AuthRequest authRequest);
-
     String extractSubject(String token);
-
-    void loadSecureData(SecureData secureData);
-
-    AuthResponse refreshAccessToken(String refreshToken);
-
-    Date getJwtExpiration(String token);
-
-    void resetPassword(ResetPasswordDto resetPasswordDto);
-
-    void logout();
 }

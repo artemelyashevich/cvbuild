@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -27,48 +28,73 @@ public class SecureDataServiceImpl implements SecureDataService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
+    @Transactional
     public SecureData prepareData(UserProfile user) {
-        var secureData = secureDataRepository.findByUserId(user.getId()).orElse(
-                SecureData.builder()
-                        .userId(user.getId())
-                        .refreshTokenEncoded(SecretDecodeUtil.encode(
-                                jwtService.generateToken(user, TokenType.REFRESH),
-                                applicationProperties.getSecurity().getDecodeSignature()))
-                        .build()
-        );
+        log.debug("Preparing secure data for user: {}", user.getId());
 
-        var refreshToken = jwtService.generateToken(user, TokenType.REFRESH);
-        var encodedToken = SecretDecodeUtil.encode(
-                refreshToken,
-                applicationProperties.getSecurity().getDecodeSignature()
-        );
+        SecureData secureData = secureDataRepository.findByUserId(user.getId())
+                .orElseGet(() -> SecureData.builder().userId(user.getId()).build());
 
-        if (secureData.getRefreshTokenEncoded() == null) {
-            secureData.setRefreshTokenEncoded(encodedToken);
-        } else {
-            try {
-                String decryptedToken = SecretDecodeUtil.decode(
-                        secureData.getRefreshTokenEncoded(),
-                        applicationProperties.getSecurity().getDecodeSignature()
-                );
-                jwtService.validateToken(decryptedToken, TokenType.REFRESH);
-            } catch (AppException | AuthTokenException e) {
-                secureData.setRefreshTokenEncoded(encodedToken);
-                secureDataRepository.save(secureData);
-            }
+        if (isTokenValid(secureData.getRefreshTokenEncoded())) {
+            return secureData;
         }
 
+        log.info("Refresh token expired or missing for user {}, generating new one", user.getId());
+        String newToken = jwtService.generateToken(user, TokenType.REFRESH);
+        String encodedToken = encodeToken(newToken);
+
+        secureData.setRefreshTokenEncoded(encodedToken);
         return secureDataRepository.save(secureData);
     }
 
     @Override
     public void checkData(UserProfile userProfile, AuthRequest authRequest) {
-        var secureData = secureDataRepository.findByUserId(userProfile.getId()).orElseThrow(
-                () -> new AppException("Invalid user profile", 401)
-        );
+        SecureData secureData = findByUserId(userProfile.getId());
+
         if (!passwordEncoder.matches(authRequest.password(), secureData.getPassword())) {
-            log.debug("Password does not match stored value, email: {}", authRequest.email());
-            throw new AppException("Password mismatch", 401);
+            log.warn("Password mismatch for user: {}", userProfile.getEmail());
+            throw new AppException("Invalid credentials", 401);
         }
+    }
+
+    @Override
+    public SecureData findByUserId(String id) {
+        return secureDataRepository.findByUserId(id)
+                .orElseThrow(() -> new AppException("Security data not found for user: " + id, 401));
+    }
+
+    @Override
+    @Transactional
+    public void loadSecureData(SecureData secureData) {
+        SecureData persistentData = secureDataRepository.findByUserId(secureData.getUserId())
+                .orElseGet(() -> SecureData.builder().userId(secureData.getUserId()).build());
+
+        persistentData.setPassword(passwordEncoder.encode(secureData.getPassword()));
+        secureDataRepository.save(persistentData);
+    }
+
+    private boolean isTokenValid(String encodedToken) {
+        if (encodedToken == null) {
+            return false;
+        }
+
+        try {
+            String decryptedToken = SecretDecodeUtil.decode(
+                    encodedToken,
+                    applicationProperties.getSecurity().getDecodeSignature()
+            );
+            jwtService.validateToken(decryptedToken, TokenType.REFRESH);
+            return true;
+        } catch (Exception e) {
+            log.debug("Stored refresh token is invalid: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    private String encodeToken(String token) {
+        return SecretDecodeUtil.encode(
+                token,
+                applicationProperties.getSecurity().getDecodeSignature()
+        );
     }
 }

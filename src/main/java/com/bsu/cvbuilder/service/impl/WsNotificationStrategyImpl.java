@@ -1,6 +1,7 @@
 package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
+import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
 import com.bsu.cvbuilder.service.NotificationStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,5 +24,10 @@ public class WsNotificationStrategyImpl implements NotificationStrategy {
                 notificationDto.getParameters()
         );
         log.info("Sent notification: {}", notificationDto);
+    }
+
+    @Override
+    public NotificationEngine getSupportedEngine() {
+        return NotificationEngine.WS;
     }
 }

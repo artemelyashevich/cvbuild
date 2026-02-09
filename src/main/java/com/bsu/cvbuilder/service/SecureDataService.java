@@ -9,4 +9,8 @@ public interface SecureDataService {
     SecureData prepareData(UserProfile userProfile);
 
     void checkData(UserProfile userProfile, AuthRequest authRequest);
+
+    SecureData findByUserId(String id);
+
+    void loadSecureData(SecureData build);
 }
