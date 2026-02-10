@@ -9,7 +9,8 @@ import lombok.Setter;
 import lombok.ToString;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Getter
 @Setter
@@ -38,6 +39,18 @@ public class SecureData {
 
     @ToString.Exclude
     private String password;
+
+    @ToString.Exclude
+    @Builder.Default
+    private Map<SecureEvent, List<LocalDateTime>> secureEvents = new HashMap<>();
+
+    public void addEvent(SecureEvent event) {
+        if (this.secureEvents == null) {
+            this.secureEvents = new HashMap<>();
+        }
+        this.secureEvents.computeIfAbsent(event, k -> new ArrayList<>())
+                .add(LocalDateTime.now());
+    }
 
     @Getter
     @Setter

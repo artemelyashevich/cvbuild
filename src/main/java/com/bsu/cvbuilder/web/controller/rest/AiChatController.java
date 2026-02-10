@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
+import com.bsu.cvbuilder.annotation.agreement.AgreementRequire;
 import com.bsu.cvbuilder.domain.entity.chat.AiChat;
 import com.bsu.cvbuilder.domain.entity.resume.Resume;
 import com.bsu.cvbuilder.domain.dto.ai.AiRequestDto;
@@ -48,17 +49,21 @@ public class AiChatController {
         return chatService.getChatById(chatId);
     }
 
+    @AgreementRequire
     @PostMapping("/create")
+    @ResponseStatus(HttpStatus.CREATED)
     public AiChat create() {
         return chatService.createAiChat(UUID.randomUUID());
     }
 
+    @AgreementRequire
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public String ask(@RequestBody AiRequestDto aiRequestDto) {
        return aiService.call(aiRequestDto);
     }
 
+    @AgreementRequire
     @GetMapping("/{chatId}")
     @ResponseStatus(HttpStatus.OK)
     public Resume extract(@PathVariable String chatId) {

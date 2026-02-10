@@ -21,9 +21,6 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 @RequiredArgsConstructor
 public class AiConfiguration {
 
-    @Value("${app.maxMessages:25}")
-    private int maxMessage;
-
     private final ChatService aiService;
     private final ExpansionQueryAdvisor expansionQueryAdvisor;
     private final ApplicationProperties applicationProperties;
@@ -61,7 +58,7 @@ public class AiConfiguration {
 
     private ChatMemory getMongoChatMemory() {
         return MongoChatMemory.builder()
-                .maxMessages(maxMessage)
+                .maxMessages(applicationProperties.getChat().getMemoryMaxMessages())
                 .chatService(aiService)
                 .build();
     }

@@ -60,6 +60,7 @@ public class GlobalRestExceptionHandler {
     private ExceptionBodyDto handleException(final Exception exception, final String defaultMessage) {
         var message = exception.getMessage() == null ? defaultMessage : exception.getMessage();
         log.warn("{} '{}'.", defaultMessage, message);
+        exception.printStackTrace();
         return new ExceptionBodyDto(message);
     }
 }

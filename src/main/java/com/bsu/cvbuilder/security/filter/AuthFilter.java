@@ -62,19 +62,19 @@ public class AuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI().substring(request.getContextPath().length());
-
-        boolean isPublic =  Arrays.stream(PathUtil.PUBLIC_RESOURCES)
-                .anyMatch(p -> pathMatcher.match(p, request.getServletPath()));
-
-        if (isPublic) {
-            log.debug("Path {} is public, skipping filter", path);
-        }
-
-        return isPublic;
-    }
+//    @Override
+//    protected boolean shouldNotFilter(HttpServletRequest request) {
+//        String path = request.getRequestURI().substring(request.getContextPath().length());
+//
+//        boolean isPublic = Arrays.stream(PathUtil.PUBLIC_RESOURCES)
+//                .anyMatch(p -> pathMatcher.match(p, request.getServletPath()));
+//
+//        if (isPublic) {
+//            log.debug("Path {} is public, skipping filter", path);
+//        }
+//
+//        return isPublic;
+//    }
 
     private String resolveToken(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);

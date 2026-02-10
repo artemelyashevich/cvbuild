@@ -2,7 +2,10 @@ package com.bsu.cvbuilder.service;
 
 import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
 import com.bsu.cvbuilder.domain.entity.security.SecureData;
+import com.bsu.cvbuilder.domain.entity.security.SecureEvent;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+
+import java.util.function.Consumer;
 
 public interface SecureDataService {
 
@@ -12,5 +15,9 @@ public interface SecureDataService {
 
     SecureData findByUserId(String id);
 
+    void validateNewEvent(String userId, SecureEvent secureEvent);
+
     void loadSecureData(SecureData build);
+
+    void updateEvents(String id, SecureEvent secureEvent, Consumer<SecureData> updater);
 }

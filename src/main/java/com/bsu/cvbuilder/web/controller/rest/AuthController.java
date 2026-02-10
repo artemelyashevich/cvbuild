@@ -1,6 +1,11 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
-import com.bsu.cvbuilder.domain.dto.auth.*;
+import com.bsu.cvbuilder.annotation.email.EmailVerification;
+import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
+import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
+import com.bsu.cvbuilder.domain.dto.auth.RefreshRequest;
+import com.bsu.cvbuilder.domain.dto.auth.RegisterAuthDto;
+import com.bsu.cvbuilder.domain.dto.auth.ResetPasswordDto;
 import com.bsu.cvbuilder.service.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -37,10 +42,16 @@ public class AuthController {
         return authService.refreshToken(request);
     }
 
+    @EmailVerification
     @PostMapping("/reset-password")
     @ResponseStatus(HttpStatus.CREATED)
-    public AuthResponse resetPassword(@RequestBody ResetPasswordDto resetPasswordDto) {
-        return authService.resetPassword(resetPasswordDto);
+    public void resetPassword(@RequestBody ResetPasswordDto resetPasswordDto) {
+        authService.resetPassword(resetPasswordDto);
+    }
+
+    @PostMapping("/agree")
+    public void agree() {
+        authService.agree();
     }
 
     @PostMapping("/logout")

@@ -61,23 +61,8 @@ public class ImageController {
                 .body(metadata.getId());
     }
 
-    @PostMapping("/{userId}")
-    public ResponseEntity<String> create(
-            final @PathVariable("userId") String userId,
-            final @RequestParam("file") MultipartFile file,
-            final UriComponentsBuilder uriComponentsBuilder
-    ) {
-        var metadata = this.imageService.create(file, userId);
-        return ResponseEntity
-                .created(
-                        uriComponentsBuilder.path("/api/v1/images/{id}")
-                                .build(metadata.getId())
-                )
-                .body(metadata.getId());
-    }
-
     @PostMapping
-    public ResponseEntity<?> save(
+    public ResponseEntity<String> save(
             final @RequestParam("file") MultipartFile file,
             final UriComponentsBuilder uriComponentsBuilder
 

@@ -12,5 +12,7 @@ public interface AuthService {
 
     void logout();
 
-    AuthResponse resetPassword(ResetPasswordDto resetPasswordDto);
+    void resetPassword(ResetPasswordDto resetPasswordDto);
+
+    void agree();
 }

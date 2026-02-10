@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
@@ -17,4 +18,6 @@ public class ChatMessage {
     private UUID id;
     private MessageRole role;
     private String content;
+    @Builder.Default
+    private LocalDateTime timestamp = LocalDateTime.now();
 }

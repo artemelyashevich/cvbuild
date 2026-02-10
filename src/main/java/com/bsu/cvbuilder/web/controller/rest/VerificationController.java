@@ -24,7 +24,7 @@ public class VerificationController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
+    @ResponseStatus(HttpStatus.ACCEPTED)
     public void verifyEmail()  {
         securityService.verifyEmailRequest();
     }
