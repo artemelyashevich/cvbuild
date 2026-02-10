@@ -9,4 +9,6 @@ import java.util.UUID;
 
 public interface AiChatRepository extends MongoRepository<AiChat, UUID> {
     Page<AiChat> findAllByUserId(Pageable pageable, String id);
+
+    void deleteByUserId(String id);
 }

@@ -3,6 +3,7 @@ package com.bsu.cvbuilder.service.impl;
 import com.bsu.cvbuilder.domain.entity.image.ImageMetadata;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
 import com.bsu.cvbuilder.domain.event.UserCreatedEvent;
+import com.bsu.cvbuilder.domain.event.UserUpdateEmailEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.UserProfileRepository;
 import com.bsu.cvbuilder.service.ImageService;
@@ -11,6 +12,7 @@ import com.bsu.cvbuilder.service.mapper.UserMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -79,7 +81,7 @@ public class UserProfileServiceImpl implements UserProfileService {
             @CachePut(value = CACHE_LOGIN, key = "#result.login", condition = "#result.login != null")
     })
     public UserProfile create(UserProfile userProfile) {
-        log.debug("Creating user profile: {}", userProfile.getEmail());
+        log.debug("Creating user profile: {}", userProfile.getLogin());
         UserProfile saved = userProfileRepository.save(userProfile);
         eventPublisher.publishEvent(new UserCreatedEvent(saved));
         return saved;
@@ -134,6 +136,31 @@ public class UserProfileServiceImpl implements UserProfileService {
         userProfile.setAvatarUrl(imageMetadata.getId());
 
         return userProfileRepository.save(userProfile);
+    }
+
+    @Override
+    @Caching(evict = {
+            @CacheEvict(value = CACHE_ID, key = "#id"),
+            @CacheEvict(value = CACHE_EMAIL, key = "#result.email", condition = "#result.email != null"),
+            @CacheEvict(value = CACHE_LOGIN, key = "#result.login", condition = "#result.login != null")
+    })
+    public void updateEmail(String id, String email) {
+        log.debug("Attempting update user email: {}", email);
+        if (userProfileRepository.existsByEmail(email)) {
+            throw new AppException("Email already exists", 400);
+        }
+        UserProfile user = findById(id);
+        user.setEmail(email);
+        UserProfile saved = userProfileRepository.save(user);
+        eventPublisher.publishEvent(UserUpdateEmailEvent.builder().user(saved).build());
+        log.info("User profile updated: {}", saved);
+    }
+
+    @Override
+    public void deleteById(String id) {
+        log.debug("Attempting delete user profile: {}", id);
+        userProfileRepository.deleteById(id);
+        log.info("User profile deleted: {}", id);
     }
 
     private Supplier<AppException> notFound(String field, Object value) {

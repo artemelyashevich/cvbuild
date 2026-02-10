@@ -11,8 +11,4 @@ public interface AuthService {
     AuthResponse refreshToken(RefreshRequest refreshRequest);
 
     void logout();
-
-    void resetPassword(ResetPasswordDto resetPasswordDto);
-
-    void agree();
 }

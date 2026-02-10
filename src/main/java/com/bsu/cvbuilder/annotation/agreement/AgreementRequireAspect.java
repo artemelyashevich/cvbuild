@@ -20,6 +20,11 @@ public class AgreementRequireAspect {
 
     @Before("@annotation(agreementRequire)")
     public void beforeMethod(JoinPoint joinPoint, AgreementRequire agreementRequire) {
+
+        if (!agreementRequire.value()) {
+            return;
+        }
+
         UserProfile user = securityService.findCurrentUser();
 
         if (!user.isAgree()) {

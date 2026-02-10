@@ -12,4 +12,6 @@ public interface HistoryService {
     History findByUserId(String userId);
 
     void save(AbstractEvent event);
+
+    void deleteAllByUserId(String id);
 }

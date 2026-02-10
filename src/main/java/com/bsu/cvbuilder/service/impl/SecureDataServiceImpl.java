@@ -60,7 +60,7 @@ public class SecureDataServiceImpl implements SecureDataService {
         SecureData secureData = findByUserId(userProfile.getId());
 
         if (!passwordEncoder.matches(authRequest.password(), secureData.getPassword())) {
-            log.warn("Password mismatch for user: {}", userProfile.getEmail());
+            log.warn("Password mismatch for user: {}", userProfile.getLogin());
             throw new AppException("Invalid credentials", 401);
         }
     }
@@ -105,10 +105,17 @@ public class SecureDataServiceImpl implements SecureDataService {
     }
 
     @Override
-    public void updateEvents(String userId, SecureEvent secureEvent, Consumer<SecureData> updater) {
+    public void update(String userId, SecureEvent secureEvent, Consumer<SecureData> updater) {
         SecureData secureData = findByUserId(userId);
         updater.accept(secureData);
         secureDataRepository.save(secureData);
+    }
+
+    @Override
+    public void deleteByUserId(String id) {
+        log.debug("Attempting delete secure data for user with id: {}", id);
+        secureDataRepository.deleteByUserId(id);
+        log.info("Deleted secure data for user with id: {}", id);
     }
 
     @Override

@@ -8,6 +8,7 @@ import java.time.Duration;
 @Getter
 @RequiredArgsConstructor
 public enum SecureEvent {
+    setPassword(Duration.ofDays(30)),
     resetPassword(Duration.ofDays(1)),
     verifyEmail(Duration.ofDays(7)),
     changeNotificationEngine(Duration.ofMinutes(5));

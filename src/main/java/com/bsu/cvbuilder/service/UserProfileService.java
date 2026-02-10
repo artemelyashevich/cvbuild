@@ -20,4 +20,8 @@ public interface UserProfileService {
     UserProfile update(UserProfile profile);
 
     UserProfile uploadAvatar(MultipartFile file, String id);
+
+    void updateEmail(String id, String email);
+
+    void deleteById(String id);
 }

@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface SecureDataRepository extends MongoRepository<SecureData, String> {
 
     Optional<SecureData> findByUserId(String userId);
+
+    void deleteByUserId(String id);
 }

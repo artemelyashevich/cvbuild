@@ -7,4 +7,6 @@ public interface OtpService {
     String create(UserProfile userProfile);
 
     boolean validateOtp(UserProfile userProfile, String otp);
+
+    boolean exists(String key);
 }

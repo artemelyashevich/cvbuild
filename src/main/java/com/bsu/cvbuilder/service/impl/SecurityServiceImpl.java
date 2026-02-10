@@ -3,7 +3,7 @@ package com.bsu.cvbuilder.service.impl;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.auth.*;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
-import com.bsu.cvbuilder.domain.event.UserLoginEvent;
+import com.bsu.cvbuilder.domain.event.LoginEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.BlackListService;
 import com.bsu.cvbuilder.service.JwtService;
@@ -26,7 +26,6 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.Map;
 
@@ -80,7 +79,7 @@ public class SecurityServiceImpl implements SecurityService {
                 SecretDecodeUtil.decode(secureData.getRefreshTokenEncoded(), applicationProperties.getSecurity().getDecodeSignature())
         );
 
-        applicationEventPublisher.publishEvent(UserLoginEvent.builder()
+        applicationEventPublisher.publishEvent(LoginEvent.builder()
                         .userId(user.getId())
                         .userProfile(user)
                 .build());
@@ -100,11 +99,14 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     @Override
-    public void verifyEmailRequest() {
+    public void verifyEmailRequest(EmailVerificationRequestDto emailVerificationRequestDto) {
         UserProfile userProfile = findCurrentUser();
-        if (!StringUtils.hasText(userProfile.getEmail())) {
-            throw new AppException("Invalid email", 401);
+
+        if (emailVerificationRequestDto.email() != null) {
+            userProfile.setEmail(emailVerificationRequestDto.email());
+            userProfileService.updateEmail(userProfile.getId(), emailVerificationRequestDto.email());
         }
+
         if (userProfile.getEmailVerified()) { // NOSONAR
             return;
         }

@@ -5,14 +5,12 @@ import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
 import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
 import com.bsu.cvbuilder.domain.dto.auth.RefreshRequest;
 import com.bsu.cvbuilder.domain.dto.auth.RegisterAuthDto;
-import com.bsu.cvbuilder.domain.dto.auth.ResetPasswordDto;
 import com.bsu.cvbuilder.domain.dto.auth.SecurityProvider;
 import com.bsu.cvbuilder.domain.dto.auth.TokenType;
 import com.bsu.cvbuilder.domain.entity.security.SecureData;
-import com.bsu.cvbuilder.domain.entity.security.SecureEvent;
 import com.bsu.cvbuilder.domain.entity.user.UserProfile;
 import com.bsu.cvbuilder.domain.event.AbstractEvent;
-import com.bsu.cvbuilder.domain.event.UserLogoutEvent;
+import com.bsu.cvbuilder.domain.event.LogoutEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.AuthService;
 import com.bsu.cvbuilder.service.BlackListService;
@@ -25,11 +23,9 @@ import com.bsu.cvbuilder.util.SecretDecodeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 
 import static com.bsu.cvbuilder.util.OAuthUtil.getOAuth2AuthenticationToken;
 
@@ -46,7 +42,6 @@ public class AuthServiceImpl implements AuthService {
     private final BlackListService blackListService;
     private final SecureDataService secureDataService;
     private final ApplicationProperties applicationProperties;
-    private final PasswordEncoder passwordEncoder;
 
     @Override
     public AuthResponse authenticate(AuthRequest authRequest) {
@@ -108,49 +103,10 @@ public class AuthServiceImpl implements AuthService {
         publishLogoutEvent(token);
     }
 
-    @Override
-    @Transactional
-    public void resetPassword(ResetPasswordDto resetPasswordDto) {
-        log.debug("Attempting reset password");
-
-        if (!resetPasswordDto.newPassword().equals(resetPasswordDto.confirmedNewPassword())) {
-            log.debug("Passwords do not match");
-            throw new AppException("Password do not match", 400);
-        }
-
-        UserProfile currentUser = securityService.findCurrentUser();
-
-        SecureData secureData = secureDataService.findByUserId(currentUser.getId());
-
-        if (!passwordEncoder.matches(resetPasswordDto.oldPassword(), secureData.getPassword())) {
-            throw new AppException("Old password do not match", 401);
-        }
-
-        secureDataService.validateNewEvent(currentUser.getId(), SecureEvent.resetPassword);
-
-        secureDataService.updateEvents(currentUser.getId(), SecureEvent.resetPassword, data -> {
-            data.addEvent(SecureEvent.resetPassword);
-            data.setPassword(passwordEncoder.encode(resetPasswordDto.newPassword()));
-        });
-
-        logout();
-
-        log.info("Password has been reset for user: {}", currentUser.getLogin());
-    }
-
-    @Override
-    @Transactional
-    public void agree() {
-        UserProfile user = securityService.findCurrentUser();
-        log.debug("Attempting process user agreement: {}", user.getLogin());
-        user.setAgree(!user.isAgree());
-        userProfileService.update(user);
-    }
-
     private void publishLogoutEvent(String token) {
         try {
             String login = jwtService.extractLogin(token, TokenType.ACCESS);
-            AbstractEvent logoutEvent = UserLogoutEvent.builder()
+            AbstractEvent logoutEvent = LogoutEvent.builder()
                     .userId(null)
                     .build();
             logoutEvent.setLogin(login);

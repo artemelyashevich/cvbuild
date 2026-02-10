@@ -29,7 +29,7 @@ public class UserEventListener {
 
     @Async
     @EventListener
-    public void handleUserLoginEvent(UserLoginEvent userLoginEvent) {
+    public void handleUserLoginEvent(LoginEvent userLoginEvent) {
         String userId = userLoginEvent.getUserId();
         UserProfile userProfile = userLoginEvent.getUserProfile();
 
@@ -62,7 +62,7 @@ public class UserEventListener {
 
     @Async
     @EventListener
-    public void handleDownload(UserDownloadedResumeEvent event) {
+    public void handleDownload(DownloadeResumeEvent event) {
         updateStat(event.getUserId(), "totalDownloads",
                 stats -> stats.setTotalDownloads(stats.getTotalDownloads() + 1));
     }
@@ -79,7 +79,7 @@ public class UserEventListener {
 
     @Async
     @EventListener
-    public void handleResumeCreated(UserCreatedResumeEvent event) {
+    public void handleResumeCreated(CreateResumeEvent event) {
         updateStat(event.getUserId(), "resumesCreated", stats -> {
             stats.setResumesCreated(stats.getResumesCreated() + 1);
             var monthly = stats.getCurrentMonthUsage();

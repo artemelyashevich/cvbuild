@@ -29,8 +29,8 @@ public class ChatServiceImpl implements ChatService {
         log.debug("Attempting to create a new AiChat with id {}", chatId);
         UserProfile user = securityService.findCurrentUser();
         AiChat aiChat = aiChatRepository.save(AiChat.builder()
-                        .id(chatId)
-                        .userId(user.getId())
+                .id(chatId)
+                .userId(user.getId())
                 .build());
         log.info("Created AiChat with id {}", chatId);
         return aiChat;
@@ -59,5 +59,12 @@ public class ChatServiceImpl implements ChatService {
         Page<AiChat> aiChats = aiChatRepository.findAllByUserId(pageable, user.getId());
         log.info("Found all AiChats by current user");
         return aiChats;
+    }
+
+    @Override
+    public void deleteAllByUserId(String id) {
+        log.debug("Attempting to delete AiChat with user id {}", id);
+        aiChatRepository.deleteByUserId(id);
+        log.info("Deleted AiChats with user id {}", id);
     }
 }

@@ -74,6 +74,11 @@ public class OtpServiceImpl implements OtpService {
         return false;
     }
 
+    @Override
+    public boolean exists(String key) {
+        return redisTemplate.opsForValue().get(OTP_KEY + key) != null;
+    }
+
     private void handleFailedAttempt(String email) {
         String key = ATTEMPTS_KEY + email;
         Long attempts = redisTemplate.opsForValue().increment(key);

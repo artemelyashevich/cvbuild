@@ -56,4 +56,11 @@ public class HistoryServiceImpl implements HistoryService {
         historyRepository.save(history);
         log.info("History for user {} saved", event.getUserId());
     }
+
+    @Override
+    public void deleteAllByUserId(String id) {
+        log.debug("Attempting to delete history for user {}", id);
+        historyRepository.deleteByUserId(id);
+        log.info("History for user {} deleted", id);
+    }
 }

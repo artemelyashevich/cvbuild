@@ -15,4 +15,6 @@ public interface ChatService {
     AiChat saveAiChat(AiChat aiChat);
 
     Page<AiChat> findAllByCurrentUser(Pageable pageable);
+
+    void deleteAllByUserId(String id);
 }

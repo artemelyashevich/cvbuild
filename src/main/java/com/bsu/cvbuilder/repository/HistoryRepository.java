@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface HistoryRepository extends MongoRepository<History, String> {
 
     Optional<History> findByUserId(String userId);
+
+    void deleteByUserId(String id);
 }
