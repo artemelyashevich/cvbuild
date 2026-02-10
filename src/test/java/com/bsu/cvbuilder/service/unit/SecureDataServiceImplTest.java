@@ -127,7 +127,7 @@ class SecureDataServiceImplTest {
         // Act & Assert
         var ex = assertThrows(AppException.class, () -> secureDataService.checkData(user, request));
         assertEquals(401, ex.getStatusCode());
-        assertEquals("Password mismatch", ex.getMessage());
+        assertEquals("Invalid credentials", ex.getMessage());
     }
 
     @Test
