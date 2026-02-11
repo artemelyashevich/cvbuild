@@ -48,7 +48,7 @@ class PromptRegistryServiceImplTest {
 
         when(res1.getFilename()).thenReturn("interviewer.txt");
         when(res1.getContentAsString(StandardCharsets.UTF_8)).thenReturn("Interviewer content");
-        
+
         when(res2.getFilename()).thenReturn("final.txt");
         when(res2.getContentAsString(StandardCharsets.UTF_8)).thenReturn("Final content");
 
@@ -119,7 +119,7 @@ class PromptRegistryServiceImplTest {
         var res = mock(Resource.class);
         when(res.getFilename()).thenReturn("empty.txt");
         when(res.getContentAsString(StandardCharsets.UTF_8)).thenReturn("   trimmed content   ");
-        
+
         when(resourcePatternResolver.getResources(PROMPTS_PATH)).thenReturn(new Resource[]{res});
         promptRegistryService.init();
 

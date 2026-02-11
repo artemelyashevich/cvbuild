@@ -17,11 +17,11 @@ public abstract class AbstractEvent implements Serializable {
 
     @ToString.Exclude
     private transient ThreadLocal<String> login;
-    
+
     public void setLogin(@NonNull String value) {
         login.set(value);
     }
-    
+
     public Optional<String> getLogin() {
         if (login == null) {
             login = new ThreadLocal<>();
@@ -30,7 +30,7 @@ public abstract class AbstractEvent implements Serializable {
         login.remove();
         return value;
     }
-    
+
     public AbstractEvent(String userId) {
         this.userId = userId;
         login = new ThreadLocal<>();

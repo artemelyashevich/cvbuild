@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.service.unit;
 
-import com.bsu.cvbuilder.domain.entity.image.ImageMetadata;
+import com.bsu.cvbuilder.domain.entity.ImageMetadata;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.ImageMetadataRepository;
 import com.bsu.cvbuilder.service.impl.ImageServiceImpl;
@@ -198,19 +198,46 @@ class ImageServiceImplTest {
                 target.addAll(files);
                 return target;
             }
-            @Override public com.mongodb.client.MongoCursor<GridFSFile> iterator() { throw new UnsupportedOperationException(); }
-            @Override public com.mongodb.client.MongoCursor<GridFSFile> cursor() { throw new UnsupportedOperationException(); }
-            @Override public GridFSFile first() { throw new UnsupportedOperationException(); }
+
+            @Override
+            public com.mongodb.client.MongoCursor<GridFSFile> iterator() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public com.mongodb.client.MongoCursor<GridFSFile> cursor() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public GridFSFile first() {
+                throw new UnsupportedOperationException();
+            }
 
             @Override
             public <U> MongoIterable<U> map(Function<GridFSFile, U> function) {
                 return null;
             }
 
-            @Override public com.mongodb.client.FindIterable<GridFSFile> filter(org.bson.conversions.Bson filter) { throw new UnsupportedOperationException(); }
-            @Override public com.mongodb.client.FindIterable<GridFSFile> limit(int limit) { throw new UnsupportedOperationException(); }
-            @Override public com.mongodb.client.FindIterable<GridFSFile> skip(int skip) { throw new UnsupportedOperationException(); }
-            @Override public com.mongodb.client.FindIterable<GridFSFile> maxTime(long maxTime, java.util.concurrent.TimeUnit timeUnit) { throw new UnsupportedOperationException(); }
+            @Override
+            public com.mongodb.client.FindIterable<GridFSFile> filter(org.bson.conversions.Bson filter) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public com.mongodb.client.FindIterable<GridFSFile> limit(int limit) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public com.mongodb.client.FindIterable<GridFSFile> skip(int skip) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public com.mongodb.client.FindIterable<GridFSFile> maxTime(long maxTime, java.util.concurrent.TimeUnit timeUnit) {
+                throw new UnsupportedOperationException();
+            }
 
             @Override
             public FindIterable<GridFSFile> maxAwaitTime(long l, TimeUnit timeUnit) {
@@ -222,7 +249,10 @@ class ImageServiceImplTest {
                 return null;
             }
 
-            @Override public com.mongodb.client.FindIterable<GridFSFile> batchSize(int batchSize) { throw new UnsupportedOperationException(); }
+            @Override
+            public com.mongodb.client.FindIterable<GridFSFile> batchSize(int batchSize) {
+                throw new UnsupportedOperationException();
+            }
 
             @Override
             public FindIterable<GridFSFile> collation(Collation collation) {
@@ -304,7 +334,10 @@ class ImageServiceImplTest {
                 return null;
             }
 
-            @Override public com.mongodb.client.FindIterable<GridFSFile> noCursorTimeout(boolean noCursorTimeout) { throw new UnsupportedOperationException(); }
+            @Override
+            public com.mongodb.client.FindIterable<GridFSFile> noCursorTimeout(boolean noCursorTimeout) {
+                throw new UnsupportedOperationException();
+            }
 
             @Override
             public FindIterable<GridFSFile> partial(boolean b) {
@@ -316,8 +349,15 @@ class ImageServiceImplTest {
                 return null;
             }
 
-            @Override public com.mongodb.client.FindIterable<GridFSFile> sort(org.bson.conversions.Bson sort) { throw new UnsupportedOperationException(); }
-            @Override public void forEach(java.util.function.Consumer<? super GridFSFile> action) { throw new UnsupportedOperationException(); }
+            @Override
+            public com.mongodb.client.FindIterable<GridFSFile> sort(org.bson.conversions.Bson sort) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public void forEach(java.util.function.Consumer<? super GridFSFile> action) {
+                throw new UnsupportedOperationException();
+            }
         };
     }
 }

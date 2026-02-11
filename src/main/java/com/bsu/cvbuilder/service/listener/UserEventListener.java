@@ -2,8 +2,8 @@ package com.bsu.cvbuilder.service.listener;
 
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
 import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
-import com.bsu.cvbuilder.domain.entity.user.UserProfile;
-import com.bsu.cvbuilder.domain.entity.user.UserStats;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
+import com.bsu.cvbuilder.domain.entity.UserStats;
 import com.bsu.cvbuilder.domain.event.*;
 import com.bsu.cvbuilder.service.NotificationService;
 import com.bsu.cvbuilder.service.UserProfileService;

@@ -29,7 +29,7 @@ public class ChatStreamingServiceImpl implements ChatStreamingService {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
-   // @AgreementRequire
+    // @AgreementRequire
     public Flux<String> process(AiRequestDto dto) {
         log.debug("Starting AI stream for chat: {}", dto.chatId());
         StringBuilder responseAccumulator = new StringBuilder();

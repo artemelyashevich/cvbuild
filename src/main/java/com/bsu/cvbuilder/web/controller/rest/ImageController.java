@@ -45,7 +45,7 @@ public class ImageController {
         var data = this.imageService.findByOwnerId(userId);
         return ResponseEntity.ok(data);
     }
-    
+
     @PostMapping("/avatar/{userId}")
     public ResponseEntity<String> uploadAvatar(
             @PathVariable String userId,
@@ -69,9 +69,9 @@ public class ImageController {
     ) {
         var id = this.imageService.upload(file);
         return ResponseEntity.created(
-                uriComponentsBuilder.path("/api/v1/images/{id}")
-                        .build(id)
-        )
+                        uriComponentsBuilder.path("/api/v1/images/{id}")
+                                .build(id)
+                )
                 .body(id);
     }
 }

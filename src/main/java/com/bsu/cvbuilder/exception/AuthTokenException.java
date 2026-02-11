@@ -3,7 +3,7 @@ package com.bsu.cvbuilder.exception;
 import lombok.Getter;
 
 @Getter
-public class AuthTokenException extends RuntimeException{
+public class AuthTokenException extends RuntimeException {
 
     private final Boolean isExpired;
 

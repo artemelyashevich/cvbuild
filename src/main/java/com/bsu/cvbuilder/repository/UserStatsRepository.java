@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.repository;
 
-import com.bsu.cvbuilder.domain.entity.user.UserStats;
+import com.bsu.cvbuilder.domain.entity.UserStats;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;

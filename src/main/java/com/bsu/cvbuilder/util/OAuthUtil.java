@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.util;
 
-import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import lombok.experimental.UtilityClass;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;

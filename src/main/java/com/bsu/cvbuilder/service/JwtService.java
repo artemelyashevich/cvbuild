@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.service;
 
 import com.bsu.cvbuilder.domain.dto.auth.TokenType;
-import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 
 import java.util.Date;
 

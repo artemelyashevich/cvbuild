@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.annotation.otp;
 
-import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.OtpService;
 import com.bsu.cvbuilder.service.SecurityService;

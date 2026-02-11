@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.service;
 
-import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface UserProfileService {

@@ -1,8 +1,8 @@
 package com.bsu.cvbuilder.ai;
 
-import com.bsu.cvbuilder.domain.entity.chat.AiChat;
-import com.bsu.cvbuilder.domain.entity.chat.ChatMessage;
-import com.bsu.cvbuilder.domain.entity.chat.MessageRole;
+import com.bsu.cvbuilder.domain.entity.AiChat;
+import com.bsu.cvbuilder.domain.entity.ChatMessage;
+import com.bsu.cvbuilder.domain.entity.MessageRole;
 import com.bsu.cvbuilder.service.ChatService;
 import lombok.Builder;
 import lombok.NonNull;

@@ -1,9 +1,9 @@
 package com.bsu.cvbuilder.service;
 
 import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
-import com.bsu.cvbuilder.domain.entity.security.SecureData;
-import com.bsu.cvbuilder.domain.entity.security.SecureEvent;
-import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.entity.SecureData;
+import com.bsu.cvbuilder.domain.entity.SecureEvent;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 
 import java.util.function.Consumer;
 

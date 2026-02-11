@@ -24,14 +24,14 @@ class LimitServiceImplIntegrationTest extends AbstractTest {
     @BeforeEach
     void setUp() {
         var connectionFactory = new LettuceConnectionFactory(
-                redisContainer.getHost(), 
+                redisContainer.getHost(),
                 redisContainer.getFirstMappedPort()
         );
         connectionFactory.afterPropertiesSet();
-        
+
         this.redisTemplate = new StringRedisTemplate(connectionFactory);
         this.limitService = new LimitServiceImpl(redisTemplate);
-        
+
         redisTemplate.getConnectionFactory().getConnection().flushAll();
     }
 
@@ -46,11 +46,11 @@ class LimitServiceImplIntegrationTest extends AbstractTest {
 
         assertDoesNotThrow(() -> limitService.check(userId, type, capacity));
 
-        var ex = assertThrows(AppException.class, 
+        var ex = assertThrows(AppException.class,
                 () -> limitService.check(userId, type, capacity));
         assertTrue(ex.getMessage().contains("Limit exceeded"));
 
-        var banEx = assertThrows(AppException.class, 
+        var banEx = assertThrows(AppException.class,
                 () -> limitService.check(userId, type, capacity));
         assertTrue(banEx.getMessage().contains("temporarily banned"));
     }
@@ -62,11 +62,11 @@ class LimitServiceImplIntegrationTest extends AbstractTest {
         var banKey = "limit:ban:AI_MESSAGE:" + userId;
 
         redisTemplate.opsForValue().set(banKey, "banned");
-        
+
         assertThrows(AppException.class, () -> limitService.check(userId, LimitType.AI_MESSAGE, 5));
 
         redisTemplate.delete(banKey);
-        
+
         assertDoesNotThrow(() -> limitService.check(userId, LimitType.AI_MESSAGE, 5));
     }
 }

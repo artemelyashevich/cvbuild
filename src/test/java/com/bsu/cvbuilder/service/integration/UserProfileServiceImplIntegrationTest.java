@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.service.integration;
 
 import com.bsu.cvbuilder.AbstractTest;
-import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.repository.UserProfileRepository;
 import com.bsu.cvbuilder.service.impl.UserProfileServiceImpl;
 import com.bsu.cvbuilder.service.provider.UserProfileTestData;

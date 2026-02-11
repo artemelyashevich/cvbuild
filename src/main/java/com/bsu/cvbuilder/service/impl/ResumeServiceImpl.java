@@ -2,8 +2,8 @@ package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.annotation.limit.LimitType;
 import com.bsu.cvbuilder.annotation.limit.Limited;
-import com.bsu.cvbuilder.domain.entity.chat.AiChat;
-import com.bsu.cvbuilder.domain.entity.resume.Resume;
+import com.bsu.cvbuilder.domain.entity.AiChat;
+import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.ChatService;

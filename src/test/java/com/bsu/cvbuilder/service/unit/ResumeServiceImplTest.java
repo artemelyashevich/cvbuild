@@ -1,9 +1,9 @@
 package com.bsu.cvbuilder.service.unit;
 
-import com.bsu.cvbuilder.domain.entity.chat.AiChat;
-import com.bsu.cvbuilder.domain.entity.chat.ChatMessage;
-import com.bsu.cvbuilder.domain.entity.chat.MessageRole;
-import com.bsu.cvbuilder.domain.entity.resume.Resume;
+import com.bsu.cvbuilder.domain.entity.AiChat;
+import com.bsu.cvbuilder.domain.entity.ChatMessage;
+import com.bsu.cvbuilder.domain.entity.MessageRole;
+import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.ChatService;
@@ -95,10 +95,10 @@ class ResumeServiceImplTest {
         var chatId = UUID.randomUUID();
         var chatHistory = TestDataFactory.createChatWithMessages(chatId);
         var generatedResume = Resume.builder().id("gen-1").build();
-        
+
         // Mock response spec for fluent AI call
         var responseSpec = mock(ChatClient.CallResponseSpec.class);
-        
+
         when(mongoTemplate.findOne(any(Query.class), eq(Resume.class))).thenReturn(null);
         when(chatService.getChatById(chatId)).thenReturn(chatHistory);
         when(aiService.callExtractor(anyString(), eq(chatId))).thenReturn(responseSpec);
@@ -165,7 +165,7 @@ class ResumeServiceImplTest {
         // Assert
         var resumeCaptor = ArgumentCaptor.forClass(Resume.class);
         verify(mongoTemplate).save(resumeCaptor.capture());
-        
+
         assertEquals("New Bio", resumeCaptor.getValue().getBlocks().get("bio"));
         assertEquals("New Bio", result.getBlocks().get("bio"));
     }
@@ -178,7 +178,7 @@ class ResumeServiceImplTest {
         // Arrange
         var chatId = UUID.randomUUID();
         var responseSpec = mock(ChatClient.CallResponseSpec.class);
-        
+
         when(mongoTemplate.findOne(any(Query.class), eq(Resume.class))).thenReturn(null);
         when(chatService.getChatById(chatId)).thenReturn(TestDataFactory.createChatWithMessages(chatId));
         when(aiService.callExtractor(anyString(), eq(chatId))).thenReturn(responseSpec);

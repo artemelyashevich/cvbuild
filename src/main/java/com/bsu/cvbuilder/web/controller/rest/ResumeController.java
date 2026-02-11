@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
-import com.bsu.cvbuilder.domain.entity.resume.Resume;
+import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.service.ResumeGeneratorService;
 import com.bsu.cvbuilder.service.ResumeService;
 import com.bsu.cvbuilder.web.dto.resume.UpdateResumeRequest;
@@ -55,7 +55,7 @@ public class ResumeController {
     @GetMapping("/generate/{id}")
     public ResponseEntity<byte[]> generateResume(@PathVariable String id) throws IOException {
         var resume = resumeService.findById(id);
-        var filename =  "resume.pdf";
+        var filename = "resume.pdf";
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .header(HttpHeaders.CONTENT_DISPOSITION,

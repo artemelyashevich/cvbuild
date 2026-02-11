@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.domain.entity.resume.Resume;
+import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.AnalyzerService;
 import com.bsu.cvbuilder.service.ResumeService;

@@ -20,7 +20,7 @@ import java.util.Map;
 @Builder
 public record ExpansionQueryAdvisor(
         ChatClient chatClient,
-        PromptRegistryService  promptRegistryService,
+        PromptRegistryService promptRegistryService,
         ApplicationProperties.Chat chatProperties
 ) implements BaseAdvisor {
 

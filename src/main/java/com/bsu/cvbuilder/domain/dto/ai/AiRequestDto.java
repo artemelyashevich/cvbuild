@@ -15,7 +15,7 @@ public record AiRequestDto(
         QUESTION, ANSWER;
 
         public static AiRequestType get(Boolean isUserAnswer) {
-            return  isUserAnswer ? ANSWER : QUESTION;
+            return isUserAnswer ? ANSWER : QUESTION;
         }
     }
 }

@@ -21,7 +21,7 @@ public class LimitAspect {
     @Before("@annotation(limited)")
     public void beforeMethod(JoinPoint joinPoint, Limited limited) {
         String userId = securityService.findCurrentUser().getId();
-        
+
         log.debug("Checking limit {} for user {}", limited.value(), userId);
 
         limitService.check(userId, limited.value(), limited.capacity());

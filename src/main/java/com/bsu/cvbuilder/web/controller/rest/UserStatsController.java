@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
-import com.bsu.cvbuilder.domain.entity.user.UserStats;
+import com.bsu.cvbuilder.domain.entity.UserStats;
 import com.bsu.cvbuilder.service.UserStatsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -2,7 +2,7 @@ package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.auth.*;
-import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.LoginEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.BlackListService;
@@ -80,8 +80,8 @@ public class SecurityServiceImpl implements SecurityService {
         );
 
         applicationEventPublisher.publishEvent(LoginEvent.builder()
-                        .userId(user.getId())
-                        .userProfile(user)
+                .userId(user.getId())
+                .userProfile(user)
                 .build());
         return response;
     }

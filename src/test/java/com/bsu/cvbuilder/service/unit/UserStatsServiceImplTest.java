@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.service.unit;
 
-import com.bsu.cvbuilder.domain.entity.user.UserStats;
+import com.bsu.cvbuilder.domain.entity.UserStats;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.UserStatsRepository;
 import com.bsu.cvbuilder.service.impl.UserStatsServiceImpl;
@@ -89,7 +89,7 @@ class UserStatsServiceImplTest {
         var userId = "user-1";
         var existingStats = TestDataFactory.createStats(userId, 10);
         when(userStatsRepository.findByUserId(userId)).thenReturn(Optional.of(existingStats));
-        
+
         // Mocking the behavior of an updater (e.g., incrementing total messages)
         Consumer<UserStats> updater = stats -> stats.setResumesCreated(stats.getResumesCreated() + 1);
 
@@ -99,7 +99,7 @@ class UserStatsServiceImplTest {
         // Assert
         var captor = ArgumentCaptor.forClass(UserStats.class);
         verify(userStatsRepository).save(captor.capture());
-        
+
         assertEquals(11, captor.getValue().getResumesCreated());
         assertEquals(userId, captor.getValue().getUserId());
     }
@@ -110,7 +110,7 @@ class UserStatsServiceImplTest {
         // Arrange
         var userId = "new-user";
         when(userStatsRepository.findByUserId(userId)).thenReturn(Optional.empty());
-        
+
         Consumer<UserStats> updater = stats -> stats.setResumesCreated(1);
 
         // Act
@@ -119,7 +119,7 @@ class UserStatsServiceImplTest {
         // Assert
         var captor = ArgumentCaptor.forClass(UserStats.class);
         verify(userStatsRepository).save(captor.capture());
-        
+
         var savedStats = captor.getValue();
         assertAll(
                 () -> assertEquals(userId, savedStats.getUserId()),

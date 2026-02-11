@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.service.schedule;
 
-import com.bsu.cvbuilder.domain.entity.history.History;
+import com.bsu.cvbuilder.domain.entity.History;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -18,17 +18,17 @@ public class HistoryCleanupScheduler {
 
     private final MongoTemplate mongoTemplate;
 
-    @Scheduled(cron = "0 0 1 * * ?") 
+    @Scheduled(cron = "0 0 1 * * ?")
     public void cleanupOldHistoryEntries() {
         log.info("Starting scheduled history cleanup...");
 
         LocalDateTime thresholdDate = LocalDateTime.now().minusDays(3);
-        
+
         Query query = new Query();
         query.addCriteria(Criteria.where("createdAt").lt(thresholdDate));
-        
+
         query.addCriteria(Criteria.where("events").exists(true).andOperator(
-            new Criteria().and("{ $gt: [ { $size: { $objectToArray: '$events' } }, 10 ] }")
+                new Criteria().and("{ $gt: [ { $size: { $objectToArray: '$events' } }, 10 ] }")
         ));
 
         long deletedCount = mongoTemplate.remove(query, History.class).getDeletedCount();

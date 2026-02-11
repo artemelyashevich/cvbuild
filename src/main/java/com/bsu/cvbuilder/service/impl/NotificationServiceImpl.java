@@ -2,7 +2,7 @@ package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
 import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
-import com.bsu.cvbuilder.domain.entity.history.Notification;
+import com.bsu.cvbuilder.domain.entity.Notification;
 import com.bsu.cvbuilder.repository.NotificationRepository;
 import com.bsu.cvbuilder.service.NotificationService;
 import com.bsu.cvbuilder.service.NotificationStrategy;
@@ -53,9 +53,9 @@ public class NotificationServiceImpl implements NotificationService {
             strategy.sendNotification(notificationDto);
 
             notificationRepository.save(Notification.builder()
-                            .engine(notificationDto.getEngine())
-                            .receiver(notificationDto.getReceiver())
-                            .content(notificationDto.getParameters())
+                    .engine(notificationDto.getEngine())
+                    .receiver(notificationDto.getReceiver())
+                    .content(notificationDto.getParameters())
                     .build());
 
             log.info("Successfully sent notification to {}", notificationDto.getReceiver());

@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.domain.entity.security;
+package com.bsu.cvbuilder.domain.entity;
 
 import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
 import lombok.AllArgsConstructor;

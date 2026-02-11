@@ -33,12 +33,12 @@ class LimitServiceImplTest {
     @MethodSource("com.bsu.cvbuilder.service.provider.LimitTestData#provideLimitCheckScenarios")
     @DisplayName("Check Limit - Various Scenarios - Validates behavior based on Redis response")
     void check_VaryingRedisResponses_BehavesCorrectly(
-            String userId, 
-            LimitType type, 
-            int capacity, 
-            Long redisResponse, 
+            String userId,
+            LimitType type,
+            int capacity,
+            Long redisResponse,
             boolean expectException) {
-        
+
         // Arrange
         var banKey = "limit:ban:" + type.name() + ":" + userId;
         var countKey = "limit:count:" + type.name() + ":" + userId;
@@ -51,9 +51,9 @@ class LimitServiceImplTest {
 
         // Act & Assert
         if (expectException) {
-            var exception = assertThrows(AppException.class, 
-                () -> limitService.check(userId, type, capacity));
-            
+            var exception = assertThrows(AppException.class,
+                    () -> limitService.check(userId, type, capacity));
+
             assertEquals(403, exception.getStatusCode());
             assertTrue(exception.getMessage().contains("ban") || exception.getMessage().contains("Limit exceeded"));
         } else {

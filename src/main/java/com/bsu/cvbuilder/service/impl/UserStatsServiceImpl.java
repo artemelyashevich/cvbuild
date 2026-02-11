@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.domain.entity.user.UserStats;
+import com.bsu.cvbuilder.domain.entity.UserStats;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.UserStatsRepository;
 import com.bsu.cvbuilder.service.UserStatsService;

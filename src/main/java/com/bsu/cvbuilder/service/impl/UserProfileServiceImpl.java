@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.domain.entity.image.ImageMetadata;
-import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.entity.ImageMetadata;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.UserCreatedEvent;
 import com.bsu.cvbuilder.domain.event.UserUpdateEmailEvent;
 import com.bsu.cvbuilder.exception.AppException;
@@ -9,10 +9,8 @@ import com.bsu.cvbuilder.repository.UserProfileRepository;
 import com.bsu.cvbuilder.service.ImageService;
 import com.bsu.cvbuilder.service.UserProfileService;
 import com.bsu.cvbuilder.service.mapper.UserMapper;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.BadRequestException;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;

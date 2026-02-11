@@ -31,19 +31,19 @@ class ImageServiceImplIntegrationTest extends AbstractTest {
 
         // Act - Store
         var savedMetadata = imageService.create(file, userId);
-        
+
         // Act - Find by User
         var userFiles = imageService.findByOwnerId(userId);
-        
+
         // Act - Download Bytes
         var downloadedBytes = imageService.findById(savedMetadata.getId());
 
         // Assert
         assertAll(
-            () -> assertEquals(1, userFiles.size(), "User should have exactly 1 file"),
-            () -> assertEquals(file.getOriginalFilename(), savedMetadata.getFilename()),
-            () -> assertArrayEquals(ImageTestData.CONTENT, downloadedBytes, "Content should match original"),
-            () -> assertTrue(imageMetadataRepository.existsById(savedMetadata.getId()))
+                () -> assertEquals(1, userFiles.size(), "User should have exactly 1 file"),
+                () -> assertEquals(file.getOriginalFilename(), savedMetadata.getFilename()),
+                () -> assertArrayEquals(ImageTestData.CONTENT, downloadedBytes, "Content should match original"),
+                () -> assertTrue(imageMetadataRepository.existsById(savedMetadata.getId()))
         );
     }
 }

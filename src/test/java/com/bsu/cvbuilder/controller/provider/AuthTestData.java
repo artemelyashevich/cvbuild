@@ -16,21 +16,21 @@ public class AuthTestData {
 
     public static Stream<Arguments> registerProvider() {
         return Stream.of(
-            Arguments.of(new RegisterAuthDto("user@test.com", "password123", "John", "Doe")),
-            Arguments.of(new RegisterAuthDto("admin@test.com", "securePass!", "Admin", "User"))
+                Arguments.of(new RegisterAuthDto("user@test.com", "password123", "John", "Doe")),
+                Arguments.of(new RegisterAuthDto("admin@test.com", "securePass!", "Admin", "User"))
         );
     }
 
     public static Stream<Arguments> loginProvider() {
         return Stream.of(
-            Arguments.of(new AuthRequest("user@test.com", "password123")),
-            Arguments.of(new AuthRequest("admin@test.com", "securePass!"))
+                Arguments.of(new AuthRequest("user@test.com", "password123")),
+                Arguments.of(new AuthRequest("admin@test.com", "securePass!"))
         );
     }
 
     public static Stream<Arguments> refreshProvider() {
         return Stream.of(
-            Arguments.of(new RefreshRequest("refresh-token-456"))
+                Arguments.of(new RefreshRequest("refresh-token-456"))
         );
     }
 }

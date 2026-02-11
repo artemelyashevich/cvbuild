@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.annotation.agreement;
 
-import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.SecurityService;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.service.unit;
 
-import com.bsu.cvbuilder.domain.entity.chat.AiChat;
+import com.bsu.cvbuilder.domain.entity.AiChat;
 import com.bsu.cvbuilder.repository.AiChatRepository;
 import com.bsu.cvbuilder.service.impl.ChatServiceImpl;
 import org.junit.jupiter.api.Disabled;
@@ -76,7 +76,7 @@ class ChatServiceImplTest {
         // Arrange
         var chatId = UUID.randomUUID();
         var newChat = TestDataFactory.createChat(chatId);
-        
+
         when(aiChatRepository.findById(chatId)).thenReturn(Optional.empty());
         when(aiChatRepository.save(any(AiChat.class))).thenReturn(newChat);
 

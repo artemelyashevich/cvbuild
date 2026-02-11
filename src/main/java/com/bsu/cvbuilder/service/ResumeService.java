@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.service;
 
-import com.bsu.cvbuilder.domain.entity.resume.Resume;
+import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.web.dto.resume.UpdateResumeRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

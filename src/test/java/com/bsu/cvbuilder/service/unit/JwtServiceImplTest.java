@@ -2,7 +2,7 @@ package com.bsu.cvbuilder.service.unit;
 
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.auth.TokenType;
-import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.exception.AuthTokenException;
 import com.bsu.cvbuilder.service.impl.JwtServiceImpl;
@@ -45,7 +45,7 @@ class JwtServiceImplTest {
         when(applicationProperties.getSecurity()).thenReturn(securityProps);
         when(securityProps.getAccessSecret()).thenReturn(TEST_ACCESS_SECRET);
         when(securityProps.getRefreshSecret()).thenReturn(TEST_REFRESH_SECRET);
-        
+
         jwtService.init();
     }
 

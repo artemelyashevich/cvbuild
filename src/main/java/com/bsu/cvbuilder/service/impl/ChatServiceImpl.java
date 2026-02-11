@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.domain.entity.chat.AiChat;
-import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.entity.AiChat;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.repository.AiChatRepository;
 import com.bsu.cvbuilder.service.ChatService;
 import com.bsu.cvbuilder.service.SecurityService;

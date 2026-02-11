@@ -43,10 +43,10 @@ class AuthControllerIntegrationTest extends AbstractTest {
 
         // Assert
         assertAll(
-            () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED),
-            () -> assertThat(response.getBody()).isNotNull(),
-            () -> assertThat(response.getBody().accessToken()).isEqualTo(mockResponse.accessToken()),
-            () -> verify(authService).register(request)
+                () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED),
+                () -> assertThat(response.getBody()).isNotNull(),
+                () -> assertThat(response.getBody().accessToken()).isEqualTo(mockResponse.accessToken()),
+                () -> verify(authService).register(request)
         );
     }
 
@@ -67,9 +67,9 @@ class AuthControllerIntegrationTest extends AbstractTest {
 
         // Assert
         assertAll(
-            () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED),
-            () -> assertThat(response.getBody().refreshToken()).isEqualTo(mockResponse.refreshToken()),
-            () -> verify(authService).authenticate(request)
+                () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED),
+                () -> assertThat(response.getBody().refreshToken()).isEqualTo(mockResponse.refreshToken()),
+                () -> verify(authService).authenticate(request)
         );
     }
 
@@ -90,9 +90,9 @@ class AuthControllerIntegrationTest extends AbstractTest {
 
         // Assert
         assertAll(
-            () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED),
-            () -> assertThat(response.getBody().accessToken()).isEqualTo(mockResponse.accessToken()),
-            () -> verify(authService).refreshToken(request)
+                () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED),
+                () -> assertThat(response.getBody().accessToken()).isEqualTo(mockResponse.accessToken()),
+                () -> verify(authService).refreshToken(request)
         );
     }
 }

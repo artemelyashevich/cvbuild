@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.domain.entity.chat;
+package com.bsu.cvbuilder.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -13,29 +13,25 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.HashMap;
+import java.util.Map;
 
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Document(collection = "chat")
-public class AiChat {
+@Document(collection = "history")
+public class History {
 
     @Id
-    private UUID id;
+    private String id;
 
     private String userId;
+    private String login;
 
     @Builder.Default
-    private List<ChatMessage> messages = new ArrayList<>();
-
-    private String templateId;
-
-    private boolean isFinished;
+    private Map<String, String> events = new HashMap<>();
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
@@ -43,7 +39,6 @@ public class AiChat {
     private LocalDateTime createdAt;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @LastModifiedDate
     private LocalDateTime updatedAt;
 }

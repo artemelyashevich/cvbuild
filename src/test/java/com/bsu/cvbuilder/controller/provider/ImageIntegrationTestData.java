@@ -29,14 +29,14 @@ public class ImageIntegrationTestData {
 
     public static Stream<Arguments> uploadProvider() {
         return Stream.of(
-            Arguments.of("profile.jpg", new byte[]{1, 2, 3, 4}, "user-123"),
-            Arguments.of("resume-photo.png", new byte[]{5, 6, 7, 8}, "user-456")
+                Arguments.of("profile.jpg", new byte[]{1, 2, 3, 4}, "user-123"),
+                Arguments.of("resume-photo.png", new byte[]{5, 6, 7, 8}, "user-456")
         );
     }
 
     public static Stream<Arguments> genericUploadProvider() {
         return Stream.of(
-            Arguments.of("test-image.jpg", new byte[]{10, 11, 12})
+                Arguments.of("test-image.jpg", new byte[]{10, 11, 12})
         );
     }
 }

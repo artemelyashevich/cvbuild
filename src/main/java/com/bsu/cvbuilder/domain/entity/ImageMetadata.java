@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.domain.entity.chat;
+package com.bsu.cvbuilder.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -7,35 +7,33 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
-@Getter
 @Setter
-@Builder
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class AiMessage {
+@Builder
+@Document(collection = "imageMetadata")
+public class ImageMetadata {
 
-    private SenderChatRole senderRole;
+    @Id
+    private String id;
 
-    private String message;
+    private String filename;
 
-    private boolean isQuestion;
+    private String contentType;
+
+    private long size;
+
+    private String ownerId;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @CreatedDate
     private LocalDateTime createdAt;
-
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    @LastModifiedDate
-    private LocalDateTime updatedAt;
-
-    public enum SenderChatRole {
-        ASSISTANT, USER
-    }
 }

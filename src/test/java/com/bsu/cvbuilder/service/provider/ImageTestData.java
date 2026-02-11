@@ -1,13 +1,14 @@
 package com.bsu.cvbuilder.service.provider;
 
-import com.bsu.cvbuilder.domain.entity.image.ImageMetadata;
+import com.bsu.cvbuilder.domain.entity.ImageMetadata;
 import org.bson.types.ObjectId;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 public final class ImageTestData {
 
-    private ImageTestData() {}
+    private ImageTestData() {
+    }
 
     public static final String USER_ID = "user-123";
     public static final String IMAGE_ID = new ObjectId().toString();

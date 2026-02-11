@@ -1,12 +1,13 @@
 package com.bsu.cvbuilder.service.provider;
 
-import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
+
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 public final class UserProfileTestData {
 
-    private UserProfileTestData() {}
+    private UserProfileTestData() {
+    }
 
     public static UserProfile createNewProfile(String email, String login) {
         return UserProfile.builder()

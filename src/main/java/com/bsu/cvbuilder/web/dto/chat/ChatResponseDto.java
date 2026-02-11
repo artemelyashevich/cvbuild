@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.web.dto.chat;
 
-import com.bsu.cvbuilder.domain.entity.chat.ChatMessage;
+import com.bsu.cvbuilder.domain.entity.ChatMessage;
 import lombok.*;
 
 import java.util.List;

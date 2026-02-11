@@ -2,9 +2,9 @@ package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.domain.dto.auth.PasswordDto;
 import com.bsu.cvbuilder.domain.dto.auth.ResetPasswordDto;
-import com.bsu.cvbuilder.domain.entity.security.SecureData;
-import com.bsu.cvbuilder.domain.entity.security.SecureEvent;
-import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.entity.SecureData;
+import com.bsu.cvbuilder.domain.entity.SecureEvent;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.AgreementEvent;
 import com.bsu.cvbuilder.domain.event.ResetPasswordEvent;
 import com.bsu.cvbuilder.domain.event.SetPasswordEvent;

@@ -3,7 +3,7 @@ package com.bsu.cvbuilder.service;
 import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
 import com.bsu.cvbuilder.domain.dto.auth.EmailVerificationRequestDto;
 import com.bsu.cvbuilder.domain.dto.auth.TokenType;
-import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import org.springframework.security.core.Authentication;
 
 public interface SecurityService {

@@ -8,8 +8,8 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @EnableMongoRepositories(basePackages = "com.bsu.cvbuilder.repository")
 public class CvApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(CvApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(CvApplication.class, args);
+    }
 
 }

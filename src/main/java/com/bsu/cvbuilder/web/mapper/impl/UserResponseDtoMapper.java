@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.web.mapper.impl;
 
-import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.web.dto.user.UserResponseDto;
 import com.bsu.cvbuilder.web.mapper.Mappable;
 import org.mapstruct.Mapper;

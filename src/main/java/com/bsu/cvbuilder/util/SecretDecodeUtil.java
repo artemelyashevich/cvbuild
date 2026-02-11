@@ -2,6 +2,7 @@ package com.bsu.cvbuilder.util;
 
 import com.bsu.cvbuilder.exception.AppException;
 import lombok.experimental.UtilityClass;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;

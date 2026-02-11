@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.domain.entity.security;
+package com.bsu.cvbuilder.domain.entity;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.repository;
 
-import com.bsu.cvbuilder.domain.entity.chat.AiChat;
+import com.bsu.cvbuilder.domain.entity.AiChat;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;

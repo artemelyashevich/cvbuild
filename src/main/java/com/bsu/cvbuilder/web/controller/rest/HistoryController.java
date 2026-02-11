@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
-import com.bsu.cvbuilder.domain.entity.history.History;
+import com.bsu.cvbuilder.domain.entity.History;
 import com.bsu.cvbuilder.service.HistoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

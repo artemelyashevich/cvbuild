@@ -3,8 +3,8 @@ package com.bsu.cvbuilder.service.unit;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
 import com.bsu.cvbuilder.domain.dto.auth.TokenType;
-import com.bsu.cvbuilder.domain.entity.security.SecureData;
-import com.bsu.cvbuilder.domain.entity.user.UserProfile;
+import com.bsu.cvbuilder.domain.entity.SecureData;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.SecureDataRepository;
 import com.bsu.cvbuilder.service.JwtService;
@@ -82,15 +82,15 @@ class SecureDataServiceImplTest {
             // Arrange
             var user = TestDataFactory.createSampleUser("1");
             var existingData = SecureData.builder().userId("1").refreshTokenEncoded("bad-token").build();
-            
+
             setupSecurityProps();
             when(secureDataRepository.findByUserId("1")).thenReturn(Optional.of(existingData));
             when(jwtService.generateToken(user, TokenType.REFRESH)).thenReturn("new-token");
             utilities.when(() -> SecretDecodeUtil.decode("bad-token", SIGNATURE)).thenReturn("decrypted-bad-token");
-            
+
             doThrow(new AppException("Expired", 401))
                     .when(jwtService).validateToken("decrypted-bad-token", TokenType.REFRESH);
-            
+
             assertNotNull(existingData.getRefreshTokenEncoded());
             verify(secureDataRepository).save(existingData);
         }

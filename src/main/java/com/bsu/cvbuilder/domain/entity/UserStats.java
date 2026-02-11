@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.domain.entity.user;
+package com.bsu.cvbuilder.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;

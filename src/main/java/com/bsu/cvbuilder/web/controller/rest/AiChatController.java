@@ -1,8 +1,8 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
 import com.bsu.cvbuilder.annotation.agreement.AgreementRequire;
-import com.bsu.cvbuilder.domain.entity.chat.AiChat;
-import com.bsu.cvbuilder.domain.entity.resume.Resume;
+import com.bsu.cvbuilder.domain.entity.AiChat;
+import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.domain.dto.ai.AiRequestDto;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.ChatService;
@@ -60,7 +60,7 @@ public class AiChatController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public String ask(@RequestBody AiRequestDto aiRequestDto) {
-       return aiService.call(aiRequestDto);
+        return aiService.call(aiRequestDto);
     }
 
     @AgreementRequire

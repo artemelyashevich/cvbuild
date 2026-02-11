@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.domain.entity.chat;
+package com.bsu.cvbuilder.domain.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
