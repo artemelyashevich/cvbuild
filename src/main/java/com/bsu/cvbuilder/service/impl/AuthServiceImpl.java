@@ -52,7 +52,7 @@ public class AuthServiceImpl implements AuthService {
         secureDataService.checkData(user, authRequest);
 
         var ctx = SecurityContextHolder.createEmptyContext();
-        OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(authRequest.email());
+        OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(authRequest.email(), user.getRole());
         ctx.setAuthentication(authentication);
         SecurityContextHolder.setContext(ctx);
 

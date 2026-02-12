@@ -2,11 +2,11 @@ package com.bsu.cvbuilder.security.filter;
 
 import com.bsu.cvbuilder.domain.dto.auth.SecurityProvider;
 import com.bsu.cvbuilder.domain.dto.auth.TokenType;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.exception.AuthTokenException;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.util.HandleSecurityErrorUtil;
-import com.bsu.cvbuilder.util.PathUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -46,7 +46,6 @@ public class AuthFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-
         try {
             String token = resolveToken(request);
 
@@ -98,7 +97,8 @@ public class AuthFilter extends OncePerRequestFilter {
 
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
             String login = securityService.extractSubject(token);
-            OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(login);
+            UserProfile.Role role = securityService.extractRole(token);
+            OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(login, role);
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }

@@ -124,7 +124,7 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public void checkToken(String token, TokenType tokenType) {
         Boolean isBlacklisted = blackListService.validate(token);
-        if (isBlacklisted) {
+        if (isBlacklisted) { // NOSONAR
             throw new AppException("This token is banned", 401);
         }
         jwtService.validateToken(token, tokenType);
@@ -133,6 +133,11 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public String extractSubject(String token) {
         return jwtService.extractLogin(token, TokenType.ACCESS);
+    }
+
+    @Override
+    public UserProfile.Role extractRole(String token) {
+        return jwtService.extractRole(token, TokenType.ACCESS);
     }
 
     private String getCurrentUserLogin() {

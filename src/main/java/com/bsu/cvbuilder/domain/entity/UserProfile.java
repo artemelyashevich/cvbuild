@@ -79,6 +79,6 @@ public class UserProfile {
     private Locale locale = Locale.ENGLISH;
 
     public enum Role {
-        USER
+        USER, ADMIN
     }
 }

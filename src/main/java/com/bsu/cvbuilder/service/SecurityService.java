@@ -19,4 +19,6 @@ public interface SecurityService {
     void checkToken(String token, TokenType tokenType);
 
     String extractSubject(String token);
+
+    UserProfile.Role extractRole(String token);
 }
