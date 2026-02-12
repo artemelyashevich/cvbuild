@@ -3,6 +3,7 @@ package com.bsu.cvbuilder.service.impl;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.PromptRegistryService;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,6 +63,13 @@ public class PromptRegistryServiceImpl implements PromptRegistryService {
 
         this.prompts = Collections.unmodifiableMap(loadedPrompts);
         log.info("Successfully loaded {} prompts.", prompts.size());
+    }
+
+    @PreDestroy
+    public void destroy() {
+        log.debug("Destroying AI prompts from {}", promptsPath);
+        prompts.clear();
+        log.info("Successfully destroyed AI prompts from {}", promptsPath);
     }
 
     @Override
