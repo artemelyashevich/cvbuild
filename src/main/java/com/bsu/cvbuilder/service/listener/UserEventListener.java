@@ -62,7 +62,7 @@ public class UserEventListener {
 
     @Async
     @EventListener
-    public void handleDownload(DownloadeResumeEvent event) {
+    public void handleDownload(DownloadResumeEvent event) {
         updateStat(event.getUserId(), "totalDownloads",
                 stats -> stats.setTotalDownloads(stats.getTotalDownloads() + 1));
     }
