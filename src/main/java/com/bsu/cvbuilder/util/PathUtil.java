@@ -13,7 +13,8 @@ public class PathUtil {
             "/api/v1/auth/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
-            "/error"
+            "/error",
+            "/actuator/**"
     };
 
     public static final String[] AUTH_RESOURCES = { // NOSONAR
