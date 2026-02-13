@@ -18,9 +18,6 @@ public class HistoryEventListener {
     @Async
     @EventListener
     public void storeEvent(AbstractEvent event) {
-        log.debug("Storing event {}", event);
-
         historyService.save(event);
-        log.info("Event stored {}", event);
     }
 }

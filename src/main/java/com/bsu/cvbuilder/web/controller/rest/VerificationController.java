@@ -2,6 +2,7 @@ package com.bsu.cvbuilder.web.controller.rest;
 
 import com.bsu.cvbuilder.domain.dto.auth.EmailVerificationDto;
 import com.bsu.cvbuilder.domain.dto.auth.EmailVerificationRequestDto;
+import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
 import com.bsu.cvbuilder.service.SecurityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

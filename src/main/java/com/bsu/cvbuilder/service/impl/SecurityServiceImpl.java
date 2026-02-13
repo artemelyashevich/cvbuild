@@ -3,13 +3,13 @@ package com.bsu.cvbuilder.service.impl;
 import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.auth.*;
+import com.bsu.cvbuilder.domain.entity.SecureData;
+import com.bsu.cvbuilder.domain.entity.SecureEvent;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.AbstractEvent;
-import com.bsu.cvbuilder.domain.event.CheckOtpEvent;
 import com.bsu.cvbuilder.domain.event.LoginEvent;
 import com.bsu.cvbuilder.domain.event.VerifyEmailRequestEvent;
 import com.bsu.cvbuilder.exception.AppException;
-import com.bsu.cvbuilder.service.BlackListService;
 import com.bsu.cvbuilder.service.JwtService;
 import com.bsu.cvbuilder.service.NotificationService;
 import com.bsu.cvbuilder.service.OtpService;
@@ -21,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -52,7 +51,7 @@ public class SecurityServiceImpl implements SecurityService {
     private boolean oauth2Enabled;
 
     @Override
-    @Monitored(value = "security_current", context = "internal")
+    @Monitored(value = "security_service.current", context = "internal")
     public UserProfile findCurrentUser() {
         log.debug("Attempting to get current user profile");
 
@@ -63,7 +62,7 @@ public class SecurityServiceImpl implements SecurityService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @Monitored(value = "security_authentication", context = "internal")
+    @Monitored(value = "security_service.authentication", context = "internal")
     public AuthResponse authenticate(Authentication authentication) {
         var login = extractLogin(authentication);
 
@@ -109,6 +108,7 @@ public class SecurityServiceImpl implements SecurityService {
     public void checkOtp(String otp) {
         UserProfile profile = findCurrentUser();
         otpService.validateOtp(profile, otp);
+        sendVerificationSuccessNotification(profile);
     }
 
     @Override
@@ -129,6 +129,7 @@ public class SecurityServiceImpl implements SecurityService {
             applicationEventPublisher.publishEvent(event);
             return;
         }
+        secureDataService.validateNewEvent(userProfile.getId(), SecureEvent.verifyEmail);
         String otp = otpService.create(userProfile);
         notificationService.sendNotification(NotificationDto.builder()
                 .engine(NotificationEngine.EMAIL)
@@ -141,6 +142,8 @@ public class SecurityServiceImpl implements SecurityService {
         data.put("otp", "sent");
         event.setData(data);
         applicationEventPublisher.publishEvent(event);
+        secureDataService.update(userProfile.getId(), SecureEvent.verifyEmail, (SecureData secureData) ->
+                secureData.addEvent(SecureEvent.verifyEmail));
     }
 
     private String getCurrentUserLogin() {

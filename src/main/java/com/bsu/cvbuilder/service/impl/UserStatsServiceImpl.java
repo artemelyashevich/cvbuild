@@ -25,7 +25,7 @@ public class UserStatsServiceImpl implements UserStatsService {
     private final UserStatsRepository userStatsRepository;
 
     @Override
-    @CacheEvict(value = CACHE_ID)
+    @CacheEvict(value = CACHE_ID, key = "#userStats.userId")
     public UserStats save(UserStats userStats) {
         log.debug("Ensuring UserStats exists for user: {}", userStats.getUserId());
 
