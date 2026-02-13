@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.service.impl;
 
+import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.domain.entity.UserStats;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.UserStatsRepository;
@@ -52,6 +53,7 @@ public class UserStatsServiceImpl implements UserStatsService {
 
     @Transactional
     @CacheEvict(value = CACHE_ID, allEntries = true)
+    @Monitored(value = "user_stats_increment", context = "internal")
     public void incrementStats(String userId, Consumer<UserStats> updater) {
         UserStats stats = userStatsRepository.findByUserId(userId)
                 .orElseGet(() -> UserStats.builder()

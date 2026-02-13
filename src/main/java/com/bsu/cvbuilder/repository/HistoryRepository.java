@@ -5,7 +5,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;
 
-public interface HistoryRepository extends MongoRepository<History, String> {
+public interface HistoryRepository extends MongoRepository<History, String>, HistoryEventRepository {
 
     Optional<History> findByUserId(String userId);
 

@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.service.impl;
 
+import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
 import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
@@ -22,10 +23,14 @@ import com.bsu.cvbuilder.service.mapper.UserMapper;
 import com.bsu.cvbuilder.util.SecretDecodeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Date;
+import java.util.Map;
 
 import static com.bsu.cvbuilder.util.OAuthUtil.getOAuth2AuthenticationToken;
 
@@ -42,8 +47,10 @@ public class AuthServiceImpl implements AuthService {
     private final BlackListService blackListService;
     private final SecureDataService secureDataService;
     private final ApplicationProperties applicationProperties;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
+    @Monitored(value = "calling_auth_authenticate", context = "api")
     public AuthResponse authenticate(AuthRequest authRequest) {
         log.debug("Attempting authenticate user with email: {}", authRequest.email());
 
@@ -64,6 +71,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @Monitored(value = "calling_auth_register", context = "api")
     public AuthResponse register(RegisterAuthDto authRequest) {
         log.debug("Attempting register user with email: {}", authRequest.email());
         UserProfile candidate = userMapper.toUserProfile(authRequest);
@@ -98,7 +106,8 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void logout() {
         String token = securityProvider.getToken();
-        blackListService.banToken(token);
+        Date expiration = jwtService.extractExpiration(token);
+        blackListService.banToken(token, expiration);
         SecurityContextHolder.clearContext();
         publishLogoutEvent(token);
     }
@@ -109,7 +118,8 @@ public class AuthServiceImpl implements AuthService {
             AbstractEvent logoutEvent = LogoutEvent.builder()
                     .userId(null)
                     .build();
-            logoutEvent.setLogin(login);
+            logoutEvent.setData(Map.of("login", login));
+            applicationEventPublisher.publishEvent(logoutEvent);
         } catch (Exception e) {
             log.warn("Could not publish logout event: user profile not found");
         }

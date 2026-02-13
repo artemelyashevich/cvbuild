@@ -7,7 +7,7 @@ import lombok.Getter;
 @Getter
 public class LoginEvent extends AbstractEvent {
 
-    private final UserProfile userProfile;
+    private final transient UserProfile userProfile;
 
     @Builder
     public LoginEvent(String userId, UserProfile userProfile) {

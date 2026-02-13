@@ -11,46 +11,31 @@ import java.util.Objects;
 @UtilityClass
 public class JsonHelper {
 
-    public static ObjectMapper mapper = new ObjectMapper();
+    public static final ObjectMapper mapper = new ObjectMapper();
 
     private static final String FAILED = "Failed to convert object to json string: {}";
-
-    public static String toBeautifulJson(Object o) {
-        if (o == null) {
-            return "null";
-        } else {
-            try {
-                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(o);
-            } catch (Exception ex) {
-                log.warn(FAILED, ex.getMessage());
-                return null;
-            }
-        }
-    }
 
     public static String toJson(Object o) {
         if (o == null) {
             return "null";
-        } else {
-            try {
-                return mapper.writeValueAsString(o);
-            } catch (Exception ex) {
-                log.warn(FAILED, ex.getMessage());
-                return null;
-            }
+        }
+        try {
+            return mapper.writeValueAsString(o);
+        } catch (Exception ex) {
+            log.warn(FAILED, ex.getMessage());
+            return null;
         }
     }
 
     public static Object fromJson(String json, Class valueClass) {
         if (json == null) {
             return null;
-        } else {
-            try {
-                return mapper.readValue(json, valueClass);
-            } catch (Exception ex) {
-                log.warn(FAILED, ex.getMessage());
-                return null;
-            }
+        }
+        try {
+            return mapper.readValue(json, valueClass);
+        } catch (Exception ex) {
+            log.warn(FAILED, ex.getMessage());
+            return null;
         }
     }
 

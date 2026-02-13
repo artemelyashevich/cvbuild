@@ -5,6 +5,7 @@ import com.bsu.cvbuilder.domain.dto.auth.TokenType;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.exception.AuthTokenException;
+import com.bsu.cvbuilder.service.BlackListService;
 import com.bsu.cvbuilder.service.JwtService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -24,6 +25,7 @@ import java.util.function.Function;
 public class JwtServiceImpl implements JwtService {
 
     private final ApplicationProperties applicationProperties;
+    private final BlackListService blackListService;
 
     private SecretKey accessKey;
     private SecretKey refreshKey;
@@ -64,6 +66,10 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public void validateToken(String token, TokenType tokenType) {
+        Boolean isBlacklisted = blackListService.validate(token);
+        if (isBlacklisted) { // NOSONAR
+            throw new AppException("This token is banned", 401);
+        }
         getClaims(token, tokenType);
     }
 

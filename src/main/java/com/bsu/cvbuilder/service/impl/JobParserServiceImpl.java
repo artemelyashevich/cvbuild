@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.service.impl;
 
+import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.JobParserService;
@@ -30,6 +31,7 @@ public class JobParserServiceImpl implements JobParserService {
     );
 
     @Override
+    @Monitored(value = "vacancy_parsing", context = "api")
     public String parse(String url) {
         validateUrl(url);
 

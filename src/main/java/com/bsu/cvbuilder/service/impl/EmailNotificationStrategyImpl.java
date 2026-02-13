@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.service.impl;
 
+import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
 import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
 import com.bsu.cvbuilder.exception.AppException;
@@ -28,6 +29,7 @@ public class EmailNotificationStrategyImpl implements NotificationStrategy {
     private String from;
 
     @Override
+    @Monitored(value = "sending_email", context = "internal")
     public void sendNotification(NotificationDto notificationDto) {
         log.debug("Attempting to send email.");
 

@@ -5,7 +5,7 @@ import com.bsu.cvbuilder.domain.dto.auth.TokenType;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.exception.AuthTokenException;
-import com.bsu.cvbuilder.service.SecurityService;
+import com.bsu.cvbuilder.service.JwtService;
 import com.bsu.cvbuilder.util.HandleSecurityErrorUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -19,7 +19,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Component;
-import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -36,9 +35,8 @@ public class AuthFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String ACCESS_TOKEN_COOKIE = "access_token";
 
-    private final SecurityService securityService;
+    private final JwtService jwtService;
     private final SecurityProvider securityProvider;
-    private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     @Override
     protected void doFilterInternal(
@@ -61,20 +59,6 @@ public class AuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-//    @Override
-//    protected boolean shouldNotFilter(HttpServletRequest request) {
-//        String path = request.getRequestURI().substring(request.getContextPath().length());
-//
-//        boolean isPublic = Arrays.stream(PathUtil.PUBLIC_RESOURCES)
-//                .anyMatch(p -> pathMatcher.match(p, request.getServletPath()));
-//
-//        if (isPublic) {
-//            log.debug("Path {} is public, skipping filter", path);
-//        }
-//
-//        return isPublic;
-//    }
-
     private String resolveToken(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (StringUtils.hasText(authHeader) && authHeader.startsWith(BEARER_PREFIX)) {
@@ -93,11 +77,11 @@ public class AuthFilter extends OncePerRequestFilter {
     }
 
     private void authenticateRequest(String token) {
-        securityService.checkToken(token, TokenType.ACCESS);
+        jwtService.validateToken(token, TokenType.ACCESS);
 
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            String login = securityService.extractSubject(token);
-            UserProfile.Role role = securityService.extractRole(token);
+            String login = jwtService.extractLogin(token, TokenType.ACCESS);
+            UserProfile.Role role = jwtService.extractRole(token, TokenType.ACCESS);
             OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(login, role);
 
             SecurityContextHolder.getContext().setAuthentication(authentication);

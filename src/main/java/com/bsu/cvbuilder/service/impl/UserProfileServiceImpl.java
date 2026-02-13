@@ -144,7 +144,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     })
     public void updateEmail(String id, String email) {
         log.debug("Attempting update user email: {}", email);
-        if (userProfileRepository.existsByEmail(email)) {
+        if (userProfileRepository.existsByEmail(email)) { // NOSONAR
             throw new AppException("Email already exists", 400);
         }
         UserProfile user = findById(id);

@@ -5,6 +5,7 @@ import com.bsu.cvbuilder.service.UserProfileService;
 import com.bsu.cvbuilder.web.dto.user.UpdateUserRequest;
 import com.bsu.cvbuilder.web.dto.user.UserResponseDto;
 import com.bsu.cvbuilder.web.mapper.impl.UserResponseDtoMapper;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.mapstruct.factory.Mappers;
@@ -24,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Tag(name = "User Profile")
 @RestController
 @RequestMapping("/api/v1/user-profile")
+@SecurityRequirement(name = "bearerAuth")
 @RequiredArgsConstructor
 public class UserProfileController {
 

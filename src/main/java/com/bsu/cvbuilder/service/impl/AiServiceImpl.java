@@ -2,6 +2,7 @@ package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.annotation.limit.LimitType;
 import com.bsu.cvbuilder.annotation.limit.Limited;
+import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.ai.AiRequestDto;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
@@ -40,6 +41,7 @@ public class AiServiceImpl implements AiService {
 
     @Override
     @Limited(value = LimitType.AI_MESSAGE, capacity = 20)
+    @Monitored(value = "calling_ai_interviewer", context = "ai")
     public String call(AiRequestDto dto) {
         log.debug("AI Call [INTERVIEWER] for chatId: {}", dto.chatId());
 
@@ -78,6 +80,7 @@ public class AiServiceImpl implements AiService {
     }
 
     @Override
+    @Monitored(value = "calling_ai_extractor", context = "ai")
     public ChatClient.CallResponseSpec callExtractor(String history, UUID chatId) {
         log.debug("AI Call [EXTRACTOR] for chatId: {}", chatId);
         String extractorPrompt = promptRegistryService.getPrompt(PROMPT_EXTRACTOR);
@@ -90,6 +93,7 @@ public class AiServiceImpl implements AiService {
     }
 
     @Override
+    @Monitored(value = "calling_ai_analyzer", context = "ai")
     public String callAnalyzer(String text, UUID chatId) {
         log.debug("AI Call [ANALYZER] for chatId: {}", chatId);
 

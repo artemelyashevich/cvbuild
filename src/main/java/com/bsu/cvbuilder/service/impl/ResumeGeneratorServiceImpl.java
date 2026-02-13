@@ -2,6 +2,7 @@ package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.annotation.limit.LimitType;
 import com.bsu.cvbuilder.annotation.limit.Limited;
+import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.ResumeGeneratorService;
@@ -29,6 +30,7 @@ public class ResumeGeneratorServiceImpl implements ResumeGeneratorService {
 
     @Override
     @Limited(value = LimitType.RESUME_DOWNLOAD, capacity = 5)
+    @Monitored(value = "resume_generating_pdf", context = "api")
     public byte[] generateResume(Resume resume) {
         log.debug("Starting PDF generation for resume: {}", resume.getId());
 

@@ -1,9 +1,13 @@
 package com.bsu.cvbuilder.service.impl;
 
+import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.auth.*;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
+import com.bsu.cvbuilder.domain.event.AbstractEvent;
+import com.bsu.cvbuilder.domain.event.CheckOtpEvent;
 import com.bsu.cvbuilder.domain.event.LoginEvent;
+import com.bsu.cvbuilder.domain.event.VerifyEmailRequestEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.BlackListService;
 import com.bsu.cvbuilder.service.JwtService;
@@ -27,6 +31,7 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -34,13 +39,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SecurityServiceImpl implements SecurityService {
 
-    @Lazy
     private final UserProfileService userProfileService;
     private final JwtService jwtService;
     private final ApplicationProperties applicationProperties;
     private final NotificationService notificationService;
     private final SecureDataService secureDataService;
-    private final BlackListService blackListService;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final SecurityProvider securityProvider;
     private final OtpService otpService;
@@ -49,6 +52,7 @@ public class SecurityServiceImpl implements SecurityService {
     private boolean oauth2Enabled;
 
     @Override
+    @Monitored(value = "security_current", context = "internal")
     public UserProfile findCurrentUser() {
         log.debug("Attempting to get current user profile");
 
@@ -59,6 +63,7 @@ public class SecurityServiceImpl implements SecurityService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @Monitored(value = "security_authentication", context = "internal")
     public AuthResponse authenticate(Authentication authentication) {
         var login = extractLogin(authentication);
 
@@ -72,17 +77,30 @@ public class SecurityServiceImpl implements SecurityService {
             throw new AppException(message, 401);
         }
 
-        var secureData = secureDataService.prepareData(user);
+        Map<String, String> data = new HashMap<>();
 
-        var response = new AuthResponse(
-                jwtService.generateToken(user, TokenType.ACCESS),
-                SecretDecodeUtil.decode(secureData.getRefreshTokenEncoded(), applicationProperties.getSecurity().getDecodeSignature())
-        );
-
-        applicationEventPublisher.publishEvent(LoginEvent.builder()
+        AbstractEvent event = LoginEvent.builder()
                 .userId(user.getId())
                 .userProfile(user)
-                .build());
+                .build();
+
+        AuthResponse response = null;
+
+        try {
+            var secureData = secureDataService.prepareData(user);
+
+            response = new AuthResponse(
+                    jwtService.generateToken(user, TokenType.ACCESS),
+                    SecretDecodeUtil.decode(secureData.getRefreshTokenEncoded(), applicationProperties.getSecurity().getDecodeSignature())
+            );
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            data.put("error", e.getMessage());
+        } finally {
+            event.setData(data);
+            applicationEventPublisher.publishEvent(event);
+        }
+
         return response;
     }
 
@@ -90,24 +108,25 @@ public class SecurityServiceImpl implements SecurityService {
     @Transactional(rollbackFor = Exception.class)
     public void checkOtp(String otp) {
         UserProfile profile = findCurrentUser();
-        if (!otpService.validateOtp(profile, otp)) {
-            throw new AppException("Invalid or expired OTP", 401);
-        }
-        profile.setEmailVerified(true);
-        userProfileService.update(profile);
-        sendVerificationSuccessNotification(profile);
+        otpService.validateOtp(profile, otp);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void verifyEmailRequest(EmailVerificationRequestDto emailVerificationRequestDto) {
         UserProfile userProfile = findCurrentUser();
-
+        AbstractEvent event = new VerifyEmailRequestEvent(userProfile.getId());
+        Map<String, String> data = new HashMap<>();
         if (emailVerificationRequestDto.email() != null) {
+            data.put("settingNewEmail", emailVerificationRequestDto.email());
             userProfile.setEmail(emailVerificationRequestDto.email());
             userProfileService.updateEmail(userProfile.getId(), emailVerificationRequestDto.email());
         }
 
         if (userProfile.getEmailVerified()) { // NOSONAR
+            data.put("status", "alreadyVerified");
+            event.setData(data);
+            applicationEventPublisher.publishEvent(event);
             return;
         }
         String otp = otpService.create(userProfile);
@@ -119,25 +138,9 @@ public class SecurityServiceImpl implements SecurityService {
                         "otp", otp
                 ))
                 .build());
-    }
-
-    @Override
-    public void checkToken(String token, TokenType tokenType) {
-        Boolean isBlacklisted = blackListService.validate(token);
-        if (isBlacklisted) { // NOSONAR
-            throw new AppException("This token is banned", 401);
-        }
-        jwtService.validateToken(token, tokenType);
-    }
-
-    @Override
-    public String extractSubject(String token) {
-        return jwtService.extractLogin(token, TokenType.ACCESS);
-    }
-
-    @Override
-    public UserProfile.Role extractRole(String token) {
-        return jwtService.extractRole(token, TokenType.ACCESS);
+        data.put("otp", "sent");
+        event.setData(data);
+        applicationEventPublisher.publishEvent(event);
     }
 
     private String getCurrentUserLogin() {

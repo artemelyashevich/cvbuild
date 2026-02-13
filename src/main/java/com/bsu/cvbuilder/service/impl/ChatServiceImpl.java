@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.service.impl;
 
+import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.domain.entity.AiChat;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.repository.AiChatRepository;
@@ -37,6 +38,7 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
+    @Monitored(value = "finding_chat", context = "api")
     public AiChat getChatById(UUID chatId) {
         log.debug("Attempting to get AiChat with id {}", chatId);
         Optional<AiChat> byId = aiChatRepository.findById(chatId);
@@ -44,6 +46,7 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
+    @Monitored(value = "saving_chat", context = "api")
     public AiChat saveAiChat(AiChat aiChat) {
         log.debug("Attempting to save AiChat with id {}", aiChat.getId());
         AiChat newChat = aiChatRepository.save(aiChat);

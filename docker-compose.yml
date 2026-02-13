@@ -32,24 +32,37 @@ services:
     volumes:
       - redis_data:/data
 
-  jenkins:
-    image: jenkins/jenkins:lts-jdk17
-    container_name: jenkins
-    restart: unless-stopped
+  prometheus:
+    image: prom/prometheus:latest
     ports:
-      - "8080:8080"
-      - "50000:50000"
+      - "9090:9090"
     volumes:
-      - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock
-    user: root
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    environment:
+      - GF_DATASOURCE_PROMETHEUS_URL=http://prometheus:9090
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
+
 
 networks:
+  monitoring:
   cvbuilder:
     driver: bridge
 
 volumes:
-  jenkins_home:
-    driver: local
+  grafana-storage:
   mongo_data:
   redis_data:

@@ -38,7 +38,7 @@ public class SecureDataServiceImpl implements SecureDataService {
     @Override
     @Transactional
     public SecureData prepareData(UserProfile user) {
-        log.debug("Preparing secure data for user: {}", user.getId());
+        log.debug("Preparing secure data for user: {}", user.getLogin());
 
         SecureData secureData = secureDataRepository.findByUserId(user.getId())
                 .orElseGet(() -> SecureData.builder().userId(user.getId()).build());

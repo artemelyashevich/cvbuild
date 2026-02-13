@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.service.impl;
 
+import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.domain.entity.ImageMetadata;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.ImageMetadataRepository;
@@ -82,6 +83,7 @@ public class ImageServiceImpl implements ImageService {
 
     @Override
     @Transactional
+    @Monitored(value = "uploading_image", context = "internal")
     public ImageMetadata create(final MultipartFile file, final String userId) {
         log.debug("Creating image for user {}: {}", userId, file.getOriginalFilename());
 
