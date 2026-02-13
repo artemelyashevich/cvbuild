@@ -8,4 +8,8 @@ import java.util.List;
 public interface ImageMetadataRepository extends MongoRepository<ImageMetadata, String> {
 
     List<ImageMetadata> findByOwnerId(final String ownerId);
+
+    List<ImageMetadata> findByOwnerIdIsNull();
+
+    List<ImageMetadata> findByOwnerIdNotNull();
 }
