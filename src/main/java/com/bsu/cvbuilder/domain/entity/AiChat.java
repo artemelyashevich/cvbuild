@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.domain.entity;
 
+import com.bsu.cvbuilder.domain.dto.ai.ChatFlowStep;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,6 +37,9 @@ public class AiChat {
     private String templateId;
 
     private boolean isFinished;
+
+    @Builder.Default
+    private ChatFlowStep chatFlowStep = ChatFlowStep.PERSONAL_INFO;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")

@@ -74,7 +74,7 @@ public class AiChatController {
             @ApiResponse(responseCode = "201", description = "Chat session created successfully"),
             @ApiResponse(responseCode = "403", description = "User agreement missing", content = @Content)
     })
-    @AgreementRequire
+    //@AgreementRequire
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     public AiChat create() {

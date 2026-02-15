@@ -10,7 +10,6 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.ollama.api.OllamaOptions;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
@@ -29,9 +28,9 @@ public class AiConfiguration {
     public ChatClient chatClient(ChatClient.Builder builder) {
         return builder
                 .defaultAdvisors(
-                        expansionQueryAdvisor,
-                        addMongoChatMemoryAdvisor(2),
-                        SimpleLoggerAdvisor.builder().order(3).build()
+                      //  expansionQueryAdvisor,
+                        addMongoChatMemoryAdvisor(1),
+                        SimpleLoggerAdvisor.builder().order(2).build()
                 )
                 .defaultOptions(
                         OllamaOptions.builder()

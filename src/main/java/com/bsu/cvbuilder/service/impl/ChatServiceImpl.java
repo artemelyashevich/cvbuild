@@ -49,9 +49,7 @@ public class ChatServiceImpl implements ChatService {
     @Monitored(value = "saving_chat", context = "api")
     public AiChat saveAiChat(AiChat aiChat) {
         log.debug("Attempting to save AiChat with id {}", aiChat.getId());
-        AiChat newChat = aiChatRepository.save(aiChat);
-        log.info("Saved AiChat with id {}", aiChat.getId());
-        return newChat;
+        return aiChatRepository.save(aiChat);
     }
 
     @Override
