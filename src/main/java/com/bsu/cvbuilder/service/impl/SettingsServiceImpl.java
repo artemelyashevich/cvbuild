@@ -98,12 +98,14 @@ public class SettingsServiceImpl implements SettingsService {
     }
 
     @Override
+    @Transactional
     public void agree() {
         UserProfile user = securityService.findCurrentUser();
         log.debug("Attempting process user agreement: {}", user.getLogin());
         user.setAgree(!user.isAgree());
         userProfileService.update(user);
         applicationEventPublisher.publishEvent(new AgreementEvent(user.getId()));
+        log.info("User has been agreed for user: {}, is agree: {}", user.getLogin(), user.isAgree());
     }
 
     @Override

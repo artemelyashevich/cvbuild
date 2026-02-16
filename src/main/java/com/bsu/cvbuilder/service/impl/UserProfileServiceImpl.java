@@ -107,7 +107,6 @@ public class UserProfileServiceImpl implements UserProfileService {
     }
 
     @Override
-    @Transactional
     @Caching(evict = {
             @CacheEvict(value = CACHE_ID, key = "#profile.id"),
             @CacheEvict(value = CACHE_EMAIL, key = "#result.email", condition = "#result.email != null"),

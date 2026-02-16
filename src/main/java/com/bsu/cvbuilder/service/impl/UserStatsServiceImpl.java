@@ -51,7 +51,6 @@ public class UserStatsServiceImpl implements UserStatsService {
         return userStats;
     }
 
-    @Transactional
     @CacheEvict(value = CACHE_ID, allEntries = true)
     @Monitored(value = "user_stats_increment", context = "internal")
     public void incrementStats(String userId, Consumer<UserStats> updater) {

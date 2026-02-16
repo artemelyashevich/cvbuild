@@ -110,6 +110,7 @@ public class AuthServiceImpl implements AuthService {
         blackListService.banToken(token, expiration);
         SecurityContextHolder.clearContext();
         publishLogoutEvent(token);
+        log.info("User logged out");
     }
 
     private void publishLogoutEvent(String token) {

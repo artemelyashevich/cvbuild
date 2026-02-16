@@ -108,6 +108,8 @@ public class SecurityServiceImpl implements SecurityService {
     public void checkOtp(String otp) {
         UserProfile profile = findCurrentUser();
         otpService.validateOtp(profile, otp);
+        profile.setEmailVerified(true);
+        userProfileService.update(profile);
         sendVerificationSuccessNotification(profile);
     }
 
@@ -117,11 +119,6 @@ public class SecurityServiceImpl implements SecurityService {
         UserProfile userProfile = findCurrentUser();
         AbstractEvent event = new VerifyEmailRequestEvent(userProfile.getId());
         Map<String, String> data = new HashMap<>();
-        if (emailVerificationRequestDto.email() != null) {
-            data.put("settingNewEmail", emailVerificationRequestDto.email());
-            userProfile.setEmail(emailVerificationRequestDto.email());
-            userProfileService.updateEmail(userProfile.getId(), emailVerificationRequestDto.email());
-        }
 
         if (userProfile.getEmailVerified()) { // NOSONAR
             data.put("status", "alreadyVerified");

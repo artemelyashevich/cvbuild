@@ -4,9 +4,12 @@ import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
 import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.entity.UserStats;
-import com.bsu.cvbuilder.domain.event.*;
+import com.bsu.cvbuilder.domain.event.CreateResumeEvent;
+import com.bsu.cvbuilder.domain.event.DownloadResumeEvent;
+import com.bsu.cvbuilder.domain.event.LoginEvent;
+import com.bsu.cvbuilder.domain.event.UserCreatedEvent;
+import com.bsu.cvbuilder.domain.event.UserGenerateNewMessageEvent;
 import com.bsu.cvbuilder.service.NotificationService;
-import com.bsu.cvbuilder.service.UserProfileService;
 import com.bsu.cvbuilder.service.UserStatsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +27,6 @@ import java.util.function.Consumer;
 public class UserEventListener {
 
     private final UserStatsService userStatsService;
-    private final UserProfileService userProfileService;
     private final NotificationService notificationService;
 
     @Async
@@ -34,13 +36,6 @@ public class UserEventListener {
         UserProfile userProfile = userLoginEvent.getUserProfile();
 
         log.debug("Received UserLoginEvent for userId {}", userId);
-
-        userProfile.setLastLogin(LocalDateTime.now());
-        userProfileService.update(userProfile);
-
-        userStatsService.incrementStats(userId, stats -> {
-            stats.setTotalViews(stats.getTotalViews() + 1);
-        });
 
         if (userProfile.getEmail() == null || userProfile.getEmail().isEmpty()) {
             notificationService.sendNotification(NotificationDto.builder()

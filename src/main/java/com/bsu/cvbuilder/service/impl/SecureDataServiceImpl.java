@@ -68,7 +68,7 @@ public class SecureDataServiceImpl implements SecureDataService {
     @Override
     public SecureData findByUserId(String id) {
         return secureDataRepository.findByUserId(id)
-                .orElseThrow(() -> new AppException("Security data not found for user: " + id, 401));
+                .orElseThrow(() -> new AppException("Login via outh2.0 with this email" + id, 401));
     }
 
     @Override
