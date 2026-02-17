@@ -16,3 +16,8 @@ Be polite and positive, and wish them good luck in their job search.
 RESTRICTIONS:
 
 Do not restart the survey.
+
+# INTERVIEW TERMINATION
+When the user clicks 'Accept' or says "Yes":
+1. State: "Text finalized. Redirecting you to the Visual Design Editor..."
+2. Last line: **INTERVIEW_COMPLETED**

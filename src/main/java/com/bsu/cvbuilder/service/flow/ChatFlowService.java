@@ -3,8 +3,11 @@ package com.bsu.cvbuilder.service.flow;
 import com.bsu.cvbuilder.domain.dto.ai.ChatFlowStep;
 import com.bsu.cvbuilder.domain.dto.ai.StepAnalysisResult;
 import com.bsu.cvbuilder.domain.entity.AiChat;
+import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.exception.AppException;
+import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.ChatService;
+import com.bsu.cvbuilder.service.ResumeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -29,14 +32,23 @@ public class ChatFlowService {
 
     private final ChatClient chatClient;
     private final ChatService chatService;
+    private final ResumeService resumeService;
     private final Map<ChatFlowStep, AbstractChatStepHandler> stepHandlers;
 
     @Autowired
-    public ChatFlowService(ChatClient chatClient, ChatService chatService, List<AbstractChatStepHandler> handlers) {
+    public ChatFlowService(ChatClient chatClient, ChatService chatService, ResumeService resumeService, List<AbstractChatStepHandler> handlers) {
         this.chatClient = chatClient;
         this.chatService = chatService;
+        this.resumeService = resumeService;
         this.stepHandlers = handlers.stream()
                 .collect(Collectors.toMap(AbstractChatStepHandler::getStep, Function.identity()));
+    }
+
+    public Resume extractFromChat(UUID chatId) {
+        log.debug("Extract from chat with id {}", chatId);
+        Resume resume = resumeService.findByChatId(chatId);
+        log.info("Extracted from chat with id {}", chatId);
+        return resume;
     }
 
     public SseEmitter processMessage(UUID chatId, String userMessage) {
@@ -44,10 +56,6 @@ public class ChatFlowService {
 
         AiChat chat = chatService.getChatById(chatId);
         SseEmitter emitter = new SseEmitter(0L);
-
-        if (chat.isFinished()) {
-            throw new AppException("This resume already completed", 400);
-        }
 
         AbstractChatStepHandler currentHandler = stepHandlers.get(chat.getChatFlowStep());
 

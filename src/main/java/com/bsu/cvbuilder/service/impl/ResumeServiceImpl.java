@@ -91,6 +91,10 @@ public class ResumeServiceImpl implements ResumeService {
     private Resume generateAndSave(UUID chatId) {
         AiChat chat = chatService.getChatById(chatId);
 
+        if (!chat.isFinished()) {
+            throw new AppException("Failed to convert not finished chat with id: " + chatId, 404);
+        }
+
         String contextHistory = chat.getMessages().stream()
                 .map(m -> String.format("%s: %s", m.getRole(), m.getContent()))
                 .collect(Collectors.joining("\n"));
