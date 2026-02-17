@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.service.schedule;
 
+import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.domain.entity.ImageMetadata;
 import com.bsu.cvbuilder.repository.ImageMetadataRepository;
 import com.bsu.cvbuilder.repository.UserProfileRepository;
@@ -24,8 +25,9 @@ public class OrphanImageCleanupService {
     private final UserProfileRepository userProfileRepository;
     private final GridFsTemplate gridFsTemplate;
 
-    @Scheduled(fixedRate = 5 * 60 * 1000)
     @Transactional
+    @Scheduled(fixedRate = 5 * 60 * 1000)
+    @Monitored(value = "scheduling.orphan_image", context = "cleanup")
     public void cleanupOrphanImages() {
 
         log.info("[CLEAN UP JOB]: Starting orphan images cleanup...");

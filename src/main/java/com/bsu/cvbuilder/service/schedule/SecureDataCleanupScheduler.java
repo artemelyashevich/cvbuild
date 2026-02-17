@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.service.schedule;
 
+import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.domain.entity.SecureData;
 import com.bsu.cvbuilder.domain.entity.SecureEvent;
 import com.bsu.cvbuilder.repository.SecureDataRepository;
@@ -21,6 +22,7 @@ public class SecureDataCleanupScheduler {
     private final SecureDataRepository repository;
 
     @Scheduled(fixedRate = 5 * 60 * 1000)
+    @Monitored(value = "scheduling.secure_data", context = "cleanup")
     public void cleanupExpiredSecureEvents() {
 
         long start = System.currentTimeMillis();

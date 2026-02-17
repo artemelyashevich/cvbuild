@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.service.schedule;
 
+import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.domain.entity.History;
 import com.bsu.cvbuilder.repository.HistoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class HistoryCleanupScheduler {
     private final HistoryRepository historyRepository;
 
     @Scheduled(fixedRate = 5 * 60 * 1000)
+    @Monitored(value = "scheduling.history", context = "cleanup")
     public void cleanupHistoryDuplicates() {
 
         long start = System.currentTimeMillis();
