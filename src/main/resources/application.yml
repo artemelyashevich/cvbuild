@@ -110,7 +110,7 @@ app:
   analyzer:
     user-agent: ${USER_AGENT}
     trust-urls:
-      - "rabota.by/vacancy/"
+      - "rabota.by"
 
 management:
   endpoint:

@@ -38,6 +38,11 @@ public class ResumeServiceImpl implements ResumeService {
     private final MongoTemplate mongoTemplate;
 
     @Override
+    public Resume save(Resume resume) {
+        return mongoTemplate.save(resume);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Page<Resume> findAll(Pageable pageable) {
         log.debug("Fetching page of resumes: {}", pageable);

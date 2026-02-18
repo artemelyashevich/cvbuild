@@ -6,8 +6,7 @@ import com.bsu.cvbuilder.domain.entity.AiChat;
 import com.bsu.cvbuilder.domain.entity.ChatMessage;
 import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.exception.AppException;
-import com.bsu.cvbuilder.service.ChatService;
-import com.bsu.cvbuilder.service.ResumeService;
+import com.bsu.cvbuilder.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -34,15 +33,21 @@ public class ChatFlowService {
     private final ChatClient chatClient;
     private final ChatService chatService;
     private final ResumeService resumeService;
+    private final JobParserService jobParserService;
+    private final AnalyzerService analyzerService;
+    private final SecurityService securityService;
     private final Map<ChatFlowStep, AbstractChatStepHandler> stepHandlers;
 
     public ChatFlowService(ChatClient chatClient,
                            ChatService chatService,
-                           ResumeService resumeService,
+                           ResumeService resumeService, JobParserService jobParserService, AnalyzerService analyzerService, SecurityService securityService,
                            List<AbstractChatStepHandler> handlers) {
         this.chatClient = chatClient;
         this.chatService = chatService;
         this.resumeService = resumeService;
+        this.jobParserService = jobParserService;
+        this.analyzerService = analyzerService;
+        this.securityService = securityService;
         this.stepHandlers = handlers.stream()
                 .collect(Collectors.toUnmodifiableMap(
                         AbstractChatStepHandler::getStep,
@@ -178,5 +183,13 @@ public class ChatFlowService {
                 .collect(Collectors.joining("\n"));
 
         return history + "\nUSER: " + currentUserMessage;
+    }
+
+    public String ats(UUID chatId, String link) {
+        log.debug("Attempting process ats for chatId={} and vacancy={}", chatId,  link);
+        Resume resume = resumeService.findByChatId(chatId);
+        String jobDescription = jobParserService.parse(link);
+        analyzerService.ats(resume, jobDescription, securityService.findCurrentUser());
+        return null;
     }
 }

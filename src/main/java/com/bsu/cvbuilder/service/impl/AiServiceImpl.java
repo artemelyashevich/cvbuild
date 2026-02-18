@@ -5,11 +5,15 @@ import com.bsu.cvbuilder.annotation.limit.Limited;
 import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.ai.AiRequestDto;
+import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.UserGenerateNewMessageEvent;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.PromptRegistryService;
 import com.bsu.cvbuilder.service.SecurityService;
+import com.bsu.cvbuilder.util.JsonHelper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -31,12 +35,14 @@ public class AiServiceImpl implements AiService {
     private static final String PROMPT_FINAL = "final";
     private static final String PROMPT_EXTRACTOR = "extractor";
     private static final String PROMPT_ANALYZER = "analyzer";
+    private static final String PROMPT_ATS = "ats";
     private static final String COMPLETED_SIGNAL = "COMPLETED";
 
     private final ChatClient chatClient;
     private final PromptRegistryService promptRegistryService;
     private final ApplicationProperties applicationProperties;
     private final SecurityService securityService;
+    private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
@@ -110,6 +116,28 @@ public class AiServiceImpl implements AiService {
                 .options(defaultOptions())
                 .call()
                 .content();
+    }
+
+    @Override
+    public ChatClient.CallResponseSpec callAtsOptimization(Resume resume, String jobDescription) {
+        log.debug("AI Call [ATS_OPTIMIZATION] for resume with id: {}]", resume.getId());
+
+        String atsPrompt = promptRegistryService.getPrompt(PROMPT_ATS);
+        String renderedPrompt = null;
+        try {
+            renderedPrompt = atsPrompt.formatted(objectMapper.writeValueAsString(resume), jobDescription);
+        } catch (JsonProcessingException e) {
+            log.error(e.getMessage(), e);
+        }
+
+        return chatClient.prompt()
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, resume.getChatId()))
+                .user(renderedPrompt)
+                .options(OllamaOptions.builder()
+                        .temperature((double)0)
+                        .numPredict(2000)
+                        .build())
+                .call();
     }
 
     private OllamaOptions defaultOptions() {

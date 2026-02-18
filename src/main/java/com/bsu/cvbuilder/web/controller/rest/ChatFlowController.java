@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -33,5 +34,12 @@ public class ChatFlowController {
     @PostMapping(value = "/generate/{chatId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public String generate(@PathVariable UUID chatId) {
         return chatFlowService.extractFromChat(chatId).getId();
+    }
+
+    @AgreementRequire
+    @EmailVerification
+    @PostMapping(value = "/ats/{chatId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String ats(@PathVariable String chatId, @RequestBody Map<String, String> body) {
+        return chatFlowService.ats(UUID.fromString(chatId), body.get("url"));
     }
 }

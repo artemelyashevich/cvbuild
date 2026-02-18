@@ -44,6 +44,11 @@ public class Resume {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
+    private String atsId;
+
+    @Builder.Default
+    private boolean isAts = false;
+
     @Getter
     @Setter
     @Builder

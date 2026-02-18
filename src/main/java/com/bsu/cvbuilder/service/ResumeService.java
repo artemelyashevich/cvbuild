@@ -9,6 +9,8 @@ import java.util.UUID;
 
 public interface ResumeService {
 
+    Resume save(Resume resume);
+
     Page<Resume> findAll(Pageable pageable);
 
     Resume findByChatId(UUID chatId);
