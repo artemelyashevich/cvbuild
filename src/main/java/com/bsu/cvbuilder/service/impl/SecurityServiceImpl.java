@@ -53,10 +53,7 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     @Monitored(value = "security_service.current", context = "internal")
     public UserProfile findCurrentUser() {
-        log.debug("Attempting to get current user profile");
-
         var login = getCurrentUserLogin();
-
         return userProfileService.findByLogin(login);
     }
 

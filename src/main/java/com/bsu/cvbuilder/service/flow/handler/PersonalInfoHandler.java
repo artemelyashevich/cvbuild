@@ -35,6 +35,7 @@ public class PersonalInfoHandler extends AbstractChatStepHandler {
             1. Full Name (First Name): Check presence in the text. (If present -> OK, if missing -> REQUIRED).
             2. Email: %s
             3. Phone: %s
+            4. Role
             
             IMPORTANT: If Email or Phone is marked as "REQUIRED", you MUST return completed = false.
             """.formatted(

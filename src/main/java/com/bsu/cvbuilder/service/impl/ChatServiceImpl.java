@@ -55,10 +55,10 @@ public class ChatServiceImpl implements ChatService {
     @Override
     @Transactional
     public Page<AiChat> findAllByCurrentUser(Pageable pageable) {
-        log.debug("Attempting to find all AiChats by current user");
         UserProfile user = securityService.findCurrentUser();
+        log.debug("Attempting to find all AiChats by current user: {}", user.getLogin());
         Page<AiChat> aiChats = aiChatRepository.findAllByUserId(pageable, user.getId());
-        log.info("Found all AiChats by current user");
+        log.info("Found all AiChats: {} by current user: {}", aiChats.getTotalElements(), user.getLogin());
         return aiChats;
     }
 

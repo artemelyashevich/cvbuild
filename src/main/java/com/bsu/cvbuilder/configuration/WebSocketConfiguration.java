@@ -31,7 +31,6 @@ import static com.bsu.cvbuilder.util.OAuthUtil.getOAuth2AuthenticationToken;
 public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer {
 
     private final JwtService jwtService;
-    private final SecurityProvider securityProvider;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
@@ -70,7 +69,6 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
                             OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(login, role);
                             ctx.setAuthentication(authentication);
                             SecurityContextHolder.setContext(ctx);
-                            securityProvider.setAuthentication(authentication);
                             accessor.setUser(authentication);
                         } catch (Exception e) {
                             log.error(e.getMessage(), e);

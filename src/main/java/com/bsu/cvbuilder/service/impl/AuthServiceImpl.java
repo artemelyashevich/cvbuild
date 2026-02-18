@@ -108,6 +108,7 @@ public class AuthServiceImpl implements AuthService {
         String token = securityProvider.getToken();
         Date expiration = jwtService.extractExpiration(token);
         blackListService.banToken(token, expiration);
+        securityProvider.setUserProfile(null);
         SecurityContextHolder.clearContext();
         publishLogoutEvent(token);
         log.info("User logged out");

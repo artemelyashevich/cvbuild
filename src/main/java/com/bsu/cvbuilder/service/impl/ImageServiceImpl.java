@@ -60,8 +60,6 @@ public class ImageServiceImpl implements ImageService {
 
     @Override
     public byte[] findById(final String id) {
-        log.debug("Downloading image: {}", id);
-
         GridFSFile gridFsFile = Optional.of(
                 gridFsTemplate.findOne(Query.query(Criteria.where("_id").is(id)))
         ).orElseThrow(() -> new AppException("Image not found: " + id, 404));
