@@ -13,4 +13,6 @@ public class UpdateUserRequest {
 
     @NotBlank(message = "Lastname must be not null")
     private String lastName;
+
+    private String email;
 }

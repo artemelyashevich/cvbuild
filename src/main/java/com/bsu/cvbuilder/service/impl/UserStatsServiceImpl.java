@@ -40,13 +40,9 @@ public class UserStatsServiceImpl implements UserStatsService {
     @Cacheable(value = CACHE_ID, key = "#id")
     public UserStats findByUserId(String id) {
         log.debug("Finding UserStats for user with id: {}", id);
-        UserStats userStats = userStatsRepository.findByUserId(id).orElseThrow(
-                () -> {
-                    String message = "UserStats not found for user with id: " + id;
-                    log.debug(message);
-                    return new AppException(message, 404);
-                }
-        );
+        UserStats userStats = userStatsRepository.findByUserId(id).orElseGet(() -> save(UserStats.builder()
+                .userId(id)
+                .build()));
         log.debug("Found UserStats for user with id: {}", userStats.getUserId());
         return userStats;
     }

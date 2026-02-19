@@ -115,7 +115,10 @@ public class UserProfileServiceImpl implements UserProfileService {
                 .or(() -> userProfileRepository.findByEmail(login))
                 .orElseGet(() -> {
                     log.info("User not found, preparing new profile for: {}", login);
-                    return UserProfile.builder().login(login).build();
+                    UserProfile userProfile = UserProfile.builder().login(login).build();
+                    UserProfile saved = userProfileRepository.save(userProfile);
+                    eventPublisher.publishEvent(new UserCreatedEvent(saved));
+                    return saved;
                 });
 
         user.setLastLogin(LocalDateTime.now());

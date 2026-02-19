@@ -20,6 +20,5 @@ public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "login", ignore = true)
-    @Mapping(target = "email", ignore = true)
     void updateEntity(UserProfile source, @MappingTarget UserProfile target);
 }

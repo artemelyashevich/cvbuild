@@ -119,6 +119,7 @@ public class AiServiceImpl implements AiService {
     }
 
     @Override
+    @Monitored(value = "calling_ai_ats_optimization", context = "ai")
     public ChatClient.CallResponseSpec callAtsOptimization(Resume resume, String jobDescription) {
         log.debug("AI Call [ATS_OPTIMIZATION] for resume with id: {}]", resume.getId());
 

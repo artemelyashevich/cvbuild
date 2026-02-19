@@ -50,6 +50,7 @@ public class UserProfileController {
         var profile = securityService.findCurrentUser();
         profile.setFirstName(request.getFirstName());
         profile.setLastName(request.getLastName());
+        profile.setEmail(request.getEmail());
         return responseMapper.toDto(userProfileService.update(profile));
     }
 

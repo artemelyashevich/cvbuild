@@ -17,8 +17,10 @@ import com.bsu.cvbuilder.service.SecureDataService;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.service.UserProfileService;
 import com.bsu.cvbuilder.util.SecretDecodeUtil;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -46,9 +48,15 @@ public class SecurityServiceImpl implements SecurityService {
     private final ApplicationEventPublisher applicationEventPublisher;
     private final SecurityProvider securityProvider;
     private final OtpService otpService;
+    private ThreadLocal<UserProfile> profileThreadLocal;
 
     @Value("${app.security.oauth2.enabled:false}")
     private boolean oauth2Enabled;
+
+    @PostConstruct
+    public void init() {
+        profileThreadLocal = new ThreadLocal<>();
+    }
 
     @Override
     @Monitored(value = "security_service.current", context = "internal")
@@ -96,6 +104,8 @@ public class SecurityServiceImpl implements SecurityService {
             event.setData(data);
             applicationEventPublisher.publishEvent(event);
         }
+
+        profileThreadLocal.set(user);
 
         return response;
     }
