@@ -13,7 +13,7 @@ public class AuthIntegrationTestData {
     public static final String AUTH_BASE_URL = "/api/v1/auth";
 
     public static AuthResponse createMockResponse() {
-        return new AuthResponse("access-token-abc", "refresh-token-xyz");
+        return AuthResponse.builder().accessToken("access-token-abc").refreshToken("refresh-token-xyz").build();
     }
 
     public static Stream<Arguments> registerIntegrationProvider() {

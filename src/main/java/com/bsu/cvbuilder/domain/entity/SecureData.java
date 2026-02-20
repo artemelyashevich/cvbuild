@@ -44,6 +44,9 @@ public class SecureData {
     @ToString.Exclude
     private String password;
 
+    @Builder.Default
+    private Boolean secondAuthPhaseRequire = false;
+
     @ToString.Exclude
     @Builder.Default
     private Map<SecureEvent, List<LocalDateTime>> secureEvents = new HashMap<>();

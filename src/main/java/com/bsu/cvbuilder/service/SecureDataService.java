@@ -11,7 +11,7 @@ public interface SecureDataService {
 
     SecureData prepareData(UserProfile userProfile);
 
-    void checkData(UserProfile userProfile, AuthRequest authRequest);
+    boolean checkCredsAndIf2faIsRequire(UserProfile userProfile, AuthRequest authRequest);
 
     SecureData findByUserId(String id);
 

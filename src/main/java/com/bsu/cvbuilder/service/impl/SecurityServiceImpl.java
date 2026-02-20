@@ -48,15 +48,9 @@ public class SecurityServiceImpl implements SecurityService {
     private final ApplicationEventPublisher applicationEventPublisher;
     private final SecurityProvider securityProvider;
     private final OtpService otpService;
-    private ThreadLocal<UserProfile> profileThreadLocal;
 
     @Value("${app.security.oauth2.enabled:false}")
     private boolean oauth2Enabled;
-
-    @PostConstruct
-    public void init() {
-        profileThreadLocal = new ThreadLocal<>();
-    }
 
     @Override
     @Monitored(value = "security_service.current", context = "internal")
@@ -93,10 +87,10 @@ public class SecurityServiceImpl implements SecurityService {
         try {
             var secureData = secureDataService.prepareData(user);
 
-            response = new AuthResponse(
-                    jwtService.generateToken(user, TokenType.ACCESS),
-                    SecretDecodeUtil.decode(secureData.getRefreshTokenEncoded(), applicationProperties.getSecurity().getDecodeSignature())
-            );
+            response = AuthResponse.builder()
+                    .accessToken(jwtService.generateToken(user, TokenType.ACCESS))
+                    .refreshToken(SecretDecodeUtil.decode(secureData.getRefreshTokenEncoded(), applicationProperties.getSecurity().getDecodeSignature()))
+                    .build();
         } catch (Exception e) {
             log.error(e.getMessage());
             data.put("error", e.getMessage());
@@ -104,9 +98,6 @@ public class SecurityServiceImpl implements SecurityService {
             event.setData(data);
             applicationEventPublisher.publishEvent(event);
         }
-
-        profileThreadLocal.set(user);
-
         return response;
     }
 

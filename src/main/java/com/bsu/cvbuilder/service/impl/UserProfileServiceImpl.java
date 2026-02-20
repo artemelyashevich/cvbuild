@@ -131,9 +131,13 @@ public class UserProfileServiceImpl implements UserProfileService {
             @CacheEvict(value = CACHE_EMAIL, key = "#result.email", condition = "#result.email != null"),
             @CacheEvict(value = CACHE_LOGIN, key = "#result.login", condition = "#result.login != null")
     })
+    @Transactional
     public UserProfile update(UserProfile profile) {
         log.debug("Updating user profile: {}", profile.getId());
         UserProfile existingUser = findById(profile.getId());
+        if (userProfileRepository.existsByEmail(profile.getEmail()) && !existingUser.getEmail().equals(profile.getEmail())) {
+            throw new AppException("User this such email already exists", 400);
+        }
         userMapper.updateEntity(profile, existingUser);
         return userProfileRepository.save(existingUser);
     }

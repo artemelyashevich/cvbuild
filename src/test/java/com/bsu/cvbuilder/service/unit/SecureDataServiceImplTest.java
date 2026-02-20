@@ -110,7 +110,7 @@ class SecureDataServiceImplTest {
         when(passwordEncoder.matches("password", "encoded-password")).thenReturn(true);
 
         // Act & Assert
-        assertDoesNotThrow(() -> secureDataService.checkData(user, request));
+        assertDoesNotThrow(() -> secureDataService.checkCredsAndIf2faIsRequire(user, request));
     }
 
     @Test
@@ -125,7 +125,7 @@ class SecureDataServiceImplTest {
         when(passwordEncoder.matches("wrong", "encoded-password")).thenReturn(false);
 
         // Act & Assert
-        var ex = assertThrows(AppException.class, () -> secureDataService.checkData(user, request));
+        var ex = assertThrows(AppException.class, () -> secureDataService.checkCredsAndIf2faIsRequire(user, request));
         assertEquals(401, ex.getStatusCode());
         assertEquals("Invalid credentials", ex.getMessage());
     }
@@ -138,7 +138,7 @@ class SecureDataServiceImplTest {
         when(secureDataRepository.findByUserId("non-existent")).thenReturn(Optional.empty());
 
         // Act & Assert
-        var ex = assertThrows(AppException.class, () -> secureDataService.checkData(user, new AuthRequest("a", "b")));
+        var ex = assertThrows(AppException.class, () -> secureDataService.checkCredsAndIf2faIsRequire(user, new AuthRequest("a", "b")));
         assertEquals(401, ex.getStatusCode());
     }
 

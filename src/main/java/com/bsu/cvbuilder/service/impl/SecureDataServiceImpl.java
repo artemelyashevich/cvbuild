@@ -56,13 +56,18 @@ public class SecureDataServiceImpl implements SecureDataService {
     }
 
     @Override
-    public void checkData(UserProfile userProfile, AuthRequest authRequest) {
+    public boolean checkCredsAndIf2faIsRequire(UserProfile userProfile, AuthRequest authRequest) {
         SecureData secureData = findByUserId(userProfile.getId());
 
         if (!passwordEncoder.matches(authRequest.password(), secureData.getPassword())) {
             log.warn("Password mismatch for user: {}", userProfile.getLogin());
             throw new AppException("Invalid credentials", 401);
         }
+        if (secureData.getSecondAuthPhaseRequire() == null) {
+            secureData.setSecondAuthPhaseRequire(false);
+            secureDataRepository.save(secureData);
+        }
+        return secureData.getSecondAuthPhaseRequire();
     }
 
     @Override

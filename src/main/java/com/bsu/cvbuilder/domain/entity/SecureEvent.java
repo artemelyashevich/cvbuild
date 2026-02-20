@@ -10,6 +10,7 @@ import java.time.Duration;
 public enum SecureEvent {
     setPassword(Duration.ofDays(30)),
     resetPassword(Duration.ofDays(1)),
+    enable2fa(Duration.ofMinutes(10)),
     verifyEmail(Duration.ofDays(7)),
     changeNotificationEngine(Duration.ofMinutes(5));
 

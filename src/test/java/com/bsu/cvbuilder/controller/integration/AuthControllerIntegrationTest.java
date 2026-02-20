@@ -45,7 +45,7 @@ class AuthControllerIntegrationTest extends AbstractTest {
         assertAll(
                 () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED),
                 () -> assertThat(response.getBody()).isNotNull(),
-                () -> assertThat(response.getBody().accessToken()).isEqualTo(mockResponse.accessToken()),
+                () -> assertThat(response.getBody().getAccessToken()).isEqualTo(mockResponse.getAccessToken()),
                 () -> verify(authService).register(request)
         );
     }
@@ -68,7 +68,7 @@ class AuthControllerIntegrationTest extends AbstractTest {
         // Assert
         assertAll(
                 () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED),
-                () -> assertThat(response.getBody().refreshToken()).isEqualTo(mockResponse.refreshToken()),
+                () -> assertThat(response.getBody().getRefreshToken()).isEqualTo(mockResponse.getRefreshToken()),
                 () -> verify(authService).authenticate(request)
         );
     }
@@ -91,7 +91,7 @@ class AuthControllerIntegrationTest extends AbstractTest {
         // Assert
         assertAll(
                 () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED),
-                () -> assertThat(response.getBody().accessToken()).isEqualTo(mockResponse.accessToken()),
+                () -> assertThat(response.getBody().getAccessToken()).isEqualTo(mockResponse.getRefreshToken()),
                 () -> verify(authService).refreshToken(request)
         );
     }

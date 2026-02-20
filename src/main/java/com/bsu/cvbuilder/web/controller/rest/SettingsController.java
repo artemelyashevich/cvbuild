@@ -38,4 +38,10 @@ public class SettingsController {
     public void agree() {
         settingsService.agree();
     }
+
+    @EmailVerification
+    @PostMapping("/2fa")
+    public void disagree() {
+        settingsService.enable2fa();
+    }
 }

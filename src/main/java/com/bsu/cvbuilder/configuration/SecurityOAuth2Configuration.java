@@ -74,8 +74,8 @@ public class SecurityOAuth2Configuration {
         try {
             var authResponse = securityService.authenticate(authentication);
 
-            response.addCookie(createCookie("access_token", authResponse.accessToken(), 3600, false));
-            response.addCookie(createCookie("refresh_token", authResponse.refreshToken(), 604800, true));
+            response.addCookie(createCookie("access_token", authResponse.getAccessToken(), 3600, false));
+            response.addCookie(createCookie("refresh_token", authResponse.getRefreshToken(), 604800, true));
 
             response.sendRedirect(applicationProperties.getSecurity().getOauthRedirectUrl());
         } catch (Exception e) {

@@ -107,8 +107,8 @@ class SecurityServiceImplTest {
 
             // Assert
             assertAll(
-                    () -> assertEquals("access-token", result.accessToken()),
-                    () -> assertEquals("decoded-refresh", result.refreshToken()),
+                    () -> assertEquals("access-token", result.getAccessToken()),
+                    () -> assertEquals("decoded-refresh", result.getRefreshToken()),
                     () -> verify(notificationService).sendNotification(any(NotificationDto.class))
             );
         }

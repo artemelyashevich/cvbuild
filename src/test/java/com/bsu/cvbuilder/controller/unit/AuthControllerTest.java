@@ -42,8 +42,8 @@ class AuthControllerTest {
 
         // Assert
         assertAll(
-                () -> assertEquals(expectedResponse.accessToken(), actualResponse.accessToken()),
-                () -> assertEquals(expectedResponse.refreshToken(), actualResponse.refreshToken()),
+                () -> assertEquals(expectedResponse.getAccessToken(), actualResponse.getRefreshToken()),
+                () -> assertEquals(expectedResponse.getRefreshToken(), actualResponse.getRefreshToken()),
                 () -> verify(authService).register(request)
         );
     }
@@ -61,7 +61,7 @@ class AuthControllerTest {
 
         // Assert
         assertAll(
-                () -> assertEquals(expectedResponse.accessToken(), actualResponse.accessToken()),
+                () -> assertEquals(expectedResponse.getAccessToken(), actualResponse.getAccessToken()),
                 () -> verify(authService).authenticate(request)
         );
     }
@@ -79,7 +79,7 @@ class AuthControllerTest {
 
         // Assert
         assertAll(
-                () -> assertEquals(expectedResponse.accessToken(), actualResponse.accessToken()),
+                () -> assertEquals(expectedResponse.getAccessToken(), actualResponse.getAccessToken()),
                 () -> verify(authService).refreshToken(request)
         );
     }

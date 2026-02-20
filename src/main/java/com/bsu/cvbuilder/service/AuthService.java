@@ -1,6 +1,7 @@
 package com.bsu.cvbuilder.service;
 
 import com.bsu.cvbuilder.domain.dto.auth.*;
+import jakarta.validation.Valid;
 
 public interface AuthService {
 
@@ -11,4 +12,6 @@ public interface AuthService {
     AuthResponse refreshToken(RefreshRequest refreshRequest);
 
     void logout();
+
+    AuthResponse verify2fa(@Valid Verify2faRequest verify2faRequest);
 }

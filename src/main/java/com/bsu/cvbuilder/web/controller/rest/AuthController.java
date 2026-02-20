@@ -1,9 +1,6 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
-import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
-import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
-import com.bsu.cvbuilder.domain.dto.auth.RefreshRequest;
-import com.bsu.cvbuilder.domain.dto.auth.RegisterAuthDto;
+import com.bsu.cvbuilder.domain.dto.auth.*;
 import com.bsu.cvbuilder.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -77,6 +74,11 @@ public class AuthController {
             @RequestBody @Valid RefreshRequest request
     ) {
         return authService.refreshToken(request);
+    }
+
+    @PostMapping("/2fa")
+    public AuthResponse verify2fa(@Valid @RequestBody Verify2faRequest verify2faRequest) {
+        return authService.verify2fa(verify2faRequest);
     }
 
     @PostMapping("/logout")

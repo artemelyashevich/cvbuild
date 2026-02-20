@@ -12,4 +12,6 @@ public interface SettingsService {
     void agree();
 
     void deleteAccount();
+
+    void enable2fa();
 }

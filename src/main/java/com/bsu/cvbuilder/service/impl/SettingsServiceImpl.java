@@ -121,4 +121,15 @@ public class SettingsServiceImpl implements SettingsService {
         });
         log.info("Account has been deleted: {}", user.getLogin());
     }
+
+    @Override
+    public void enable2fa() {
+        UserProfile user = securityService.findCurrentUser();
+        log.debug("Attempting to enable 2FA for user: {}", user.getLogin());
+        secureDataService.validateNewEvent(user.getId(), SecureEvent.enable2fa);
+        secureDataService.update(user.getId(), SecureEvent.enable2fa, data -> {
+            data.setSecondAuthPhaseRequire(!data.getSecondAuthPhaseRequire());
+            log.info("2FA has been enabled for user: {} / {}", user.getLogin(), data.getSecondAuthPhaseRequire());
+        });
+    }
 }
