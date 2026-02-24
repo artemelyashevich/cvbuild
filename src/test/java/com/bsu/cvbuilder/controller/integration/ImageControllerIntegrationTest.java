@@ -90,7 +90,7 @@ class ImageControllerIntegrationTest extends AbstractTest {
         var mockFile = mock(com.mongodb.client.gridfs.model.GridFSFile.class);
         when(mockFile.getId()).thenReturn(new org.bson.BsonString(mockId));
 
-        when(imageService.create(any(MultipartFile.class), eq(userId)));//.thenReturn(mockFile);
+        when(imageService.create(any(MultipartFile.class), eq(userId)));
 
         var headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);

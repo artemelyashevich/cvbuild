@@ -16,6 +16,7 @@ import com.bsu.cvbuilder.service.OtpService;
 import com.bsu.cvbuilder.service.SecureDataService;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.service.UserProfileService;
+import com.bsu.cvbuilder.util.OtpKeyUtil;
 import com.bsu.cvbuilder.util.SecretDecodeUtil;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -105,7 +106,7 @@ public class SecurityServiceImpl implements SecurityService {
     @Transactional(rollbackFor = Exception.class)
     public void checkOtp(String otp) {
         UserProfile profile = findCurrentUser();
-        otpService.validateOtp(profile, otp);
+        otpService.validateOtp(profile, otp, OtpKeyUtil.EMAIL_KEY + profile.getEmail());
         profile.setEmailVerified(true);
         userProfileService.update(profile);
         sendVerificationSuccessNotification(profile);
@@ -125,7 +126,7 @@ public class SecurityServiceImpl implements SecurityService {
             return;
         }
         secureDataService.validateNewEvent(userProfile.getId(), SecureEvent.verifyEmail);
-        String otp = otpService.create(userProfile);
+        String otp = otpService.create(userProfile, OtpKeyUtil.EMAIL_KEY + userProfile.getEmail());
         notificationService.sendNotification(NotificationDto.builder()
                 .engine(NotificationEngine.EMAIL)
                 .receiver(userProfile.getEmail())

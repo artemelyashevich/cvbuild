@@ -17,6 +17,7 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
 @RequiredArgsConstructor
 public class HistoryEventRepositoryImpl implements HistoryEventRepository {
 
+    public static final String EVENTS_ARRAY = "eventsArray";
     private final MongoTemplate mongoTemplate;
 
     @Override
@@ -24,15 +25,15 @@ public class HistoryEventRepositoryImpl implements HistoryEventRepository {
         Aggregation aggregation = Aggregation.newAggregation(
             match(Criteria.where("userId").is(id)),
             project("id")
-                .and(ObjectOperators.ObjectToArray.valueOfToArray("events")).as("eventsArray"),
-            unwind("eventsArray"),
+                .and(ObjectOperators.ObjectToArray.valueOfToArray("events")).as(EVENTS_ARRAY),
+            unwind(EVENTS_ARRAY),
             sort(Sort.Direction.ASC, "eventsArray.k"),
             skip((long) page * size),
             limit(size),
             group("_id")
-                .push("eventsArray").as("eventsArray"),
+                .push(EVENTS_ARRAY).as(EVENTS_ARRAY),
             project("id")
-                .and(ArrayOperators.ArrayToObject.arrayToObject("eventsArray")).as("events")
+                .and(ArrayOperators.ArrayToObject.arrayToObject(EVENTS_ARRAY)).as("events")
         );
         return mongoTemplate.aggregate(aggregation, "history", HistoryEventsDto.class)
                             .getUniqueMappedResult();

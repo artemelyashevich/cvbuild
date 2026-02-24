@@ -23,8 +23,4 @@ public abstract class AbstractChatStepHandler {
     public String getSystemPrompt() {
         return promptRegistryService.getPrompt(getStep().name().toLowerCase());
     }
-
-    public boolean isStepCompleted(String userLastMessage) {
-        return false;
-    }
 }

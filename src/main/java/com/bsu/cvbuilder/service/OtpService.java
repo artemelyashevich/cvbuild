@@ -4,9 +4,9 @@ import com.bsu.cvbuilder.domain.entity.UserProfile;
 
 public interface OtpService {
 
-    String create(UserProfile userProfile);
+    String create(UserProfile userProfile, String key);
 
-    boolean validateOtp(UserProfile userProfile, String otp);
+    boolean validateOtp(UserProfile userProfile, String otp, String key);
 
     boolean exists(String key);
 }

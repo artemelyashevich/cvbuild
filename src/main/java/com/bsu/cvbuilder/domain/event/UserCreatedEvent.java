@@ -7,7 +7,7 @@ import lombok.Getter;
 public class UserCreatedEvent extends AbstractEvent {
 
     @Getter
-    private final UserProfile user;
+    private final transient UserProfile user;
 
     @Builder
     public UserCreatedEvent(UserProfile user) {

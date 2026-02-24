@@ -20,6 +20,7 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -39,6 +40,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final ImageService imageService;
     private final UserMapper userMapper;
     private final SecurityProvider securityProvider;
+    private final TransactionTemplate transactionTemplate;
 
     @Override
     @Transactional(readOnly = true)
@@ -73,7 +75,6 @@ public class UserProfileServiceImpl implements UserProfileService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     @Cacheable(value = CACHE_ID, key = "#id")
     public UserProfile findById(String id) {
         log.debug("Finding user profile by id: {}", id);
@@ -131,15 +132,16 @@ public class UserProfileServiceImpl implements UserProfileService {
             @CacheEvict(value = CACHE_EMAIL, key = "#result.email", condition = "#result.email != null"),
             @CacheEvict(value = CACHE_LOGIN, key = "#result.login", condition = "#result.login != null")
     })
-    @Transactional
     public UserProfile update(UserProfile profile) {
         log.debug("Updating user profile: {}", profile.getId());
-        UserProfile existingUser = findById(profile.getId());
-        if (userProfileRepository.existsByEmail(profile.getEmail()) && !existingUser.getEmail().equals(profile.getEmail())) {
-            throw new AppException("User this such email already exists", 400);
-        }
-        userMapper.updateEntity(profile, existingUser);
-        return userProfileRepository.save(existingUser);
+        return transactionTemplate.execute(s -> {
+            UserProfile existingUser = findById(profile.getId());
+            if (userProfileRepository.existsByEmail(profile.getEmail()) && !existingUser.getEmail().equals(profile.getEmail())) {
+                throw new AppException("User this such email already exists", 400);
+            }
+            userMapper.updateEntity(profile, existingUser);
+            return userProfileRepository.save(existingUser);
+        });
     }
 
     @Override

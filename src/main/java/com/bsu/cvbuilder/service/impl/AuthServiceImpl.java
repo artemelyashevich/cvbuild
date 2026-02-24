@@ -10,6 +10,7 @@ import com.bsu.cvbuilder.domain.event.LogoutEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.*;
 import com.bsu.cvbuilder.service.mapper.UserMapper;
+import com.bsu.cvbuilder.util.OtpKeyUtil;
 import com.bsu.cvbuilder.util.SecretDecodeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -110,7 +111,7 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse verify2fa(Verify2faRequest verify2faRequest) {
         log.debug("Attempting verify2fa user with email: {}", verify2faRequest.email());
         UserProfile user = userProfileService.findByEmail(verify2faRequest.email());
-        otpService.validateOtp(user, verify2faRequest.code());
+        otpService.validateOtp(user, verify2faRequest.code(), OtpKeyUtil.EMAIL_KEY + user.getEmail());
         log.info("Verify2fa user with email: {}", verify2faRequest.email());
         return auth(user);
     }

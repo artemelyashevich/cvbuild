@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -23,9 +24,9 @@ public class ChatServiceImpl implements ChatService {
 
     private final SecurityService securityService;
     private final AiChatRepository aiChatRepository;
+    private final TransactionTemplate transactionTemplate;
 
     @Override
-    @Transactional
     public AiChat createAiChat(UUID chatId) {
         log.debug("Attempting to create a new AiChat with id {}", chatId);
         UserProfile user = securityService.findCurrentUser();
@@ -41,8 +42,10 @@ public class ChatServiceImpl implements ChatService {
     @Monitored(value = "finding_chat", context = "api")
     public AiChat getChatById(UUID chatId) {
         log.debug("Attempting to get AiChat with id {}", chatId);
-        Optional<AiChat> byId = aiChatRepository.findById(chatId);
-        return byId.orElseGet(() -> createAiChat(chatId));
+        return transactionTemplate.execute(s -> {
+            Optional<AiChat> byId = aiChatRepository.findById(chatId);
+            return byId.orElseGet(() -> createAiChat(chatId));
+        });
     }
 
     @Override

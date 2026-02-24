@@ -36,7 +36,7 @@ public abstract class AbstractEvent implements Serializable {
         return map;
     }
 
-    public AbstractEvent(String userId) {
+    public AbstractEvent(String userId) { // NOSONAR
         this.userId = userId;
         data = new ThreadLocal<>();
     }

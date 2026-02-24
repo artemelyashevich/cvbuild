@@ -21,6 +21,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @Service
@@ -60,9 +61,7 @@ public class SettingsServiceImpl implements SettingsService {
             throw new AppException("Password already set", 401);
         }
 
-        secureDataService.update(userProfile.getId(), SecureEvent.setPassword, data -> {
-            data.setPassword(passwordEncoder.encode(passwordDto.newPassword()));
-        });
+        secureDataService.update(userProfile.getId(), SecureEvent.setPassword, data -> data.setPassword(passwordEncoder.encode(passwordDto.newPassword())));
 
         log.info("Password updated for user {}", userProfile.getLogin());
         applicationEventPublisher.publishEvent(new SetPasswordEvent(userProfile.getId()));
@@ -123,13 +122,16 @@ public class SettingsServiceImpl implements SettingsService {
     }
 
     @Override
-    public void enable2fa() {
+    public boolean enable2fa() {
         UserProfile user = securityService.findCurrentUser();
         log.debug("Attempting to enable 2FA for user: {}", user.getLogin());
         secureDataService.validateNewEvent(user.getId(), SecureEvent.enable2fa);
+        AtomicBoolean isEnabled = new AtomicBoolean(false);
         secureDataService.update(user.getId(), SecureEvent.enable2fa, data -> {
+            isEnabled.set(!data.getSecondAuthPhaseRequire());
             data.setSecondAuthPhaseRequire(!data.getSecondAuthPhaseRequire());
             log.info("2FA has been enabled for user: {} / {}", user.getLogin(), data.getSecondAuthPhaseRequire());
         });
+        return isEnabled.get();
     }
 }

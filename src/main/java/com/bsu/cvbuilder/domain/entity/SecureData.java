@@ -10,11 +10,7 @@ import lombok.ToString;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Getter
 @Setter
@@ -49,11 +45,11 @@ public class SecureData {
 
     @ToString.Exclude
     @Builder.Default
-    private Map<SecureEvent, List<LocalDateTime>> secureEvents = new HashMap<>();
+    private Map<SecureEvent, List<LocalDateTime>> secureEvents = new EnumMap<>(SecureEvent.class);
 
     public void addEvent(SecureEvent event) {
         if (this.secureEvents == null) {
-            this.secureEvents = new HashMap<>();
+            this.secureEvents = new EnumMap<>(SecureEvent.class);
         }
         this.secureEvents.computeIfAbsent(event, k -> new ArrayList<>())
                 .add(LocalDateTime.now());

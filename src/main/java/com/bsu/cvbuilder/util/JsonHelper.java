@@ -1,11 +1,8 @@
 package com.bsu.cvbuilder.util;
 
-import com.bsu.cvbuilder.exception.AppException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Objects;
 
 @Slf4j
 @UtilityClass
@@ -24,27 +21,6 @@ public class JsonHelper {
         } catch (Exception ex) {
             log.warn(FAILED, ex.getMessage());
             return null;
-        }
-    }
-
-    public static Object fromJson(String json, Class valueClass) {
-        if (json == null) {
-            return null;
-        }
-        try {
-            return mapper.readValue(json, valueClass);
-        } catch (Exception ex) {
-            log.warn(FAILED, ex.getMessage());
-            return null;
-        }
-    }
-
-    public static <T> T parseString(String json, Class<T> valueClass) {
-        try {
-            Objects.requireNonNull(json, "json is null");
-            return mapper.readValue(json, valueClass);
-        } catch (Exception e) {
-            throw new AppException("Can't parse string '" + json + "'", 500);
         }
     }
 }

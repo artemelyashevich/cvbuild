@@ -41,7 +41,7 @@ public class SettingsController {
 
     @EmailVerification
     @PostMapping("/2fa")
-    public void disagree() {
-        settingsService.enable2fa();
+    public boolean disagree() {
+        return settingsService.enable2fa();
     }
 }

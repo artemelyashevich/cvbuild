@@ -4,7 +4,6 @@ import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.AbstractEvent;
 import com.bsu.cvbuilder.domain.event.CheckOtpEvent;
-import com.bsu.cvbuilder.domain.event.VerifyEmailRequestEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.OtpService;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +24,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class OtpServiceImpl implements OtpService {
 
-    private static final String OTP_KEY = "otp:email:";
     private static final String ATTEMPTS_KEY = "otp:attempts:";
     private static final String BLOCKED_KEY = "otp:blocked:";
     private static final String EVENT_KEY = "status";
@@ -41,7 +38,7 @@ public class OtpServiceImpl implements OtpService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     @Override
-    public String create(UserProfile userProfile) {
+    public String create(UserProfile userProfile, String key) {
         String email = userProfile.getEmail();
         validateEmail(email);
 
@@ -52,8 +49,7 @@ public class OtpServiceImpl implements OtpService {
 
         String otp = String.format("%06d", SECURE_RANDOM.nextInt(1000000));
 
-        redisTemplate.opsForValue().set(OTP_KEY + email, otp,
-                Duration.ofSeconds(applicationProperties.getCache().getVerification()));
+        redisTemplate.opsForValue().set(key, otp, Duration.ofSeconds(applicationProperties.getCache().getVerification()));
         redisTemplate.delete(ATTEMPTS_KEY + email);
 
         log.info("New OTP created for user: {}", email);
@@ -61,7 +57,7 @@ public class OtpServiceImpl implements OtpService {
     }
 
     @Override
-    public boolean validateOtp(UserProfile userProfile, String otp) {
+    public boolean validateOtp(UserProfile userProfile, String otp, String key) {
         String email = userProfile.getEmail();
         String userId = userProfile.getId();
 
@@ -72,7 +68,7 @@ public class OtpServiceImpl implements OtpService {
             throw new AppException("Your account is temporarily blocked from OTP verification", 429);
         }
 
-        String storedOtp = redisTemplate.opsForValue().get(OTP_KEY + email);
+        String storedOtp = redisTemplate.opsForValue().get(key);
 
         if (storedOtp == null) {
             publishOtpCheckEvent(userId, "otp expired / (never requested)");
@@ -86,21 +82,21 @@ public class OtpServiceImpl implements OtpService {
 
         if (isMatch) {
             publishOtpCheckEvent(userId, "otp verified");
-            clearOtpData(email);
+            clearOtpData(email, key);
             return true;
         } else {
             publishOtpCheckEvent(userId, "otp invalid");
-            handleFailedAttempt(email);
+            handleFailedAttempt(email, key);
             return false;
         }
     }
 
     @Override
     public boolean exists(String key) {
-        return redisTemplate.opsForValue().get(OTP_KEY + key) != null;
+        return redisTemplate.opsForValue().get(key) != null;
     }
 
-    private void handleFailedAttempt(String email) {
+    private void handleFailedAttempt(String email, String otpKey) {
         String key = ATTEMPTS_KEY + email;
         Long attempts = redisTemplate.opsForValue().increment(key);
 
@@ -111,22 +107,22 @@ public class OtpServiceImpl implements OtpService {
         log.warn("Failed OTP attempt #{} for user: {}", attempts, email);
 
         if (attempts != null && attempts >= MAX_ATTEMPTS) {
-            blockUser(email);
+            blockUser(email, otpKey);
         }
     }
 
-    private void blockUser(String email) {
+    private void blockUser(String email, String key) {
         log.error("Blocking user {} due to too many failed OTP attempts", email);
 
         redisTemplate.opsForValue().set(BLOCKED_KEY + email, "blocked", BLOCK_DURATION);
 
-        clearOtpData(email);
+        clearOtpData(email, key);
 
         throw new AppException("Too many failed attempts. You are blocked for " + BLOCK_DURATION.toMinutes() + " minutes", 429);
     }
 
-    private void clearOtpData(String email) {
-        redisTemplate.delete(List.of(OTP_KEY + email, ATTEMPTS_KEY + email));
+    private void clearOtpData(String email, String key) {
+        redisTemplate.delete(List.of(key, ATTEMPTS_KEY + email));
     }
 
     private void validateEmail(String email) {

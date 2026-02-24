@@ -51,8 +51,8 @@ public class AnalyzerServiceImpl implements AnalyzerService {
         try {
             ChatClient.CallResponseSpec callResponseSpec = aiService.callAtsOptimization(resume, jobDescription);
             Resume optimizedResume = callResponseSpec.entity(converter);
-            optimizedResume.setId(null);
-            optimizedResume.setChatId(resume.getChatId().toString());
+            optimizedResume.setId(null); // NOSONAR
+            optimizedResume.setChatId(resume.getChatId());
             optimizedResume.setAts(true);
             transactionTemplate.execute(status -> {
                 Resume persistentResume = resumeService.save(optimizedResume);
