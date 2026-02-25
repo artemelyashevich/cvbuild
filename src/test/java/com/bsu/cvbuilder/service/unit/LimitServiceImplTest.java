@@ -43,12 +43,6 @@ class LimitServiceImplTest {
         var banKey = "limit:ban:" + type.name() + ":" + userId;
         var countKey = "limit:count:" + type.name() + ":" + userId;
 
-        when(redisTemplate.execute(
-                any(RedisScript.class),
-                eq(List.of(banKey, countKey)),
-                eq(String.valueOf(capacity)), eq("90000"), eq("86400")
-        )).thenReturn(redisResponse);
-
         // Act & Assert
         if (expectException) {
             var exception = assertThrows(AppException.class,

@@ -18,7 +18,7 @@ public class AuthIntegrationTestData {
 
     public static Stream<Arguments> registerIntegrationProvider() {
         return Stream.of(
-                Arguments.of(new RegisterAuthDto("new-user@test.com", "pass123", "John", "Doe"))
+                Arguments.of(new RegisterAuthDto("new-user@test.com", "pass123", "John@m.con", "Doee"))
         );
     }
 
@@ -30,7 +30,7 @@ public class AuthIntegrationTestData {
 
     public static Stream<Arguments> refreshIntegrationProvider() {
         return Stream.of(
-                Arguments.of(new RefreshRequest("valid-refresh-token"))
+                Arguments.of(new RefreshRequest("valid-refresh-token-11111111111111111111111111"))
         );
     }
 }

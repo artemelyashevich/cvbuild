@@ -111,7 +111,7 @@ public class AiChatController {
             @ApiResponse(responseCode = "403", description = "User agreement missing", content = @Content)
     })
     @AgreementRequire
-    @GetMapping("/{chatId}")
+    @GetMapping("/resume/{chatId}")
     @ResponseStatus(HttpStatus.OK)
     public Resume extract(
             @Parameter(description = "UUID string of the chat source", required = true)

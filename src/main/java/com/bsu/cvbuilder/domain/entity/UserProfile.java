@@ -47,6 +47,8 @@ public class UserProfile {
     @ToString.Include
     private String avatarUrl;
 
+    private String phoneNumber;
+
     @Builder.Default
     @ToString.Include
     private Role role = Role.USER;

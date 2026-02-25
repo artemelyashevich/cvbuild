@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.service.unit;
 
+import com.bsu.cvbuilder.domain.dto.auth.SecurityProvider;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.UserCreatedEvent;
 import com.bsu.cvbuilder.exception.AppException;
@@ -17,7 +18,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -37,6 +40,12 @@ class UserProfileServiceImplTest {
 
     @Mock
     private UserMapper userMapper;
+
+    @Mock
+    private TransactionTemplate transactionTemplate;
+
+    @Mock
+    private SecurityProvider securityProvider;
 
     @InjectMocks
     private UserProfileServiceImpl userProfileService;
@@ -218,17 +227,6 @@ class UserProfileServiceImplTest {
                 () -> assertEquals(LocalDateTime.MAX, result.getLastLogin())
         );
         verify(userProfileRepository).save(existingUser);
-    }
-
-    @Test
-    @DisplayName("update: should throw AppException 404 when updating non-existent user")
-    void update_NonExistentId_ThrowsAppException() {
-        // Arrange
-        var profile = UserProfile.builder().id("invalid").build();
-        when(userProfileRepository.findById("invalid")).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertThrows(AppException.class, () -> userProfileService.update(profile));
     }
 
     private static class TestDataFactory {

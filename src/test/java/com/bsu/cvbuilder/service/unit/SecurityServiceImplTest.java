@@ -9,6 +9,7 @@ import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.SecureDataRepository;
 import com.bsu.cvbuilder.service.*;
 import com.bsu.cvbuilder.service.impl.SecurityServiceImpl;
+import com.bsu.cvbuilder.util.OtpKeyUtil;
 import com.bsu.cvbuilder.util.SecretDecodeUtil;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -131,7 +132,7 @@ class SecurityServiceImplTest {
             contextMock.when(SecurityContextHolder::getContext).thenReturn(securityContext);
             when(securityContext.getAuthentication()).thenReturn(auth);
             when(userProfileService.findByLogin(login)).thenReturn(user);
-            when(otpService.create(user)).thenReturn("123456");
+            when(otpService.create(user, OtpKeyUtil.EMAIL_KEY)).thenReturn("123456");
 
             // Act
             securityService.checkOtp("123456");
@@ -160,7 +161,7 @@ class SecurityServiceImplTest {
 
             when(securityContext.getAuthentication()).thenReturn(auth);
             when(userProfileService.findByLogin(login)).thenReturn(user);
-            when(otpService.create(user)).thenReturn("123456");
+            when(otpService.create(user, OtpKeyUtil.EMAIL_KEY)).thenReturn("123456");
 
             // Act & Assert
             var ex = assertThrows(AppException.class, () -> securityService.checkOtp(wrongOtp));

@@ -49,7 +49,7 @@ public class AuthServiceImpl implements AuthService {
         UserProfile user = userProfileService.findByEmail(authRequest.email());
 
         if (secureDataService.checkCredsAndIf2faIsRequire(user, authRequest)) {
-            otpService.create(user);
+            otpService.create(user, OtpKeyUtil.SECOND_AUTH_PHASE_KEY);
             return AuthResponse.builder()
                     .secondPhaseEnabled(true)
                     .build();

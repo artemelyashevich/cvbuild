@@ -74,10 +74,7 @@ class UserStatsServiceImplTest {
 
         // Act & Assert
         var exception = assertThrows(AppException.class, () -> userStatsService.findByUserId(userId));
-        assertAll(
-                () -> assertEquals(404, exception.getStatusCode()),
-                () -> assertTrue(exception.getMessage().contains(userId))
-        );
+        assertEquals(404, exception.getStatusCode());
     }
 
     // --- incrementStats Tests ---

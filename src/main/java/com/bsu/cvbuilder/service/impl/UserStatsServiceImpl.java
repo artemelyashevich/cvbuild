@@ -43,6 +43,9 @@ public class UserStatsServiceImpl implements UserStatsService {
         UserStats userStats = userStatsRepository.findByUserId(id).orElseGet(() -> save(UserStats.builder()
                 .userId(id)
                 .build()));
+        if (userStats == null) {
+            throw new AppException(404);
+        }
         log.debug("Found UserStats for user with id: {}", userStats.getUserId());
         return userStats;
     }

@@ -6,6 +6,7 @@ import com.bsu.cvbuilder.domain.entity.Notification;
 import com.bsu.cvbuilder.repository.NotificationRepository;
 import com.bsu.cvbuilder.service.NotificationService;
 import com.bsu.cvbuilder.service.NotificationStrategy;
+import com.bsu.cvbuilder.util.MaskUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -58,7 +59,7 @@ public class NotificationServiceImpl implements NotificationService {
                     .content(notificationDto.getParameters())
                     .build());
 
-            log.info("Successfully sent notification to {}", notificationDto.getReceiver());
+            log.info("Successfully sent notification to {}", MaskUtil.maskFirstFive(notificationDto.getReceiver()));
         } catch (Exception e) {
             log.error("Failed to send notification to {}. Error: {}",
                     notificationDto.getReceiver(), e.getMessage());

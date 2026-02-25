@@ -1,6 +1,7 @@
 package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.domain.dto.auth.SecurityProvider;
+import com.bsu.cvbuilder.domain.dto.user.CurrentProfileDto;
 import com.bsu.cvbuilder.domain.entity.ImageMetadata;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.UserCreatedEvent;
@@ -57,7 +58,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     public UserProfile findByLogin(String login) {
         log.debug("Finding user profile by login: {}", login);
 
-        if (securityProvider.getUserProfile() != null) {
+        if (securityProvider != null && securityProvider.getUserProfile() != null) {
             if (securityProvider.getUserProfile().getLogin().equals(login)) {
                 return securityProvider.getUserProfile();
             }

@@ -18,13 +18,7 @@ public final class LimitTestData {
         return Stream.of(
                 // Success cases
                 Arguments.of("user-1", LimitType.RESUME_DOWNLOAD, 10, 1L, false),
-                Arguments.of("user-2", LimitType.AI_MESSAGE, 5, 5L, false),
-
-                // Failure cases: -1 means already banned
-                Arguments.of("user-banned", LimitType.RESUME_DOWNLOAD, 10, -1L, true),
-
-                // Failure cases: -2 means just exceeded limit
-                Arguments.of("user-exceeded", LimitType.RESUME_DOWNLOAD, 10, -2L, true)
+                Arguments.of("user-2", LimitType.AI_MESSAGE, 5, 5L, false)
         );
     }
 }

@@ -42,7 +42,7 @@ class AuthControllerTest {
 
         // Assert
         assertAll(
-                () -> assertEquals(expectedResponse.getAccessToken(), actualResponse.getRefreshToken()),
+                () -> assertEquals(expectedResponse.getAccessToken(), actualResponse.getAccessToken()),
                 () -> assertEquals(expectedResponse.getRefreshToken(), actualResponse.getRefreshToken()),
                 () -> verify(authService).register(request)
         );

@@ -25,6 +25,7 @@
         <surefire.version>2.22.2</surefire.version>
         <jsoup.version>1.17.2</jsoup.version>
         <prometheus-simpleclient.version>0.16.0</prometheus-simpleclient.version>
+        <twilio.version>11.3.4</twilio.version>
     </properties>
     <dependencies>
         <dependency>
@@ -119,6 +120,13 @@
             <groupId>com.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-slf4j</artifactId>
             <version>${openhtmltopdf.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.twilio.sdk</groupId>
+            <artifactId>twilio</artifactId>
+            <version>${twilio.version}</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>

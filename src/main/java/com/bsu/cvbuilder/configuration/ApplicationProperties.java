@@ -20,6 +20,7 @@ public class ApplicationProperties {
     private Cache cache;
     private Limit limit;
     private Analyzer analyzer;
+    private Twilio twilio;
 
     @Getter
     @Setter
@@ -85,5 +86,13 @@ public class ApplicationProperties {
         private String extractor;
         private String finalPhase;
         private String interviewer;
+    }
+
+    @Getter
+    @Setter
+    public static class Twilio {
+        private String accountSid;
+        private String authToken;
+        private String phoneNumber;
     }
 }

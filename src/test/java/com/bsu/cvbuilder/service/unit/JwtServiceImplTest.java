@@ -5,6 +5,7 @@ import com.bsu.cvbuilder.domain.dto.auth.TokenType;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.exception.AuthTokenException;
+import com.bsu.cvbuilder.service.BlackListService;
 import com.bsu.cvbuilder.service.impl.JwtServiceImpl;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -32,6 +33,9 @@ class JwtServiceImplTest {
 
     @Mock
     private ApplicationProperties.Security securityProps;
+
+    @Mock
+    private BlackListService blackListService;
 
     @InjectMocks
     private JwtServiceImpl jwtService;

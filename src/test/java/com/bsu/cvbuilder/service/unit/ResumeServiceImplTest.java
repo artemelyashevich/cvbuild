@@ -88,35 +88,6 @@ class ResumeServiceImplTest {
         verifyNoInteractions(aiService); // AI should not be called
     }
 
-    @Test
-    @DisplayName("findByChatId: should trigger AI generation if resume not found in DB")
-    void findByChatId_ResumeMissing_TriggersAiGeneration() {
-        // Arrange
-        var chatId = UUID.randomUUID();
-        var chatHistory = TestDataFactory.createChatWithMessages(chatId);
-        var generatedResume = Resume.builder().id("gen-1").build();
-
-        // Mock response spec for fluent AI call
-        var responseSpec = mock(ChatClient.CallResponseSpec.class);
-
-        when(mongoTemplate.findOne(any(Query.class), eq(Resume.class))).thenReturn(null);
-        when(chatService.getChatById(chatId)).thenReturn(chatHistory);
-        when(aiService.callExtractor(anyString(), eq(chatId))).thenReturn(responseSpec);
-        when(responseSpec.entity(any(BeanOutputConverter.class))).thenReturn(generatedResume);
-        when(mongoTemplate.save(any(Resume.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        // Act
-        var result = resumeService.findByChatId(chatId);
-
-        // Assert
-        assertAll(
-                () -> assertNotNull(result),
-                () -> assertEquals(chatId.toString(), result.getChatId()),
-                () -> verify(aiService).callExtractor(contains("USER: Hello"), eq(chatId)),
-                () -> verify(mongoTemplate).save(any(Resume.class))
-        );
-    }
-
     // --- findById Tests ---
 
     @Test
@@ -181,12 +152,10 @@ class ResumeServiceImplTest {
 
         when(mongoTemplate.findOne(any(Query.class), eq(Resume.class))).thenReturn(null);
         when(chatService.getChatById(chatId)).thenReturn(TestDataFactory.createChatWithMessages(chatId));
-        when(aiService.callExtractor(anyString(), eq(chatId))).thenReturn(responseSpec);
-        when(responseSpec.entity(any(BeanOutputConverter.class))).thenReturn(null);
 
         // Act & Assert
         var ex = assertThrows(AppException.class, () -> resumeService.findByChatId(chatId));
-        assertEquals(500, ex.getStatusCode());
+        assertEquals(404, ex.getStatusCode());
     }
 
     @Test
@@ -196,11 +165,10 @@ class ResumeServiceImplTest {
         var chatId = UUID.randomUUID();
         when(mongoTemplate.findOne(any(Query.class), eq(Resume.class))).thenReturn(null);
         when(chatService.getChatById(chatId)).thenReturn(TestDataFactory.createChatWithMessages(chatId));
-        when(aiService.callExtractor(anyString(), eq(chatId))).thenThrow(new RuntimeException("AI Down"));
 
         // Act & Assert
         var ex = assertThrows(AppException.class, () -> resumeService.findByChatId(chatId));
-        assertEquals(500, ex.getStatusCode());
+        assertEquals(404, ex.getStatusCode());
     }
 
     private static class TestDataFactory {
