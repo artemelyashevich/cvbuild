@@ -7,11 +7,13 @@ import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.ai.AiRequestDto;
 import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
+import com.bsu.cvbuilder.domain.event.CallAnalyzerEvent;
+import com.bsu.cvbuilder.domain.event.CallAtsEvent;
+import com.bsu.cvbuilder.domain.event.CallExtractorEvent;
 import com.bsu.cvbuilder.domain.event.UserGenerateNewMessageEvent;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.PromptRegistryService;
 import com.bsu.cvbuilder.service.SecurityService;
-import com.bsu.cvbuilder.util.JsonHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.ollama.api.OllamaOptions;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.UUID;
@@ -86,11 +89,13 @@ public class AiServiceImpl implements AiService {
     }
 
     @Override
+    @Transactional
     @Monitored(value = "calling_ai_extractor", context = "ai")
     public ChatClient.CallResponseSpec callExtractor(String history, UUID chatId) {
+        UserProfile userProfile = securityService.findCurrentUser();
         log.debug("AI Call [EXTRACTOR] for chatId: {}", chatId);
         String extractorPrompt = promptRegistryService.getPrompt(PROMPT_EXTRACTOR);
-
+        eventPublisher.publishEvent(new CallExtractorEvent(userProfile.getId()));
         return chatClient.prompt()
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId))
                 .user(u -> u.text(extractorPrompt.formatted(history)))
@@ -99,8 +104,10 @@ public class AiServiceImpl implements AiService {
     }
 
     @Override
+    @Transactional
     @Monitored(value = "calling_ai_analyzer", context = "ai")
     public String callAnalyzer(String text, UUID chatId) {
+        UserProfile userProfile = securityService.findCurrentUser();
         log.debug("AI Call [ANALYZER] for chatId: {}", chatId);
 
         String analyzerPrompt = promptRegistryService.getPrompt(PROMPT_ANALYZER);
@@ -109,6 +116,8 @@ public class AiServiceImpl implements AiService {
                 "generated_resume", text,
                 "job_description", ""
         ));
+
+        eventPublisher.publishEvent(new CallAnalyzerEvent(userProfile.getId()));
 
         return chatClient.prompt()
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId))
@@ -119,8 +128,10 @@ public class AiServiceImpl implements AiService {
     }
 
     @Override
+    @Transactional
     @Monitored(value = "calling_ai_ats_optimization", context = "ai")
     public ChatClient.CallResponseSpec callAtsOptimization(Resume resume, String jobDescription) {
+        UserProfile userProfile = securityService.findCurrentUser();
         log.debug("AI Call [ATS_OPTIMIZATION] for resume with id: {}]", resume.getId());
 
         String atsPrompt = promptRegistryService.getPrompt(PROMPT_ATS);
@@ -130,6 +141,8 @@ public class AiServiceImpl implements AiService {
         } catch (JsonProcessingException e) {
             log.error(e.getMessage(), e);
         }
+
+        eventPublisher.publishEvent(new CallAtsEvent(userProfile.getId()));
 
         return chatClient.prompt()
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, resume.getChatId()))

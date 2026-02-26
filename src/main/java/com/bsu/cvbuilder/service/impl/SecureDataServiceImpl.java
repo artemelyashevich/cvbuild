@@ -13,6 +13,9 @@ import com.bsu.cvbuilder.service.SecureDataService;
 import com.bsu.cvbuilder.util.SecretDecodeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,8 +43,7 @@ public class SecureDataServiceImpl implements SecureDataService {
     public SecureData prepareData(UserProfile user) {
         log.debug("Preparing secure data for user: {}", user.getLogin());
 
-        SecureData secureData = secureDataRepository.findByUserId(user.getId())
-                .orElseGet(() -> SecureData.builder().userId(user.getId()).build());
+        SecureData secureData = findByUserId(user.getId());
 
         if (isTokenValid(secureData.getRefreshTokenEncoded())) {
             return secureData;
@@ -52,7 +54,7 @@ public class SecureDataServiceImpl implements SecureDataService {
         String encodedToken = encodeToken(newToken);
 
         secureData.setRefreshTokenEncoded(encodedToken);
-        return secureDataRepository.save(secureData);
+        return saveAndCache(secureData);
     }
 
     @Override
@@ -65,15 +67,60 @@ public class SecureDataServiceImpl implements SecureDataService {
         }
         if (secureData.getSecondAuthPhaseRequire() == null) {
             secureData.setSecondAuthPhaseRequire(false);
-            secureDataRepository.save(secureData);
+            saveAndCache(secureData);
         }
         return secureData.getSecondAuthPhaseRequire();
     }
 
     @Override
+    @Cacheable(value = "secureDataCache", key = "#id")
     public SecureData findByUserId(String id) {
         return secureDataRepository.findByUserId(id)
-                .orElseThrow(() -> new AppException("Login via outh2.0 with this email" + id, 401));
+                .orElseThrow(() -> new AppException("Login via oauth2.0 with this email: " + id, 401));
+    }
+
+    @CachePut(value = "secureDataCache", key = "#secureData.userId")
+    public SecureData saveAndCache(SecureData secureData) {
+        return secureDataRepository.save(secureData);
+    }
+
+    @Override
+    @CacheEvict(value = "secureDataCache", key = "#id")
+    public void deleteByUserId(String id) {
+        log.debug("Attempting delete secure data for user with id: {}", id);
+        secureDataRepository.deleteByUserId(id);
+        log.info("Deleted secure data for user with id: {}", id);
+    }
+
+    @Override
+    @Transactional
+    @CachePut(value = "secureDataCache", key = "#secureData.userId")
+    public void loadSecureData(SecureData secureData) {
+        SecureData persistentData = secureDataRepository.findByUserId(secureData.getUserId())
+                .orElseGet(() -> SecureData.builder().userId(secureData.getUserId()).build());
+
+        persistentData.setPassword(passwordEncoder.encode(secureData.getPassword()));
+        secureDataRepository.save(persistentData);
+    }
+
+    private boolean isTokenValid(String encodedToken) {
+        if (encodedToken == null) return false;
+
+        try {
+            String decryptedToken = SecretDecodeUtil.decode(
+                    encodedToken,
+                    applicationProperties.getSecurity().getDecodeSignature()
+            );
+            jwtService.validateToken(decryptedToken, TokenType.REFRESH);
+            return true;
+        } catch (Exception e) {
+            log.debug("Stored refresh token is invalid: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    private String encodeToken(String token) {
+        return SecretDecodeUtil.encode(token, applicationProperties.getSecurity().getDecodeSignature());
     }
 
     @Override
@@ -114,47 +161,5 @@ public class SecureDataServiceImpl implements SecureDataService {
         SecureData secureData = findByUserId(userId);
         updater.accept(secureData);
         secureDataRepository.save(secureData);
-    }
-
-    @Override
-    public void deleteByUserId(String id) {
-        log.debug("Attempting delete secure data for user with id: {}", id);
-        secureDataRepository.deleteByUserId(id);
-        log.info("Deleted secure data for user with id: {}", id);
-    }
-
-    @Override
-    @Transactional
-    public void loadSecureData(SecureData secureData) {
-        SecureData persistentData = secureDataRepository.findByUserId(secureData.getUserId())
-                .orElseGet(() -> SecureData.builder().userId(secureData.getUserId()).build());
-
-        persistentData.setPassword(passwordEncoder.encode(secureData.getPassword()));
-        secureDataRepository.save(persistentData);
-    }
-
-    private boolean isTokenValid(String encodedToken) {
-        if (encodedToken == null) {
-            return false;
-        }
-
-        try {
-            String decryptedToken = SecretDecodeUtil.decode(
-                    encodedToken,
-                    applicationProperties.getSecurity().getDecodeSignature()
-            );
-            jwtService.validateToken(decryptedToken, TokenType.REFRESH);
-            return true;
-        } catch (Exception e) {
-            log.debug("Stored refresh token is invalid: {}", e.getMessage());
-            return false;
-        }
-    }
-
-    private String encodeToken(String token) {
-        return SecretDecodeUtil.encode(
-                token,
-                applicationProperties.getSecurity().getDecodeSignature()
-        );
     }
 }

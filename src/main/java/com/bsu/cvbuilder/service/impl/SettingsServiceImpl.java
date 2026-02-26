@@ -50,7 +50,7 @@ public class SettingsServiceImpl implements SettingsService {
         }
 
         SecureData secureData = secureDataService.findByUserId(userProfile.getId());
-
+        secureDataService.validateNewEvent(userProfile.getId(), SecureEvent.setPassword);
         if (secureData.getPassword() != null) {
             log.debug("Password already set for user {}", userProfile.getLogin());
             throw new AppException("Password already set", 401);

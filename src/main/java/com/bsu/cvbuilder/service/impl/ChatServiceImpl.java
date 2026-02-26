@@ -3,11 +3,13 @@ package com.bsu.cvbuilder.service.impl;
 import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.domain.entity.AiChat;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
+import com.bsu.cvbuilder.domain.event.CreateChatEvent;
 import com.bsu.cvbuilder.repository.AiChatRepository;
 import com.bsu.cvbuilder.service.ChatService;
 import com.bsu.cvbuilder.service.SecurityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ public class ChatServiceImpl implements ChatService {
     private final SecurityService securityService;
     private final AiChatRepository aiChatRepository;
     private final TransactionTemplate transactionTemplate;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public AiChat createAiChat(UUID chatId) {
@@ -35,6 +38,7 @@ public class ChatServiceImpl implements ChatService {
                 .userId(user.getId())
                 .build());
         log.info("Created AiChat with id {}", chatId);
+        applicationEventPublisher.publishEvent(new CreateChatEvent(user.getId()));
         return aiChat;
     }
 

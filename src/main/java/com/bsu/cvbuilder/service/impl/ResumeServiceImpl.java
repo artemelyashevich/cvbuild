@@ -12,6 +12,9 @@ import com.bsu.cvbuilder.web.dto.resume.UpdateResumeRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.converter.BeanOutputConverter;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -58,6 +61,7 @@ public class ResumeServiceImpl implements ResumeService {
     }
 
     @Override
+    @Cacheable(value = "resume:chatId:", key = "#chatId")
     @Limited(value = LimitType.RESUME_GENERATE, capacity = 5)
     public Resume findByChatId(UUID chatId) {
         log.debug("Finding resume for chat: {}", chatId);
