@@ -75,6 +75,10 @@ public class UserProfile {
     private boolean isAgree = false;
 
     @Builder.Default
+    @ToString.Include
+    private boolean secondAuthPhase = false;
+
+    @Builder.Default
     private List<AiLimit> aiLimits = new ArrayList<>();
 
     @Builder.Default

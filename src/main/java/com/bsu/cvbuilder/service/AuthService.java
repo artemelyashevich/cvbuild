@@ -14,4 +14,6 @@ public interface AuthService {
     void logout();
 
     AuthResponse verify2fa(@Valid Verify2faRequest verify2faRequest);
+
+    void verify2faRefresh(@Valid Verify2faRefreshRequest verify2faRefreshRequest);
 }

@@ -9,4 +9,6 @@ public interface OtpService {
     boolean validateOtp(UserProfile userProfile, String otp, String key);
 
     boolean exists(String key);
+
+    void invalidate(String s);
 }

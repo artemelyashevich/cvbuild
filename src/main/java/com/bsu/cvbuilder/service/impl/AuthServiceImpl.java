@@ -40,6 +40,7 @@ public class AuthServiceImpl implements AuthService {
     private final ApplicationProperties applicationProperties;
     private final OtpService otpService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final NotificationService notificationService;
 
     @Override
     @Monitored(value = "calling_auth_authenticate", context = "api")
@@ -49,7 +50,13 @@ public class AuthServiceImpl implements AuthService {
         UserProfile user = userProfileService.findByEmail(authRequest.email());
 
         if (secureDataService.checkCredsAndIf2faIsRequire(user, authRequest)) {
-            otpService.create(user, OtpKeyUtil.SECOND_AUTH_PHASE_KEY);
+            String otp = otpService.create(user, OtpKeyUtil.SECOND_AUTH_PHASE_KEY + user.getLogin());
+            notificationService.sendNotification(NotificationDto.builder()
+                            .engine(NotificationEngine.EMAIL)
+                            .receiver(user.getEmail())
+                            .parameters(Map.of("otp", otp))
+                            .templateName("2fa")
+                    .build());
             return AuthResponse.builder()
                     .secondPhaseEnabled(true)
                     .build();
@@ -111,9 +118,32 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse verify2fa(Verify2faRequest verify2faRequest) {
         log.debug("Attempting verify2fa user with email: {}", verify2faRequest.email());
         UserProfile user = userProfileService.findByEmail(verify2faRequest.email());
-        otpService.validateOtp(user, verify2faRequest.code(), OtpKeyUtil.EMAIL_KEY + user.getEmail());
+        if (!otpService.validateOtp(user, verify2faRequest.code(), OtpKeyUtil.SECOND_AUTH_PHASE_KEY + user.getLogin())) {
+            throw new AppException("Некорректный одноразовый пароль", 401);
+        };
         log.info("Verify2fa user with email: {}", verify2faRequest.email());
+        notificationService.sendNotification(NotificationDto.builder()
+                .engine(NotificationEngine.EMAIL)
+                .receiver(user.getEmail())
+                .parameters(Map.of())
+                .templateName("2fa_success")
+                .build());
         return auth(user);
+    }
+
+    @Override
+    public void verify2faRefresh(Verify2faRefreshRequest verify2faRefreshRequest) {
+        log.debug("Attempting refresh verify2fa code user with email: {}", verify2faRefreshRequest.email());
+        UserProfile user = userProfileService.findByEmail(verify2faRefreshRequest.email());
+        otpService.invalidate(OtpKeyUtil.SECOND_AUTH_PHASE_KEY + user.getLogin());
+        String otp = otpService.create(user, OtpKeyUtil.SECOND_AUTH_PHASE_KEY + user.getLogin());
+        notificationService.sendNotification(NotificationDto.builder()
+                .engine(NotificationEngine.EMAIL)
+                .receiver(user.getEmail())
+                .parameters(Map.of("otp", otp))
+                .templateName("2fa")
+                .build());
+        log.info("Verify2fa user with email refresh code: {}", verify2faRefreshRequest.email());
     }
 
     private void publishLogoutEvent(String token) {

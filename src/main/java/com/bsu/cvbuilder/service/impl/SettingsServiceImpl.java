@@ -36,6 +36,7 @@ public class SettingsServiceImpl implements SettingsService {
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TransactionTemplate transactionTemplate;
     private final HistoryService historyService;
+    private final AuthService authService;
 
     @Override
     @Transactional
@@ -112,10 +113,12 @@ public class SettingsServiceImpl implements SettingsService {
         UserProfile user = securityService.findCurrentUser();
         log.debug("Attempting to delete account: {}", user.getLogin());
         transactionTemplate.execute(status -> {
+            authService.logout();
             chatService.deleteAllByUserId(user.getId());
             secureDataService.deleteByUserId(user.getId());
             userProfileService.deleteById(user.getId());
             historyService.deleteAllByUserId(user.getId());
+            userProfileService.deleteById(user.getId());
             return null;
         });
         log.info("Account has been deleted: {}", user.getLogin());
@@ -130,6 +133,8 @@ public class SettingsServiceImpl implements SettingsService {
         secureDataService.update(user.getId(), SecureEvent.enable2fa, data -> {
             isEnabled.set(!data.getSecondAuthPhaseRequire());
             data.setSecondAuthPhaseRequire(!data.getSecondAuthPhaseRequire());
+            user.setSecondAuthPhase(isEnabled.get());
+            userProfileService.update(user);
             log.info("2FA has been enabled for user: {} / {}", user.getLogin(), data.getSecondAuthPhaseRequire());
         });
         return isEnabled.get();

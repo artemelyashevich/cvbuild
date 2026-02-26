@@ -6,11 +6,7 @@ import com.bsu.cvbuilder.domain.dto.auth.ResetPasswordDto;
 import com.bsu.cvbuilder.service.SettingsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/settings")
@@ -43,5 +39,11 @@ public class SettingsController {
     @PostMapping("/2fa")
     public boolean disagree() {
         return settingsService.enable2fa();
+    }
+
+    @EmailVerification
+    @DeleteMapping
+    public void removeAll() {
+        settingsService.deleteAccount();
     }
 }

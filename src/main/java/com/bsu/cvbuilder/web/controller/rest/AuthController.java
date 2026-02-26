@@ -9,7 +9,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Authentication", description = "Authentication management APIs")
 @RestController
@@ -79,6 +83,11 @@ public class AuthController {
     @PostMapping("/2fa")
     public AuthResponse verify2fa(@Valid @RequestBody Verify2faRequest verify2faRequest) {
         return authService.verify2fa(verify2faRequest);
+    }
+
+    @PostMapping("/2fa/refresh")
+    public void verify2faRefresh(@Valid @RequestBody Verify2faRefreshRequest verify2faRefreshRequest) {
+        authService.verify2faRefresh(verify2faRefreshRequest);
     }
 
     @PostMapping("/logout")

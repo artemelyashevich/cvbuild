@@ -13,6 +13,7 @@ public record UserResponseDto(
         String lastName,
         String avatarUrl,
         Boolean emailVerified,
+        Boolean secondAuthPhase,
         LocalDateTime lastLogin,
         LocalDateTime createdAt
 ) {
