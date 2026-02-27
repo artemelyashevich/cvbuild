@@ -9,7 +9,6 @@ import com.mongodb.client.gridfs.model.GridFSFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.gridfs.GridFsResource;
@@ -60,7 +59,6 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
-    @Cacheable(value = "images:id", key = "#id")
     public byte[] findById(final String id) {
         GridFSFile gridFsFile = Optional.of(
                 gridFsTemplate.findOne(Query.query(Criteria.where("_id").is(id)))

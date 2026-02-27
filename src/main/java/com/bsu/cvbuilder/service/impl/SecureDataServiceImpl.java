@@ -73,19 +73,16 @@ public class SecureDataServiceImpl implements SecureDataService {
     }
 
     @Override
-    @Cacheable(value = "secureDataCache", key = "#id")
     public SecureData findByUserId(String id) {
         return secureDataRepository.findByUserId(id)
                 .orElseThrow(() -> new AppException("Login via oauth2.0 with this email: " + id, 401));
     }
 
-    @CachePut(value = "secureDataCache", key = "#secureData.userId")
     public SecureData saveAndCache(SecureData secureData) {
         return secureDataRepository.save(secureData);
     }
 
     @Override
-    @CacheEvict(value = "secureDataCache", key = "#id")
     public void deleteByUserId(String id) {
         log.debug("Attempting delete secure data for user with id: {}", id);
         secureDataRepository.deleteByUserId(id);
@@ -94,7 +91,6 @@ public class SecureDataServiceImpl implements SecureDataService {
 
     @Override
     @Transactional
-    @CachePut(value = "secureDataCache", key = "#secureData.userId")
     public void loadSecureData(SecureData secureData) {
         SecureData persistentData = secureDataRepository.findByUserId(secureData.getUserId())
                 .orElseGet(() -> SecureData.builder().userId(secureData.getUserId()).build());

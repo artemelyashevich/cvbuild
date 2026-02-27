@@ -5,12 +5,16 @@ import com.bsu.cvbuilder.domain.dto.ai.StepAnalysisResult;
 import com.bsu.cvbuilder.domain.entity.AiChat;
 import com.bsu.cvbuilder.domain.entity.ChatMessage;
 import com.bsu.cvbuilder.domain.entity.Resume;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
+import com.bsu.cvbuilder.domain.event.UserGenerateNewMessageEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
@@ -37,11 +41,12 @@ public class ChatFlowService {
     private final AnalyzerService analyzerService;
     private final SecurityService securityService;
     private final Map<ChatFlowStep, AbstractChatStepHandler> stepHandlers;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     public ChatFlowService(ChatClient chatClient,
                            ChatService chatService,
                            ResumeService resumeService, JobParserService jobParserService, AnalyzerService analyzerService, SecurityService securityService,
-                           List<AbstractChatStepHandler> handlers) {
+                           List<AbstractChatStepHandler> handlers, ApplicationEventPublisher applicationEventPublisher) {
         this.chatClient = chatClient;
         this.chatService = chatService;
         this.resumeService = resumeService;
@@ -53,6 +58,7 @@ public class ChatFlowService {
                         AbstractChatStepHandler::getStep,
                         Function.identity()
                 ));
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     public Resume extractFromChat(UUID chatId) {
@@ -60,10 +66,11 @@ public class ChatFlowService {
         return resumeService.findByChatId(chatId);
     }
 
+    @Transactional
     public SseEmitter processMessage(UUID chatId, String userMessage) {
-
+        UserProfile userProfile = securityService.findCurrentUser();
         log.info("Processing message for chatId={}", chatId);
-
+        applicationEventPublisher.publishEvent(new UserGenerateNewMessageEvent(userProfile.getId()));
         AiChat chat = chatService.getChatById(chatId);
         AbstractChatStepHandler currentHandler = resolveHandler(chat.getChatFlowStep());
 
