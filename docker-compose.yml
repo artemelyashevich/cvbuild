@@ -32,24 +32,11 @@ services:
     volumes:
       - redis_data:/data
 
-  prometheus:
-    image: prom/prometheus:latest
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-    networks:
-      - monitoring
-
 
 networks:
-  monitoring:
   cvbuilder:
     driver: bridge
 
 volumes:
-  grafana-storage:
   mongo_data:
   redis_data:

@@ -17,7 +17,7 @@ public interface SecureDataService {
 
     void validateNewEvent(String userId, SecureEvent secureEvent);
 
-    void loadSecureData(SecureData build);
+    SecureData loadSecureData(SecureData build);
 
     void update(String id, SecureEvent secureEvent, Consumer<SecureData> updater);
 

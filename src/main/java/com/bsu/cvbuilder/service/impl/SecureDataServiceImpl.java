@@ -13,9 +13,6 @@ import com.bsu.cvbuilder.service.SecureDataService;
 import com.bsu.cvbuilder.util.SecretDecodeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,7 +72,9 @@ public class SecureDataServiceImpl implements SecureDataService {
     @Override
     public SecureData findByUserId(String id) {
         return secureDataRepository.findByUserId(id)
-                .orElseThrow(() -> new AppException("Login via oauth2.0 with this email: " + id, 401));
+                .orElseGet(() -> loadSecureData(SecureData.builder()
+                        .userId(id)
+                        .build()));
     }
 
     public SecureData saveAndCache(SecureData secureData) {
@@ -91,12 +90,13 @@ public class SecureDataServiceImpl implements SecureDataService {
 
     @Override
     @Transactional
-    public void loadSecureData(SecureData secureData) {
+    public SecureData loadSecureData(SecureData secureData) {
         SecureData persistentData = secureDataRepository.findByUserId(secureData.getUserId())
                 .orElseGet(() -> SecureData.builder().userId(secureData.getUserId()).build());
-
-        persistentData.setPassword(passwordEncoder.encode(secureData.getPassword()));
-        secureDataRepository.save(persistentData);
+        if (secureData.getRefreshTokenEncoded() != null) {
+            persistentData.setPassword(passwordEncoder.encode(secureData.getPassword()));
+        }
+        return secureDataRepository.save(persistentData);
     }
 
     private boolean isTokenValid(String encodedToken) {
