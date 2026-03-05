@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -40,7 +41,15 @@ public class SecureDataServiceImpl implements SecureDataService {
     public SecureData prepareData(UserProfile user) {
         log.debug("Preparing secure data for user: {}", user.getLogin());
 
-        SecureData secureData = findByUserId(user.getId());
+        SecureData secureData;
+
+        try {
+            secureData= findByUserId(user.getId());
+        } catch (AppException e) {
+            secureData = SecureData.builder()
+                    .userId(user.getId())
+                    .build();
+        }
 
         if (isTokenValid(secureData.getRefreshTokenEncoded())) {
             return secureData;
@@ -72,9 +81,7 @@ public class SecureDataServiceImpl implements SecureDataService {
     @Override
     public SecureData findByUserId(String id) {
         return secureDataRepository.findByUserId(id)
-                .orElseGet(() -> loadSecureData(SecureData.builder()
-                        .userId(id)
-                        .build()));
+                .orElseThrow(() -> new AppException("User [SECURE] data not found", 404));
     }
 
     public SecureData saveAndCache(SecureData secureData) {
@@ -93,7 +100,7 @@ public class SecureDataServiceImpl implements SecureDataService {
     public SecureData loadSecureData(SecureData secureData) {
         SecureData persistentData = secureDataRepository.findByUserId(secureData.getUserId())
                 .orElseGet(() -> SecureData.builder().userId(secureData.getUserId()).build());
-        if (secureData.getRefreshTokenEncoded() != null) {
+        if (StringUtils.hasText(secureData.getPassword())) {
             persistentData.setPassword(passwordEncoder.encode(secureData.getPassword()));
         }
         return secureDataRepository.save(persistentData);

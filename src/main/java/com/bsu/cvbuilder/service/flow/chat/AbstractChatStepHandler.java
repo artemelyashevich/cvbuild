@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.service.flow;
+package com.bsu.cvbuilder.service.flow.chat;
 
 import com.bsu.cvbuilder.domain.dto.ai.ChatFlowStep;
 import com.bsu.cvbuilder.domain.dto.ai.StepAnalysisResult;

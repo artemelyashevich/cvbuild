@@ -28,7 +28,7 @@ public class Resume {
     @Id
     private String id;
 
-    private Map<Object, Object> blocks;
+    private Map<String, Object> blocks;
 
     private String chatId;
 
@@ -49,6 +49,9 @@ public class Resume {
     @Builder.Default
     private boolean isAts = false;
 
+    @Builder.Default
+    private Boolean generatedWithChat = true;
+
     @Getter
     @Setter
     @Builder
@@ -57,5 +60,7 @@ public class Resume {
     public static class ResumeSettings {
         private String name;
         private String resumeTemplate = "basic";
+        private String ownerId;
+        private String ownerLogin;
     }
 }

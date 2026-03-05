@@ -2,7 +2,7 @@ package com.bsu.cvbuilder.web.controller.rest;
 
 import com.bsu.cvbuilder.annotation.agreement.AgreementRequire;
 import com.bsu.cvbuilder.annotation.email.EmailVerification;
-import com.bsu.cvbuilder.service.flow.ChatFlowService;
+import com.bsu.cvbuilder.service.flow.chat.ChatFlowService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;

@@ -2,7 +2,6 @@ package com.bsu.cvbuilder.web.controller.rest;
 
 import com.bsu.cvbuilder.annotation.agreement.AgreementRequire;
 import com.bsu.cvbuilder.domain.dto.ai.AiRequestDto;
-import com.bsu.cvbuilder.domain.dto.ai.ResumeFlowFormDto;
 import com.bsu.cvbuilder.domain.entity.AiChat;
 import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.service.AiService;
@@ -15,7 +14,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -103,7 +101,7 @@ public class AiChatController {
             @Parameter(description = "DTO containing the user prompt and context", required = true)
             @RequestBody AiRequestDto aiRequestDto
     ) {
-        return aiService.call(aiRequestDto);
+        return aiService.callFlow(aiRequestDto);
     }
 
     @Operation(summary = "Extract Resume Data", description = "Analyzes a chat session and extracts structured resume data. Requires user agreement.")
@@ -120,10 +118,5 @@ public class AiChatController {
             @PathVariable String chatId
     ) {
         return resumeDataExtractorService.findByChatId(UUID.fromString(chatId));
-    }
-
-    @PostMapping("/flow")
-    public Resume process(@Valid @RequestBody ResumeFlowFormDto  resumeFlowFormDto) {
-        return resumeFlowService.generate(resumeFlowFormDto);
     }
 }

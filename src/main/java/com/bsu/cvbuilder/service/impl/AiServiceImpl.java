@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -51,7 +52,7 @@ public class AiServiceImpl implements AiService {
     @Override
     @Limited(value = LimitType.AI_MESSAGE, capacity = 20)
     @Monitored(value = "calling_ai_interviewer", context = "ai")
-    public String call(AiRequestDto dto) {
+    public String callFlow(AiRequestDto dto) {
         log.debug("AI Call [INTERVIEWER] for chatId: {}", dto.chatId());
 
         String systemPrompt = promptRegistryService.getPrompt(PROMPT_INTERVIEWER);
@@ -148,10 +149,33 @@ public class AiServiceImpl implements AiService {
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, resume.getChatId()))
                 .user(renderedPrompt)
                 .options(OllamaOptions.builder()
-                        .temperature((double)0)
+                        .temperature((double) 0)
                         .numPredict(2000)
                         .build())
                 .call();
+    }
+
+    @Override
+    public CompletableFuture<Object> callFlow(String promptName, String content) {
+        return CompletableFuture.supplyAsync(
+                () -> {
+                    String prompt = promptRegistryService.getFlowPrompt(promptName);
+                    log.debug("AI CALL [FLOW] prompt name: {}", promptName);
+                    if (content != null) {
+                        prompt = prompt.formatted(content);
+                    }
+                    log.debug("Current thread: {}", Thread.currentThread().getName());
+                    return chatClient.prompt()
+                            .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, new UUID(0L, 0L)))
+                            .user(prompt)
+                            .options(OllamaOptions.builder()
+                                    .temperature((double) 0)
+                                    .numPredict(2000)
+                                    .build())
+                            .call()
+                            .content();
+                }
+        );
     }
 
     private OllamaOptions defaultOptions() {

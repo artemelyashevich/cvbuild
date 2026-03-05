@@ -1,10 +1,10 @@
-package com.bsu.cvbuilder.service.flow.handler;
+package com.bsu.cvbuilder.service.flow.chat.handler;
 
 import com.bsu.cvbuilder.domain.dto.ai.ChatFlowStep;
 import com.bsu.cvbuilder.domain.dto.ai.StepAnalysisResult;
 import com.bsu.cvbuilder.service.PromptRegistryService;
-import com.bsu.cvbuilder.service.flow.AbstractChatStepHandler;
-import com.bsu.cvbuilder.service.flow.StepValidator;
+import com.bsu.cvbuilder.service.flow.chat.AbstractChatStepHandler;
+import com.bsu.cvbuilder.service.flow.chat.StepValidator;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Component;
 

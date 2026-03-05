@@ -72,6 +72,7 @@ app:
     auth-token: ${TWILIO_AUTH_TOKEN:}
     phone-number: ${TWILIO_PHONE_NUMBER:}
   ai:
+    prompts-flow-path: "classpath:/prompt/flow/*.txt"
     prompts-path: "classpath:/prompt/*.txt"
   limit:
     max-messages: 20 # 20 messages per 1 day
