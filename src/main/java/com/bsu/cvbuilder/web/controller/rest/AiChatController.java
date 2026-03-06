@@ -4,6 +4,7 @@ import com.bsu.cvbuilder.annotation.agreement.AgreementRequire;
 import com.bsu.cvbuilder.domain.dto.ai.AiRequestDto;
 import com.bsu.cvbuilder.domain.entity.AiChat;
 import com.bsu.cvbuilder.domain.entity.Resume;
+import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.ChatService;
 import com.bsu.cvbuilder.service.ResumeService;
@@ -39,6 +40,7 @@ public class AiChatController {
     private final ResumeService resumeDataExtractorService;
     private final AiService aiService;
     private final ChatService chatService;
+    private final ResumeService resumeService;
 
     @Operation(summary = "Get User's AI Chats", description = "Retrieves a paginated list of AI chat history for the currently authenticated user.")
     @ApiResponses(value = {
@@ -117,6 +119,11 @@ public class AiChatController {
             @Parameter(description = "UUID string of the chat source", required = true)
             @PathVariable String chatId
     ) {
-        return resumeDataExtractorService.findByChatId(UUID.fromString(chatId));
+        try {
+            Resume resume = resumeService.findById(chatId);
+            return resume;
+        } catch (AppException e) {
+            return resumeDataExtractorService.findByChatId(UUID.fromString(chatId));
+        }
     }
 }

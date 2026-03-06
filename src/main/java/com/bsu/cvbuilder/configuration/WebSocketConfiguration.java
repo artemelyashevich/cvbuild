@@ -1,6 +1,5 @@
 package com.bsu.cvbuilder.configuration;
 
-import com.bsu.cvbuilder.domain.dto.auth.SecurityProvider;
 import com.bsu.cvbuilder.domain.dto.auth.TokenType;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.service.JwtService;
@@ -66,7 +65,7 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
                             String login = jwtService.extractLogin(token, TokenType.ACCESS);
                             UserProfile.Role role = jwtService.extractRole(token, TokenType.ACCESS);
                             var ctx = SecurityContextHolder.getContext();
-                            OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(login, role);
+                            OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(login, role, token);
                             ctx.setAuthentication(authentication);
                             SecurityContextHolder.setContext(ctx);
                             accessor.setUser(authentication);

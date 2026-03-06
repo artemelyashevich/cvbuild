@@ -19,6 +19,10 @@ public record MongoChatMemory(ChatService chatService, int maxMessages) implemen
 
     @Override
     public void add(@NonNull String conversationId, List<Message> messages) {
+        if (conversationId.equals("ignore")) {
+            return;
+        }
+
         AiChat aiChat = chatService.getChatById(UUID.fromString(conversationId));
 
         for (Message message : messages) {
@@ -41,6 +45,9 @@ public record MongoChatMemory(ChatService chatService, int maxMessages) implemen
     @Override
     @NonNull
     public List<Message> get(@NonNull String conversationId) {
+        if (conversationId.equals("ignore")) {
+            return List.of();
+        }
         AiChat aiChat = chatService.getChatById(UUID.fromString(conversationId));
         return aiChat.getMessages().stream()
                 .skip(Math.max(0, aiChat.getMessages().size() - maxMessages))

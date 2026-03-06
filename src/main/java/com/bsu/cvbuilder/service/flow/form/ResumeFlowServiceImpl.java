@@ -12,6 +12,7 @@ import com.bsu.cvbuilder.service.flow.form.domain.ResumePayload;
 import com.bsu.cvbuilder.util.JsonHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -19,7 +20,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -129,6 +130,7 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
         blocks.put("Career Goals", goals);
 
         resume.setBlocks(blocks);
+        log.info("Resume for user: {} finished", userProfile.getLogin());
         return resumeService.save(resume);
     }
 

@@ -14,4 +14,6 @@ public interface SecurityService {
     void checkOtp(String otp);
 
     void verifyEmailRequest(EmailVerificationRequestDto emailVerificationRequestDto);
+
+    String getToken();
 }

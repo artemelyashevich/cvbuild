@@ -1,7 +1,5 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.domain.dto.auth.SecurityProvider;
-import com.bsu.cvbuilder.domain.dto.user.CurrentProfileDto;
 import com.bsu.cvbuilder.domain.entity.ImageMetadata;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.UserCreatedEvent;
@@ -13,7 +11,6 @@ import com.bsu.cvbuilder.service.UserProfileService;
 import com.bsu.cvbuilder.service.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -40,7 +37,6 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final ApplicationEventPublisher eventPublisher;
     private final ImageService imageService;
     private final UserMapper userMapper;
-    private final SecurityProvider securityProvider;
     private final TransactionTemplate transactionTemplate;
 
     @Override
@@ -57,22 +53,9 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Cacheable(value = CACHE_LOGIN, key = "#login")
     public UserProfile findByLogin(String login) {
         log.debug("Finding user profile by login: {}", login);
-
-        if (securityProvider != null && securityProvider.getUserProfile() != null) {
-            if (securityProvider.getUserProfile().getLogin().equals(login)) {
-                return securityProvider.getUserProfile();
-            }
-            if (securityProvider.getUserProfile().getEmail().equals(login)) {
-                return securityProvider.getUserProfile();
-            }
-        }
-
-        UserProfile userProfile = userProfileRepository.findByLogin(login)
+        return userProfileRepository.findByLogin(login)
                 .or(() -> userProfileRepository.findByEmail(login))
                 .orElseThrow(notFound("login/email", login));
-
-        securityProvider.setUserProfile(userProfile);
-        return userProfile;
     }
 
     @Override

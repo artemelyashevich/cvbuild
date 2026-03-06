@@ -1,6 +1,5 @@
 package com.bsu.cvbuilder.security.filter;
 
-import com.bsu.cvbuilder.domain.dto.auth.SecurityProvider;
 import com.bsu.cvbuilder.domain.dto.auth.TokenType;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
@@ -36,7 +35,6 @@ public class AuthFilter extends OncePerRequestFilter {
     private static final String ACCESS_TOKEN_COOKIE = "access_token";
 
     private final JwtService jwtService;
-    private final SecurityProvider securityProvider;
 
     @Override
     protected void doFilterInternal(
@@ -82,12 +80,9 @@ public class AuthFilter extends OncePerRequestFilter {
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
             String login = jwtService.extractLogin(token, TokenType.ACCESS);
             UserProfile.Role role = jwtService.extractRole(token, TokenType.ACCESS);
-            OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(login, role);
-
+            OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(login, role, token);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
-        securityProvider.setAuthentication(SecurityContextHolder.getContext().getAuthentication());
-        securityProvider.setToken(token);
     }
 }

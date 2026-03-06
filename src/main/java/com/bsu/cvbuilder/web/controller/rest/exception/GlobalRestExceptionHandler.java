@@ -72,6 +72,7 @@ public class GlobalRestExceptionHandler {
 
     private ExceptionBodyDto handleException(final Exception exception, final String defaultMessage, HttpServletRequest request) {
         var message = exception.getMessage() == null ? defaultMessage : exception.getMessage();
+        exception.printStackTrace();
         log.warn("PATH: {} --- {} --- '{}'.", request.getServletPath(), defaultMessage, message);
         return new ExceptionBodyDto(message);
     }

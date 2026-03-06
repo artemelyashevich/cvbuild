@@ -61,6 +61,7 @@ public class ResumeServiceImpl implements ResumeService {
     }
 
     @Override
+    @Transactional
     @Cacheable(value = "resume:chatId:", key = "#chatId")
     @Limited(value = LimitType.RESUME_GENERATE, capacity = 5)
     public Resume findByChatId(UUID chatId) {

@@ -8,6 +8,7 @@ import io.prometheus.client.CollectorRegistry;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -17,6 +18,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
@@ -74,7 +76,7 @@ public class BeanConfiguration {
         return new CollectorRegistry(true);
     }
 
-    @Bean
+    @Bean(name = "notificationTaskExecutor")
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(5);
@@ -83,5 +85,17 @@ public class BeanConfiguration {
         executor.setThreadNamePrefix("Notif-");
         executor.initialize();
         return executor;
+    }
+
+    @Primary
+    @Bean(name = "flowTaskExecutor")
+    public Executor taskExecutorFlow() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(10);
+        executor.setCorePoolSize(15);
+        executor.setQueueCapacity(1000);
+        executor.setThreadNamePrefix("task-flow-");
+        executor.initialize();
+        return new DelegatingSecurityContextAsyncTaskExecutor(executor);
     }
 }

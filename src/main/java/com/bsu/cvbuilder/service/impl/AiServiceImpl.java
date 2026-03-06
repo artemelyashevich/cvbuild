@@ -22,13 +22,16 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.ollama.api.OllamaOptions;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 @Slf4j
 @Service
@@ -48,6 +51,7 @@ public class AiServiceImpl implements AiService {
     private final SecurityService securityService;
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final Executor executor;
 
     @Override
     @Limited(value = LimitType.AI_MESSAGE, capacity = 20)
@@ -166,7 +170,7 @@ public class AiServiceImpl implements AiService {
                     }
                     log.debug("Current thread: {}", Thread.currentThread().getName());
                     return chatClient.prompt()
-                            .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, new UUID(0L, 0L)))
+                            .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, "ignore"))
                             .user(prompt)
                             .options(OllamaOptions.builder()
                                     .temperature((double) 0)
@@ -174,7 +178,7 @@ public class AiServiceImpl implements AiService {
                                     .build())
                             .call()
                             .content();
-                }
+                }, executor
         );
     }
 

@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -47,7 +48,6 @@ public class SecurityServiceImpl implements SecurityService {
     private final NotificationService notificationService;
     private final SecureDataService secureDataService;
     private final ApplicationEventPublisher applicationEventPublisher;
-    private final SecurityProvider securityProvider;
     private final OtpService otpService;
 
     @Value("${app.security.oauth2.enabled:false}")
@@ -142,18 +142,19 @@ public class SecurityServiceImpl implements SecurityService {
                 secureData.addEvent(SecureEvent.verifyEmail));
     }
 
+    @Override
+    public String getToken() {
+        var authToken = validateAuthentication(SecurityContextHolder.getContext().getAuthentication());
+        var principal = extractPrincipal(authToken);
+        return principal.getAttribute("token");
+    }
+
     private String getCurrentUserLogin() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            auth = securityProvider.getAuthentication();
-        }
         return extractLogin(auth);
     }
 
     private String extractLogin(Authentication authentication) {
-        if (authentication == null) {
-            authentication = securityProvider.getAuthentication();
-        }
         var authToken = validateAuthentication(authentication);
         var principal = extractPrincipal(authToken);
         return principal.getAttribute("login");

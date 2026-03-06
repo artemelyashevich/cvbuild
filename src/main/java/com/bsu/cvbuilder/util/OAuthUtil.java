@@ -15,11 +15,14 @@ import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterN
 @UtilityClass
 public class OAuthUtil {
 
-    public static OAuth2AuthenticationToken getOAuth2AuthenticationToken(String login, UserProfile.Role role) {
-        Map<String, Object> attributes = Map.of(
+    public static OAuth2AuthenticationToken getOAuth2AuthenticationToken(String login, UserProfile.Role role, String token) {
+        Map<String, Object> attributes = new java.util.HashMap<>(Map.of(
                 "login", login,
                 "sub", login
-        );
+        ));
+        if (token != null) {
+            attributes.put("token", token);
+        }
         OAuth2User oAuth2User = new DefaultOAuth2User(
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.name())),
                 attributes,

@@ -33,7 +33,6 @@ public class AuthServiceImpl implements AuthService {
     private final UserMapper userMapper;
     private final SecurityService securityService;
     private final UserProfileService userProfileService;
-    private final SecurityProvider securityProvider;
     private final JwtService jwtService;
     private final BlackListService blackListService;
     private final SecureDataService secureDataService;
@@ -105,10 +104,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout() {
-        String token = securityProvider.getToken();
+        String token = securityService.getToken();
         Date expiration = jwtService.extractExpiration(token);
         blackListService.banToken(token, expiration);
-        securityProvider.setUserProfile(null);
         SecurityContextHolder.clearContext();
         publishLogoutEvent(token);
         log.info("User logged out");
@@ -161,7 +159,7 @@ public class AuthServiceImpl implements AuthService {
 
     private AuthResponse auth(UserProfile userProfile) {
         var ctx = SecurityContextHolder.createEmptyContext();
-        OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(userProfile.getLogin(), userProfile.getRole());
+        OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(userProfile.getLogin(), userProfile.getRole(), null);
         ctx.setAuthentication(authentication);
         SecurityContextHolder.setContext(ctx);
         return securityService.authenticate(SecurityContextHolder.getContext().getAuthentication());
