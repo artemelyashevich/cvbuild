@@ -9,7 +9,13 @@ import com.bsu.cvbuilder.domain.event.AgreementEvent;
 import com.bsu.cvbuilder.domain.event.ResetPasswordEvent;
 import com.bsu.cvbuilder.domain.event.SetPasswordEvent;
 import com.bsu.cvbuilder.exception.AppException;
-import com.bsu.cvbuilder.service.*;
+import com.bsu.cvbuilder.service.AuthService;
+import com.bsu.cvbuilder.service.ChatService;
+import com.bsu.cvbuilder.service.HistoryService;
+import com.bsu.cvbuilder.service.SecureDataService;
+import com.bsu.cvbuilder.service.SecurityService;
+import com.bsu.cvbuilder.service.SettingsService;
+import com.bsu.cvbuilder.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -109,19 +115,30 @@ public class SettingsServiceImpl implements SettingsService {
     }
 
     @Override
-    public void deleteAccount() {
+    public void deleteAccount(String otp) {
         UserProfile user = securityService.findCurrentUser();
         log.debug("Attempting to delete account: {}", user.getLogin());
         transactionTemplate.execute(status -> {
-            authService.logout();
-            chatService.deleteAllByUserId(user.getId());
-            secureDataService.deleteByUserId(user.getId());
-            userProfileService.deleteById(user.getId());
-            historyService.deleteAllByUserId(user.getId());
-            userProfileService.deleteById(user.getId());
+            secureDataService.validateNewEvent(user.getId(), SecureEvent.deleteAccount);
+            try {
+                performUserDeletion(user);
+            } catch (AppException e) {
+                log.error("Failed to delete account for user {}: {}", user.getLogin(), e.getMessage(), e);
+                secureDataService.update(user.getId(), SecureEvent.deleteAccount, data -> data.addEvent(SecureEvent.deleteAccount));
+                status.setRollbackOnly();
+            }
             return null;
         });
+
         log.info("Account has been deleted: {}", user.getLogin());
+    }
+
+    private void performUserDeletion(UserProfile user) throws AppException {
+        authService.logout();
+        chatService.deleteAllByUserId(user.getId());
+        secureDataService.deleteByUserId(user.getId());
+        historyService.deleteAllByUserId(user.getId());
+        userProfileService.deleteById(user.getId());
     }
 
     @Override

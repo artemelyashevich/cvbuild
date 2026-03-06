@@ -12,7 +12,8 @@ public enum SecureEvent {
     resetPassword(Duration.ofDays(1)),
     enable2fa(Duration.ofMinutes(10)),
     verifyEmail(Duration.ofDays(7)),
-    changeNotificationEngine(Duration.ofMinutes(5));
+    changeNotificationEngine(Duration.ofMinutes(5)),
+    deleteAccount(Duration.ofDays(1));
 
     private final Duration duration;
 }

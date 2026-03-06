@@ -11,7 +11,7 @@ public interface SettingsService {
 
     void agree();
 
-    void deleteAccount();
+    void deleteAccount(String otp);
 
     boolean enable2fa();
 }
