@@ -76,25 +76,25 @@ public class BeanConfiguration {
         return new CollectorRegistry(true);
     }
 
-    @Bean(name = "notificationTaskExecutor")
+    @Bean(name = "notificationExecutor")
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(5);
-        executor.setMaxPoolSize(10);
-        executor.setQueueCapacity(500);
-        executor.setThreadNamePrefix("Notif-");
+        executor.setCorePoolSize(3);
+        executor.setMaxPoolSize(5);
+        executor.setQueueCapacity(50);
+        executor.setThreadNamePrefix("cv-builder-notification-");
         executor.initialize();
         return executor;
     }
 
     @Primary
-    @Bean(name = "flowTaskExecutor")
+    @Bean(name = "taskFlowExecutor")
     public Executor taskExecutorFlow() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(10);
-        executor.setCorePoolSize(15);
-        executor.setQueueCapacity(1000);
-        executor.setThreadNamePrefix("task-flow-");
+        executor.setMaxPoolSize(20);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("cv-builder-common-");
         executor.initialize();
         return new DelegatingSecurityContextAsyncTaskExecutor(executor);
     }

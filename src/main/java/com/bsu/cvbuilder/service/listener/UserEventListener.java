@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -30,7 +31,7 @@ public class UserEventListener {
     private final NotificationService notificationService;
 
     @Async
-    @EventListener
+    @TransactionalEventListener
     public void handleUserLoginEvent(LoginEvent userLoginEvent) {
         String userId = userLoginEvent.getUserId();
         UserProfile userProfile = userLoginEvent.getUserProfile();
@@ -48,7 +49,7 @@ public class UserEventListener {
     }
 
     @Async
-    @EventListener
+    @TransactionalEventListener
     public void handleUserCreated(UserCreatedEvent event) {
         String userId = event.getUser().getId();
         log.debug("Initializing stats for user: {}", userId);
@@ -56,14 +57,14 @@ public class UserEventListener {
     }
 
     @Async
-    @EventListener
+    @TransactionalEventListener
     public void handleDownload(DownloadResumeEvent event) {
         updateStat(event.getUserId(), "totalDownloads",
                 stats -> stats.setTotalDownloads(stats.getTotalDownloads() + 1));
     }
 
     @Async
-    @EventListener
+    @TransactionalEventListener
     public void handleAiRequest(UserGenerateNewMessageEvent event) {
         updateStat(event.getUserId(), "aiRequestsUsed", stats -> {
             stats.setAiRequestsUsed(stats.getAiRequestsUsed() + 1);
@@ -73,7 +74,7 @@ public class UserEventListener {
     }
 
     @Async
-    @EventListener
+    @TransactionalEventListener
     public void handleResumeCreated(CreateResumeEvent event) {
         updateStat(event.getUserId(), "resumesCreated", stats -> {
             stats.setResumesCreated(stats.getResumesCreated() + 1);

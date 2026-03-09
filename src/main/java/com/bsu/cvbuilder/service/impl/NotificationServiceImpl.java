@@ -31,7 +31,7 @@ public class NotificationServiceImpl implements NotificationService {
                 ));
     }
 
-    @Async
+    @Async("notificationExecutor")
     @Override
     public void sendNotification(NotificationDto notificationDto) {
         if (notificationDto == null || notificationDto.getEngine() == null) {
