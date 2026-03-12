@@ -21,7 +21,7 @@ public class SecureDataCleanupScheduler {
 
     private final SecureDataRepository repository;
 
-    @Scheduled(fixedRate = 5 * 60 * 1000)
+    @Scheduled(fixedRate = 5 * 60 * 1000, scheduler = "cleanUpExecutor")
     @Monitored(value = "scheduling.secure_data", context = "cleanup")
     public void cleanupExpiredSecureEvents() {
 

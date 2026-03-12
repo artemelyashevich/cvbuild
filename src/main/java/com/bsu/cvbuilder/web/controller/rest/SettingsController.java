@@ -4,6 +4,7 @@ import com.bsu.cvbuilder.annotation.email.EmailVerification;
 import com.bsu.cvbuilder.annotation.otp.OtpVerification;
 import com.bsu.cvbuilder.domain.dto.auth.PasswordDto;
 import com.bsu.cvbuilder.domain.dto.auth.ResetPasswordDto;
+import com.bsu.cvbuilder.domain.dto.settings.UserSettings;
 import com.bsu.cvbuilder.service.SettingsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,10 +17,15 @@ public class SettingsController {
 
     private final SettingsService settingsService;
 
+    @GetMapping
+    public UserSettings findSettings() {
+        return settingsService.findSettings();
+    }
+
     @EmailVerification
     @PostMapping("/password")
     @ResponseStatus(HttpStatus.CREATED)
-    @OtpVerification(key = "password:store:%s:", template = "store-password")
+    //@OtpVerification(key = "password:store:%s:", template = "store-password")
     public void setPassword(@RequestBody PasswordDto password) {
         settingsService.setPassword(password);
     }
@@ -27,14 +33,14 @@ public class SettingsController {
     @EmailVerification
     @PostMapping("/reset-password")
     @ResponseStatus(HttpStatus.CREATED)
-    @OtpVerification(key = "password:restore:%s:", template = "restore-password")
+    //@OtpVerification(key = "password:restore:%s:", template = "restore-password")
     public void resetPassword(@RequestBody ResetPasswordDto resetPasswordDto) {
         settingsService.resetPassword(resetPasswordDto);
     }
 
     @EmailVerification
     @PostMapping("/agree")
-    @OtpVerification(key = "agreement:agree:%s:", template = "agree")
+    //@OtpVerification(key = "agreement:agree:%s:", template = "agree")
     public void agree() {
         settingsService.agree();
     }
@@ -47,7 +53,7 @@ public class SettingsController {
 
     @DeleteMapping
     @EmailVerification
-    @OtpVerification(key = "delete:account:%s:", template = "delete")
+    //@OtpVerification(key = "delete:account:%s:", template = "delete")
     public void removeAll(@RequestParam(required = false) String otp) {
         settingsService.deleteAccount(otp);
     }

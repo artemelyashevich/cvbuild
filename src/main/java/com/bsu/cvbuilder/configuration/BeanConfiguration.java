@@ -23,6 +23,9 @@ import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecu
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @EnableAsync
 @EnableScheduling
@@ -77,24 +80,47 @@ public class BeanConfiguration {
     }
 
     @Bean(name = "notificationExecutor")
-    public Executor taskExecutor() {
+    public Executor notificationExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(3);
-        executor.setMaxPoolSize(5);
-        executor.setQueueCapacity(50);
-        executor.setThreadNamePrefix("cv-builder-notification-");
+        executor.setMaxPoolSize(6);
+        executor.setQueueCapacity(100);
+        executor.setThreadNamePrefix("cv-notification-");
+        executor.setKeepAliveSeconds(60);
+        executor.setAllowCoreThreadTimeOut(true);
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(30);
         executor.initialize();
         return executor;
     }
 
+    @Bean(name = "cleanUpExecutor", destroyMethod = "shutdown")
+    public ScheduledExecutorService cleanUpExecutor() {
+        return Executors.newScheduledThreadPool(
+                3,
+                r -> {
+                    Thread t = new Thread(r);
+                    t.setName("cv-cleanup-");
+                    t.setDaemon(true);
+                    return t;
+                }
+        );
+    }
+
     @Primary
     @Bean(name = "taskFlowExecutor")
-    public Executor taskExecutorFlow() {
+    public Executor taskFlowExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(10);
         executor.setMaxPoolSize(20);
         executor.setQueueCapacity(500);
-        executor.setThreadNamePrefix("cv-builder-common-");
+        executor.setThreadNamePrefix("cv-common-");
+        executor.setKeepAliveSeconds(120);
+        executor.setAllowCoreThreadTimeOut(true);
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(60);
         executor.initialize();
         return new DelegatingSecurityContextAsyncTaskExecutor(executor);
     }

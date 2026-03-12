@@ -25,7 +25,7 @@ public class HistoryCleanupScheduler {
 
     private final HistoryRepository historyRepository;
 
-    @Scheduled(fixedRate = 5 * 60 * 1000)
+    @Scheduled(fixedRate = 5 * 60 * 1000, scheduler = "cleanUpExecutor")
     @Monitored(value = "scheduling.history", context = "cleanup")
     public void cleanupHistoryDuplicates() {
 

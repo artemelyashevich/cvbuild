@@ -60,6 +60,8 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
         Map<String, Object> highlights = Map.of("Highlights", payload.highlights());
         Map<String, Object> goals = Map.of("Goals", payload.careerGoals());
 
+        Map<String, Object> blocks = new LinkedHashMap<>();
+
         String userContent = JsonHelper.toJson(personalInfos)
                 + JsonHelper.toJson(links)
                 + JsonHelper.toJson(jobList)
@@ -77,14 +79,13 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
         skills = Map.of("Skills", skillsFuture.join());
         goals = Map.of("Career Goals", goalFuture.join());
 
-        Map<String, Object> blocks = new LinkedHashMap<>();
         blocks.put("Personal Information", personalInfos);
         blocks.put("Professional Media", links);
         blocks.put("Job Experience", jobList);
         blocks.put("Education", educationList);
         blocks.put("Skills", skills);
         blocks.put("Key Highlights", highlights);
-        blocks.put("Career Goals", goals);
+        blocks.put("Summary", goals);
 
         resume.setBlocks(blocks);
 

@@ -2,6 +2,7 @@ package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.domain.dto.auth.PasswordDto;
 import com.bsu.cvbuilder.domain.dto.auth.ResetPasswordDto;
+import com.bsu.cvbuilder.domain.dto.settings.UserSettings;
 import com.bsu.cvbuilder.domain.entity.SecureData;
 import com.bsu.cvbuilder.domain.entity.SecureEvent;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
@@ -155,5 +156,19 @@ public class SettingsServiceImpl implements SettingsService {
             log.info("2FA has been enabled for user: {} / {}", user.getLogin(), data.getSecondAuthPhaseRequire());
         });
         return isEnabled.get();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserSettings findSettings() {
+        UserProfile user = securityService.findCurrentUser();
+        log.debug("Attempting find settings for user with login: {}", user.getLogin());
+        UserSettings userSettings = new UserSettings();
+        SecureData secureData = secureDataService.findByUserId(user.getId());
+        userSettings.setPasswordSet(secureData.getPassword() != null);
+        userSettings.setSecondAuthPhaseEnabled(user.isSecondAuthPhase());
+        userSettings.setEmailIsVerified(user.isSecondAuthPhase());
+        userSettings.setNotificationEngine(secureData.getPreferableNotificationEngine());
+        return userSettings;
     }
 }

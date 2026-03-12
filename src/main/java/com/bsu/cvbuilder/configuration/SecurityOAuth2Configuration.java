@@ -2,6 +2,7 @@ package com.bsu.cvbuilder.configuration;
 
 import com.bsu.cvbuilder.security.filter.AuthFilter;
 import com.bsu.cvbuilder.security.exception.CustomAccessDeniedHandler;
+import com.bsu.cvbuilder.security.filter.RateLimitFilter;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.util.HandleSecurityErrorUtil;
 import com.bsu.cvbuilder.util.PathUtil;
@@ -41,6 +42,7 @@ public class SecurityOAuth2Configuration {
 
     private final SecurityService securityService;
     private final AuthFilter authFilter;
+    private final RateLimitFilter rateLimitFilter;
     private final CustomCorsConfiguration corsConfiguration;
     private final ApplicationProperties applicationProperties;
 
@@ -60,6 +62,7 @@ public class SecurityOAuth2Configuration {
                 )
                 .exceptionHandling(ex -> ex.accessDeniedHandler(new CustomAccessDeniedHandler()))
                 .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(rateLimitFilter, AuthFilter.class)
                 .logout(logout -> logout
                         .logoutUrl(PathUtil.LOGOUT_URL)
                         .deleteCookies("access_token", "refresh_token")

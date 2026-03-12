@@ -34,7 +34,7 @@ public class OrphanImageCleanupService {
     private final GridFsTemplate gridFsTemplate;
 
     @Transactional
-    @Scheduled(fixedDelay = 5 * 60 * 1000)
+    @Scheduled(fixedDelay = 5 * 60 * 1000, scheduler = "cleanUpExecutor")
     @Monitored(value = "scheduling.orphan_image", context = "cleanup")
     public void cleanupOrphanImages() {
 
