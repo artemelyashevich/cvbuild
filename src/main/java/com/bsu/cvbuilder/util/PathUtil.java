@@ -23,5 +23,11 @@ public class PathUtil {
             "/api/v1/auth/reset-password"
     };
 
+    public static final String[] ADMIN_RESOURCES = {
+            "/api/v1/stats/admin/**",
+            "/api/v1/templates/admin/**",
+            "/api/v1/history/admin/**"
+    };
+
     public static final String LOGOUT_URL = "/api/v1/auth/logout";
 }

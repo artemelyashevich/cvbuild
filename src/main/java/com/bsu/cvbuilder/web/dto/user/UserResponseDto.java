@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.web.dto.user;
 
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.time.LocalDateTime;
@@ -14,6 +15,7 @@ public record UserResponseDto(
         String avatarUrl,
         Boolean emailVerified,
         Boolean secondAuthPhase,
+        UserProfile.Role role,
         LocalDateTime lastLogin,
         LocalDateTime createdAt
 ) {

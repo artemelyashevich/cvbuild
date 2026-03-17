@@ -4,11 +4,9 @@ import com.bsu.cvbuilder.annotation.limit.LimitType;
 import com.bsu.cvbuilder.annotation.limit.Limited;
 import com.bsu.cvbuilder.domain.entity.AiChat;
 import com.bsu.cvbuilder.domain.entity.Resume;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
-import com.bsu.cvbuilder.service.AiService;
-import com.bsu.cvbuilder.service.ChatService;
-import com.bsu.cvbuilder.service.LockService;
-import com.bsu.cvbuilder.service.ResumeService;
+import com.bsu.cvbuilder.service.*;
 import com.bsu.cvbuilder.util.LockUtil;
 import com.bsu.cvbuilder.web.dto.resume.UpdateResumeRequest;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +40,7 @@ public class ResumeServiceImpl implements ResumeService {
     private final ChatService chatService;
     private final MongoTemplate mongoTemplate;
     private final LockService lockService;
+    private final SecurityService securityService;
 
     @Override
     public Resume save(Resume resume) {
@@ -51,15 +50,24 @@ public class ResumeServiceImpl implements ResumeService {
     @Override
     @Transactional(readOnly = true)
     public Page<Resume> findAll(Pageable pageable) {
-        log.debug("Fetching page of resumes: {}", pageable);
-        Query query = new Query().with(pageable);
+        UserProfile userProfile = securityService.findCurrentUser();
+
+        log.debug("Fetching resumes for user: {}", userProfile.getId());
+
+        Query query = new Query()
+                .addCriteria(Criteria.where("resumeSettings.ownerId")
+                        .is(userProfile.getId()))
+                .with(pageable);
 
         List<Resume> list = mongoTemplate.find(query, Resume.class);
 
         return PageableExecutionUtils.getPage(
                 list,
                 pageable,
-                () -> mongoTemplate.count(Query.of(query).limit(-1).skip(-1), Resume.class)
+                () -> mongoTemplate.count(
+                        Query.of(query),
+                        Resume.class
+                )
         );
     }
 

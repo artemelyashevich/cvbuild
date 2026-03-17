@@ -1,10 +1,12 @@
 package com.bsu.cvbuilder.configuration;
 
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.security.filter.AuthFilter;
 import com.bsu.cvbuilder.security.exception.CustomAccessDeniedHandler;
 import com.bsu.cvbuilder.security.filter.RateLimitFilter;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.util.HandleSecurityErrorUtil;
+import com.bsu.cvbuilder.util.OAuthUtil;
 import com.bsu.cvbuilder.util.PathUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,6 +57,7 @@ public class SecurityOAuth2Configuration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PathUtil.PUBLIC_RESOURCES).permitAll()
                         .requestMatchers(PathUtil.AUTH_RESOURCES).authenticated()
+                        .requestMatchers(PathUtil.ADMIN_RESOURCES).hasRole(UserProfile.Role.ADMIN.name())
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
@@ -65,7 +68,7 @@ public class SecurityOAuth2Configuration {
                 .addFilterBefore(rateLimitFilter, AuthFilter.class)
                 .logout(logout -> logout
                         .logoutUrl(PathUtil.LOGOUT_URL)
-                        .deleteCookies("access_token", "refresh_token")
+                        .deleteCookies(OAuthUtil.ACCESS_TOKEN, OAuthUtil.REFRESH_TOKEN)
                         .logoutSuccessHandler((req, res, auth) -> SecurityContextHolder.clearContext())
                 )
                 .build();
@@ -77,8 +80,22 @@ public class SecurityOAuth2Configuration {
         try {
             var authResponse = securityService.authenticate(authentication);
 
-            response.addCookie(createCookie("access_token", authResponse.getAccessToken(), 3600, false));
-            response.addCookie(createCookie("refresh_token", authResponse.getRefreshToken(), 604800, true));
+            response.addCookie(
+                    createCookie(
+                            OAuthUtil.ACCESS_TOKEN,
+                            authResponse.getAccessToken(),
+                            applicationProperties.getSecurity().getAccessMaxAgeCookie(),
+                            false
+                    )
+            );
+            response.addCookie(
+                    createCookie(
+                            OAuthUtil.REFRESH_TOKEN,
+                            authResponse.getRefreshToken(),
+                            applicationProperties.getSecurity().getRefreshMaxAgeCookie(),
+                            true
+                    )
+            );
 
             response.sendRedirect(applicationProperties.getSecurity().getOauthRedirectUrl());
         } catch (Exception e) {

@@ -99,6 +99,8 @@ app:
     access-secret: ${JWT_ACCESS_SECRET}
     access-lifetime: 56400000
     refresh-lifetime: 90400000
+    access-max-age-cookie: 3600
+    refresh-max-age-cookie: 604800
     decode-signature: ${DECODE_SIGNATURE}
   chat:
     max-messages: 25

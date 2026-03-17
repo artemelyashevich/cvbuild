@@ -64,6 +64,8 @@ public class ApplicationProperties {
         private String refreshSecret;
         private String accessLifetime;
         private String refreshLifetime;
+        private Integer accessMaxAgeCookie;
+        private Integer refreshMaxAgeCookie;
     }
 
     @Getter

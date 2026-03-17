@@ -15,6 +15,9 @@ import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterN
 @UtilityClass
 public class OAuthUtil {
 
+    public static final String ACCESS_TOKEN = "access_token";
+    public static final String REFRESH_TOKEN = "refresh_token";
+
     public static OAuth2AuthenticationToken getOAuth2AuthenticationToken(String login, UserProfile.Role role, String token) {
         Map<String, Object> attributes = new java.util.HashMap<>(Map.of(
                 "login", login,
