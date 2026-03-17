@@ -75,6 +75,6 @@ public class GlobalRestExceptionHandler {
         var message = exception.getMessage() == null ? defaultMessage : exception.getMessage();
         var errorId = UUID.randomUUID();
         log.warn("PATH: {} --- '{}'.\nSee error details here: {}", request.getServletPath(), message, errorId);
-        return new ExceptionBodyDto(message);
+        return new ExceptionBodyDto(message, Map.of("error", errorId.toString()));
     }
 }

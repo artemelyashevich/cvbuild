@@ -34,12 +34,22 @@ public class ResumeController {
     @GetMapping
     public Page<Resume> findAll(
             @RequestParam(name = "page", defaultValue = "0", required = false) Integer page,
-            @RequestParam(name = "size", defaultValue = "5", required = false) Integer size
+            @RequestParam(name = "size", defaultValue = "5", required = false) Integer size,
+            @RequestParam(name = "masked", defaultValue = "false", required = false) Boolean masked
     ) {
-        return resumeService.findAll(Pageable
+        Page<Resume> resumes = resumeService.findAll(Pageable
                 .ofSize(size)
                 .withPage(page)
         );
+        if (masked) {
+           return resumes.map(resume -> Resume.builder()
+                   .id(resume.getId())
+                   .createdAt(resume.getCreatedAt())
+                   .updatedAt(resume.getUpdatedAt())
+                   .resumeSettings(resume.getResumeSettings())
+                   .build());
+        }
+        return resumes;
     }
 
     @GetMapping("/{id}")
