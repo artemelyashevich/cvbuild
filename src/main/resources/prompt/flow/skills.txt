@@ -14,4 +14,4 @@ Candidate data:
 %s
 ]
 
-Output:
+Output ONLY skills (without your explanations):

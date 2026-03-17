@@ -45,4 +45,4 @@ Candidate description:
 %s
 ]
 
-Output JSON:
+Output ONLY JSON!!!

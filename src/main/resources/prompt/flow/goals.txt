@@ -13,4 +13,4 @@ Candidate information:
 %s
 ]
 
-Output:
+Output ONLY necessary info (without your explanations)!!!

@@ -30,6 +30,18 @@ public class JsonHelper {
         mapper.registerModule(new JavaTimeModule());
     }
 
+    public static Object fromJson(String json, Class valueClass) {
+        if (json == null) {
+            return null;
+        }
+        try {
+            Object result = mapper.readValue(json, valueClass);
+            return result;
+        } catch (Exception var4) {
+            return null;
+        }
+    }
+
     public static String toJson(Object o) {
         if (o == null) {
             return "null";

@@ -52,7 +52,7 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
 
         Resume resume = createEmptyResume(user);
 
-        Map<String, Object> personalInfos = extractPersonalInformation(payload);
+        Map<String, Object> personalInfos = extractPersonalInformation(payload, user);
         Map<String, Object> links = extractLinks(payload);
         List<Map<String, String>> jobList = extractJobExperience(payload);
         List<Map<String, String>> educationList = extractEducation(payload);
@@ -76,16 +76,18 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
 
         CompletableFuture.allOf(skillsFuture, jobFuture, goalFuture).join();
 
-        skills = Map.of("Skills", skillsFuture.join());
-        goals = Map.of("Career Goals", goalFuture.join());
+        String skillsContent = (String) skillsFuture.join();
+        String summary = (String) goalFuture.join();
+        // fixme
+        Object job = JsonHelper.fromJson(((String)jobFuture.join()).replace("\n", ""), Map.class);
 
         blocks.put("Personal Information", personalInfos);
         blocks.put("Professional Media", links);
-        blocks.put("Job Experience", jobList);
+        blocks.put("Summary", summary);
         blocks.put("Education", educationList);
-        blocks.put("Skills", skills);
+        blocks.put("Skills", skillsContent);
         blocks.put("Key Highlights", highlights);
-        blocks.put("Summary", goals);
+        blocks.put("Job Experience", job);
 
         resume.setBlocks(blocks);
 
@@ -104,12 +106,28 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
                 .build();
     }
 
-    private Map<String, Object> extractPersonalInformation(ResumePayload payload) {
+    private Map<String, Object> extractPersonalInformation(ResumePayload payload, UserProfile user) {
+        String firstName = payload.personalInformation().get("firstName");
+        String lastName = payload.personalInformation().get("lastName");
+        String email = payload.personalInformation().get("email");
+        String phone = payload.personalInformation().get("phone");
+        if (firstName == null || firstName.isEmpty()) {
+            firstName = user.getFirstName();
+        }
+        if (lastName == null || lastName.isEmpty()) {
+            lastName = user.getLastName();
+        }
+        if (email == null || email.isEmpty()) {
+            email = user.getEmail();
+        }
+        if (phone == null || phone.isEmpty()) {
+            phone = user.getPhoneNumber();
+        }
         return Map.of(
-                "First name", payload.personalInformation().get("firstName"),
-                "Last name", payload.personalInformation().get("lastName"),
-                "Email", payload.personalInformation().get("email"),
-                "Phone", payload.personalInformation().get("phone")
+                "First name", firstName,
+                "Last name", lastName,
+                "Email", email,
+                "Phone", phone
         );
     }
 

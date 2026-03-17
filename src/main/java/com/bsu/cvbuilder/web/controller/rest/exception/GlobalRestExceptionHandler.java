@@ -68,6 +68,7 @@ public class GlobalRestExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ExceptionBodyDto> handleException(final Exception exception, HttpServletRequest request) {
+        log.error("ERROR: ", exception);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(this.handleException(exception, UNEXPECTED_ERROR_MESSAGE, request));
     }
 

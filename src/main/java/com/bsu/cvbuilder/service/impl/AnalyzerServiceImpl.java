@@ -51,6 +51,9 @@ public class AnalyzerServiceImpl implements AnalyzerService {
         try {
             ChatClient.CallResponseSpec callResponseSpec = aiService.callAtsOptimization(resume, jobDescription);
             Resume optimizedResume = callResponseSpec.entity(converter);
+            if (optimizedResume == null) {
+                throw new AppException(500);
+            }
             optimizedResume.setId(null); // NOSONAR
             optimizedResume.setChatId(resume.getChatId());
             optimizedResume.setAts(true);

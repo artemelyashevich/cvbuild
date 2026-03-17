@@ -16,4 +16,4 @@ Candidate information:
 %s
 ]
 
-Output JSON:
+Output ONLY necessary text (without your explanations)!!!
