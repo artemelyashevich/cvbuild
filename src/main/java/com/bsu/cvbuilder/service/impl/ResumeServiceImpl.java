@@ -7,7 +7,9 @@ import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.ChatService;
+import com.bsu.cvbuilder.service.LockService;
 import com.bsu.cvbuilder.service.ResumeService;
+import com.bsu.cvbuilder.util.LockUtil;
 import com.bsu.cvbuilder.web.dto.resume.UpdateResumeRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +41,7 @@ public class ResumeServiceImpl implements ResumeService {
     private final AiService aiService;
     private final ChatService chatService;
     private final MongoTemplate mongoTemplate;
+    private final LockService lockService;
 
     @Override
     public Resume save(Resume resume) {
@@ -91,11 +94,13 @@ public class ResumeServiceImpl implements ResumeService {
     @Transactional
     public Resume update(String resumeId, UpdateResumeRequest updateRequest) {
         log.debug("Updating resume: {}", resumeId);
-        Resume resume = findById(resumeId);
+        return lockService.withLock(LockUtil.RESUME.formatted(resumeId), () -> {
+            Resume resume = findById(resumeId);
 
-        resume.setBlocks(updateRequest.blocks());
+            resume.setBlocks(updateRequest.blocks());
 
-        return mongoTemplate.save(resume);
+            return mongoTemplate.save(resume);
+        });
     }
 
     private Resume generateAndSave(UUID chatId) {
@@ -111,25 +116,27 @@ public class ResumeServiceImpl implements ResumeService {
 
         String promptWithFormat = contextHistory + "\n\n" + converter.getFormat();
 
-        try {
-            log.debug("Calling AI Extractor for chat {}", chatId);
-            var responseSpec = aiService.callExtractor(promptWithFormat, chatId);
+        return lockService.withLock(LockUtil.RESUME.formatted(chatId), () -> {
+            try {
+                log.debug("Calling AI Extractor for chat {}", chatId);
+                var responseSpec = aiService.callExtractor(promptWithFormat, chatId);
 
-            Resume extractedResume = responseSpec.entity(converter);
+                Resume extractedResume = responseSpec.entity(converter);
 
-            if (extractedResume == null) {
-                throw new AppException("AI returned empty resume data", 500);
+                if (extractedResume == null) {
+                    throw new AppException("AI returned empty resume data", 500);
+                }
+
+                extractedResume.setChatId(chatId.toString());
+                Resume saved = mongoTemplate.save(extractedResume);
+
+                log.info("Successfully generated and saved resume for chat {}", chatId);
+                return saved;
+
+            } catch (Exception e) {
+                log.error("Failed to generate resume for chat {}: {}", chatId, e.getMessage());
+                throw new AppException("Failed to generate resume via AI. Please try to chat more.", e, 500);
             }
-
-            extractedResume.setChatId(chatId.toString());
-            Resume saved = mongoTemplate.save(extractedResume);
-
-            log.info("Successfully generated and saved resume for chat {}", chatId);
-            return saved;
-
-        } catch (Exception e) {
-            log.error("Failed to generate resume for chat {}: {}", chatId, e.getMessage());
-            throw new AppException("Failed to generate resume via AI. Please try to chat more.", e, 500);
-        }
+        });
     }
 }

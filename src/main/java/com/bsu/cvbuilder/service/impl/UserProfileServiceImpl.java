@@ -7,8 +7,10 @@ import com.bsu.cvbuilder.domain.event.UserUpdateEmailEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.UserProfileRepository;
 import com.bsu.cvbuilder.service.ImageService;
+import com.bsu.cvbuilder.service.LockService;
 import com.bsu.cvbuilder.service.UserProfileService;
 import com.bsu.cvbuilder.service.mapper.UserMapper;
+import com.bsu.cvbuilder.util.LockUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -37,6 +39,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final ApplicationEventPublisher eventPublisher;
     private final ImageService imageService;
     private final UserMapper userMapper;
+    private final LockService lockService;
     private final TransactionTemplate transactionTemplate;
 
     @Override
@@ -118,30 +121,32 @@ public class UserProfileServiceImpl implements UserProfileService {
     })
     public UserProfile update(UserProfile profile) {
         log.debug("Updating user profile: {}", profile.getId());
-        return transactionTemplate.execute(s -> {
+        return lockService.withLock(LockUtil.USER.formatted(profile.getId()), () -> transactionTemplate.execute(s -> {
             UserProfile existingUser = findById(profile.getId());
             if (userProfileRepository.existsByEmail(profile.getEmail()) && !existingUser.getEmail().equals(profile.getEmail())) {
                 throw new AppException("User this such email already exists", 400);
             }
             userMapper.updateEntity(profile, existingUser);
             return userProfileRepository.save(existingUser);
-        });
+        }));
+
     }
 
     @Override
-    @Transactional
     @Caching(evict = {
             @CacheEvict(value = CACHE_ID, key = "#id"),
             @CacheEvict(value = CACHE_EMAIL, key = "#result.email", condition = "#result.email != null"),
             @CacheEvict(value = CACHE_LOGIN, key = "#result.login", condition = "#result.login != null")
     })
     public UserProfile uploadAvatar(MultipartFile file, String id) {
-        UserProfile userProfile = findById(id);
+        return transactionTemplate.execute(s -> {
+            UserProfile userProfile = findById(id);
 
-        ImageMetadata imageMetadata = imageService.create(file, id);
-        userProfile.setAvatarUrl(imageMetadata.getId());
+            ImageMetadata imageMetadata = imageService.create(file, id);
+            userProfile.setAvatarUrl(imageMetadata.getId());
 
-        return userProfileRepository.save(userProfile);
+            return userProfileRepository.save(userProfile);
+        });
     }
 
     @Override

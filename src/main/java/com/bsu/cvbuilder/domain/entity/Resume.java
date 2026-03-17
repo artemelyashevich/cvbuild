@@ -10,6 +10,7 @@ import lombok.ToString;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -51,6 +52,9 @@ public class Resume {
 
     @Builder.Default
     private Boolean generatedWithChat = true;
+
+    @Version
+    private Long version;
 
     @Getter
     @Setter

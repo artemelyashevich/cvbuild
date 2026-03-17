@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.data.annotation.Version;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
@@ -43,9 +45,24 @@ public class SecureData {
     @Builder.Default
     private Boolean secondAuthPhaseRequire = false;
 
+    @Builder.Default
+    @Indexed(name = "email_verified_idx")
+    private Boolean emailVerified = false;
+
+    @Builder.Default
+    @ToString.Include
+    private boolean isAgree = false;
+
+    @Builder.Default
+    @ToString.Include
+    private boolean secondAuthPhase = false;
+
     @ToString.Exclude
     @Builder.Default
     private Map<SecureEvent, List<LocalDateTime>> secureEvents = new EnumMap<>(SecureEvent.class);
+
+    @Version
+    private Long version;
 
     public void addEvent(SecureEvent event) {
         if (this.secureEvents == null) {

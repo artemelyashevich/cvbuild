@@ -6,7 +6,9 @@ import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.CreateChatEvent;
 import com.bsu.cvbuilder.repository.AiChatRepository;
 import com.bsu.cvbuilder.service.ChatService;
+import com.bsu.cvbuilder.service.LockService;
 import com.bsu.cvbuilder.service.SecurityService;
+import com.bsu.cvbuilder.util.LockUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -27,6 +29,7 @@ public class ChatServiceImpl implements ChatService {
     private final SecurityService securityService;
     private final AiChatRepository aiChatRepository;
     private final TransactionTemplate transactionTemplate;
+    private final LockService lockService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
@@ -56,7 +59,7 @@ public class ChatServiceImpl implements ChatService {
     @Monitored(value = "saving_chat", context = "api")
     public AiChat saveAiChat(AiChat aiChat) {
         log.debug("Attempting to save AiChat with id {}", aiChat.getId());
-        return aiChatRepository.save(aiChat);
+        return lockService.withLock(LockUtil.CHAT.formatted(aiChat.getId()), () -> aiChatRepository.save(aiChat));
     }
 
     @Override

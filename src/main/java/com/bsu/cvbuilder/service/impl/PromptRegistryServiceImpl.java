@@ -31,8 +31,8 @@ public class PromptRegistryServiceImpl implements PromptRegistryService {
     @Value("${app.ai.prompts-flow-path:classpath:/prompt/flow/*.txt}")
     private String promptsFlowPath;
 
-    private Map<String, String> prompts = Collections.emptyMap();
-    private Map<String, String> flowPrompts = Collections.emptyMap();
+    private Map<String, String> prompts = new HashMap<>();
+    private Map<String, String> flowPrompts = new HashMap<>();
 
     @PostConstruct
     public void init() {

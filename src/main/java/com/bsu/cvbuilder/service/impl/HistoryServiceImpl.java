@@ -8,8 +8,10 @@ import com.bsu.cvbuilder.domain.event.AbstractEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.HistoryRepository;
 import com.bsu.cvbuilder.service.HistoryService;
+import com.bsu.cvbuilder.service.LockService;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.util.JsonHelper;
+import com.bsu.cvbuilder.util.LockUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -26,6 +28,7 @@ public class HistoryServiceImpl implements HistoryService {
 
     private final HistoryRepository historyRepository;
     private final SecurityService securityService;
+    private final LockService lockService;
 
     @Override
     public Page<History> findAll(Pageable pageable) {
@@ -55,13 +58,16 @@ public class HistoryServiceImpl implements HistoryService {
     public void save(AbstractEvent event) {
         log.debug("Attempting to save history for user {}", event.getUserId());
 
-        History history = historyRepository.findByUserId(event.getUserId()).orElseGet(History::new);
+        History ssavedHistory = lockService.withLock(LockUtil.HISTORY_EVENT.formatted(event.getUserId()), () -> {
+            History history = historyRepository.findByUserId(event.getUserId()).orElseGet(History::new);
 
-        history.setUserId(event.getUserId());
-        history.getEvents().put(LocalDateTime.now().toString(), JsonHelper.toJson(event.getData()));
+            history.setUserId(event.getUserId());
+            history.getEvents().put(LocalDateTime.now().toString(), JsonHelper.toJson(event.getData()));
 
-        historyRepository.save(history);
-        log.info("History for user {} saved", event.getUserId());
+            return historyRepository.save(history);
+        });
+
+        log.info("History {} for user {} saved", ssavedHistory.getId(), event.getUserId());
     }
 
     @Override

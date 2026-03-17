@@ -1,7 +1,9 @@
 package com.bsu.cvbuilder.annotation.agreement;
 
+import com.bsu.cvbuilder.domain.entity.SecureData;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
+import com.bsu.cvbuilder.service.SecureDataService;
 import com.bsu.cvbuilder.service.SecurityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class AgreementRequireAspect {
 
     private final SecurityService securityService;
+    private final SecureDataService secureDataService;
 
     @Before("@annotation(agreementRequire)")
     public void beforeMethod(JoinPoint joinPoint, AgreementRequire agreementRequire) {
@@ -25,8 +28,9 @@ public class AgreementRequireAspect {
         }
 
         UserProfile user = securityService.findCurrentUser();
+        SecureData secureData = secureDataService.findByUserId(user.getId());
 
-        if (!user.isAgree()) {
+        if (!secureData.isAgree()) {
             throw new AppException("You must agree with all conditions", 400);
         }
     }

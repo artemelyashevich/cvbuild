@@ -10,6 +10,7 @@ import lombok.ToString;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.IndexDirection;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -53,10 +54,6 @@ public class UserProfile {
     @ToString.Include
     private Role role = Role.USER;
 
-    @Builder.Default
-    @Indexed(name = "email_verified_idx")
-    private Boolean emailVerified = false;
-
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @CreatedDate
@@ -71,18 +68,13 @@ public class UserProfile {
     private LocalDateTime lastLogin;
 
     @Builder.Default
-    @ToString.Include
-    private boolean isAgree = false;
-
-    @Builder.Default
-    @ToString.Include
-    private boolean secondAuthPhase = false;
-
-    @Builder.Default
     private List<AiLimit> aiLimits = new ArrayList<>();
 
     @Builder.Default
     private Locale locale = Locale.ENGLISH;
+
+    @Version
+    private Long version;
 
     public enum Role {
         USER, ADMIN

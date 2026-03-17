@@ -4,7 +4,9 @@ import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.domain.entity.UserStats;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.UserStatsRepository;
+import com.bsu.cvbuilder.service.LockService;
 import com.bsu.cvbuilder.service.UserStatsService;
+import com.bsu.cvbuilder.util.LockUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -23,17 +25,18 @@ public class UserStatsServiceImpl implements UserStatsService {
     private static final String CACHE_ID = "user_id_stat";
 
     private final UserStatsRepository userStatsRepository;
+    private final LockService lockService;
 
     @Override
     @CacheEvict(value = CACHE_ID, key = "#userStats.userId")
     public UserStats save(UserStats userStats) {
         log.debug("Ensuring UserStats exists for user: {}", userStats.getUserId());
-
-        return userStatsRepository.findById(userStats.getUserId())
+        return lockService.withLock(LockUtil.STATS.formatted(userStats.getUserId()), () -> userStatsRepository.findById(userStats.getUserId())
                 .orElseGet(() -> {
                     log.info("Creating new UserStats for user: {}", userStats.getUserId());
                     return userStatsRepository.save(userStats);
-                });
+                })
+        );
     }
 
     @Override
@@ -53,16 +56,18 @@ public class UserStatsServiceImpl implements UserStatsService {
     @CacheEvict(value = CACHE_ID, allEntries = true)
     @Monitored(value = "user_stats_increment", context = "internal")
     public void incrementStats(String userId, Consumer<UserStats> updater) {
-        UserStats stats = userStatsRepository.findByUserId(userId)
-                .orElseGet(() -> UserStats.builder()
-                        .userId(userId)
-                        .currentMonthUsage(new UserStats.MonthlyUsage())
-                        .build());
+        lockService.withLock(LockUtil.STATS.formatted(userId), () -> {
+            UserStats stats = userStatsRepository.findByUserId(userId)
+                    .orElseGet(() -> UserStats.builder()
+                            .userId(userId)
+                            .currentMonthUsage(new UserStats.MonthlyUsage())
+                            .build());
 
-        checkAndResetMonthlyStats(stats);
+            checkAndResetMonthlyStats(stats);
 
-        updater.accept(stats);
-        userStatsRepository.save(stats);
+            updater.accept(stats);
+            return userStatsRepository.save(stats);
+        });
     }
 
     private void checkAndResetMonthlyStats(UserStats stats) {

@@ -8,8 +8,11 @@ import com.bsu.cvbuilder.domain.entity.SecureEvent;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.SecureDataRepository;
+import com.bsu.cvbuilder.security.SecureDataRequestCache;
 import com.bsu.cvbuilder.service.JwtService;
+import com.bsu.cvbuilder.service.LockService;
 import com.bsu.cvbuilder.service.SecureDataService;
+import com.bsu.cvbuilder.util.LockUtil;
 import com.bsu.cvbuilder.util.SecretDecodeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +37,9 @@ public class SecureDataServiceImpl implements SecureDataService {
     private final JwtService jwtService;
     private final ApplicationProperties applicationProperties;
     private final SecureDataRepository secureDataRepository;
+    private final LockService lockService;
     private final PasswordEncoder passwordEncoder;
+    private final SecureDataRequestCache secureDataRequestCache;
 
     @Override
     @Transactional
@@ -80,19 +85,40 @@ public class SecureDataServiceImpl implements SecureDataService {
 
     @Override
     public SecureData findByUserId(String id) {
-        return secureDataRepository.findByUserId(id)
+        if (secureDataRequestCache.getSecureData() != null) {
+            return secureDataRequestCache.getSecureData();
+        }
+        SecureData secureData = secureDataRepository.findByUserId(id)
                 .orElseThrow(() -> new AppException("User [SECURE] data not found", 404));
+        secureDataRequestCache.setSecureData(secureData);
+        return secureData;
     }
 
     public SecureData saveAndCache(SecureData secureData) {
-        return secureDataRepository.save(secureData);
+        SecureData data = secureDataRepository.save(secureData);
+        secureDataRequestCache.setSecureData(data);
+        return data;
     }
 
     @Override
     public void deleteByUserId(String id) {
         log.debug("Attempting delete secure data for user with id: {}", id);
         secureDataRepository.deleteByUserId(id);
+        secureDataRequestCache.setSecureData(null);
         log.info("Deleted secure data for user with id: {}", id);
+    }
+
+    @Override
+    public void performEvent(UserProfile profile, SecureEvent secureEvent) {
+        SecureData secureData = findByUserId(profile.getId());
+        switch (secureEvent){
+            case verifyEmail -> {
+                validateNewEvent(profile.getEmail(), secureEvent);
+                secureData.setEmailVerified(true);
+                secureDataRepository.save(secureData);
+            }
+            default -> throw new AppException("Invalid event type", 500);
+        }
     }
 
     @Override
@@ -103,7 +129,9 @@ public class SecureDataServiceImpl implements SecureDataService {
         if (StringUtils.hasText(secureData.getPassword())) {
             persistentData.setPassword(passwordEncoder.encode(secureData.getPassword()));
         }
-        return secureDataRepository.save(persistentData);
+        SecureData data = secureDataRepository.save(persistentData);
+        secureDataRequestCache.setSecureData(data);
+        return data;
     }
 
     private boolean isTokenValid(String encodedToken) {
@@ -160,9 +188,15 @@ public class SecureDataServiceImpl implements SecureDataService {
     }
 
     @Override
-    public void update(String userId, SecureEvent secureEvent, Consumer<SecureData> updater) {
-        SecureData secureData = findByUserId(userId);
-        updater.accept(secureData);
-        secureDataRepository.save(secureData);
+    @Transactional
+    public void update(String userId, Consumer<SecureData> updater) {
+        lockService.withLock(LockUtil.SECURE_DATA.formatted(userId), ()-> {
+            SecureData secureData = findByUserId(userId);
+            updater.accept(secureData);
+            SecureData updated = secureDataRepository.save(secureData);
+            secureDataRequestCache.setSecureData(updated);
+            return secureData;
+        });
+        log.info("Updated secure data for user: {}", userId);
     }
 }

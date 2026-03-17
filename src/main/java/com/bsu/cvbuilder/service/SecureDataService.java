@@ -19,7 +19,9 @@ public interface SecureDataService {
 
     SecureData loadSecureData(SecureData build);
 
-    void update(String id, SecureEvent secureEvent, Consumer<SecureData> updater);
+    void update(String id, Consumer<SecureData> updater);
 
     void deleteByUserId(String id);
+
+    void performEvent(UserProfile profile, SecureEvent secureEvent);
 }

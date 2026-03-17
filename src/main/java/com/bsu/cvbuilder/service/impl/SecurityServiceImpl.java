@@ -18,13 +18,10 @@ import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.service.UserProfileService;
 import com.bsu.cvbuilder.util.OtpKeyUtil;
 import com.bsu.cvbuilder.util.SecretDecodeUtil;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -104,11 +101,12 @@ public class SecurityServiceImpl implements SecurityService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void checkOtp(String otp) {
+    public void checkOtp(String otp, SecureEvent secureEvent) {
         UserProfile profile = findCurrentUser();
-        otpService.validateOtp(profile, otp, OtpKeyUtil.EMAIL_KEY + profile.getEmail());
-        profile.setEmailVerified(true);
-        userProfileService.update(profile);
+        if (!otpService.validateOtp(profile, otp, OtpKeyUtil.EMAIL_KEY + profile.getEmail())) {
+            throw new AppException("Invalid OTP", 401);
+        }
+        secureDataService.performEvent(profile, secureEvent);
         sendVerificationSuccessNotification(profile);
     }
 
@@ -116,10 +114,11 @@ public class SecurityServiceImpl implements SecurityService {
     @Transactional(rollbackFor = Exception.class)
     public void verifyEmailRequest(EmailVerificationRequestDto emailVerificationRequestDto) {
         UserProfile userProfile = findCurrentUser();
+        SecureData secureData = secureDataService.findByUserId(userProfile.getId());
         AbstractEvent event = new VerifyEmailRequestEvent(userProfile.getId());
         Map<String, String> data = new HashMap<>();
 
-        if (userProfile.getEmailVerified()) { // NOSONAR
+        if (secureData.getEmailVerified()) { // NOSONAR
             data.put("status", "alreadyVerified");
             event.setData(data);
             applicationEventPublisher.publishEvent(event);
@@ -138,8 +137,6 @@ public class SecurityServiceImpl implements SecurityService {
         data.put("otp", "sent");
         event.setData(data);
         applicationEventPublisher.publishEvent(event);
-        secureDataService.update(userProfile.getId(), SecureEvent.verifyEmail, (SecureData secureData) ->
-                secureData.addEvent(SecureEvent.verifyEmail));
     }
 
     @Override

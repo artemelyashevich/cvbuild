@@ -13,10 +13,12 @@ import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.AuthService;
 import com.bsu.cvbuilder.service.ChatService;
 import com.bsu.cvbuilder.service.HistoryService;
+import com.bsu.cvbuilder.service.LockService;
 import com.bsu.cvbuilder.service.SecureDataService;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.service.SettingsService;
 import com.bsu.cvbuilder.service.UserProfileService;
+import com.bsu.cvbuilder.util.LockUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -43,6 +45,7 @@ public class SettingsServiceImpl implements SettingsService {
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TransactionTemplate transactionTemplate;
     private final HistoryService historyService;
+    private final LockService lockService;
     private final AuthService authService;
 
     @Override
@@ -69,7 +72,10 @@ public class SettingsServiceImpl implements SettingsService {
             throw new AppException("Password already set", 401);
         }
 
-        secureDataService.update(userProfile.getId(), SecureEvent.setPassword, data -> data.setPassword(passwordEncoder.encode(passwordDto.newPassword())));
+        secureDataService.update(userProfile.getId(), data -> {
+            data.setPassword(passwordEncoder.encode(passwordDto.newPassword()));
+            data.addEvent(SecureEvent.setPassword);
+        });
 
         log.info("Password updated for user {}", userProfile.getLogin());
         applicationEventPublisher.publishEvent(new SetPasswordEvent(userProfile.getId()));
@@ -95,7 +101,7 @@ public class SettingsServiceImpl implements SettingsService {
 
         secureDataService.validateNewEvent(currentUser.getId(), SecureEvent.resetPassword);
 
-        secureDataService.update(currentUser.getId(), SecureEvent.resetPassword, data -> {
+        secureDataService.update(currentUser.getId(), data -> {
             data.addEvent(SecureEvent.resetPassword);
             data.setPassword(passwordEncoder.encode(resetPasswordDto.newPassword()));
         });
@@ -109,10 +115,15 @@ public class SettingsServiceImpl implements SettingsService {
     public void agree() {
         UserProfile user = securityService.findCurrentUser();
         log.debug("Attempting process user agreement: {}", user.getLogin());
-        user.setAgree(!user.isAgree());
-        userProfileService.update(user);
+        secureDataService.validateNewEvent(user.getId(), SecureEvent.agreement);
+        AtomicBoolean agree = new AtomicBoolean(true);
+        secureDataService.update(user.getId(), data -> {
+            data.addEvent(SecureEvent.agreement);
+            agree.set(!data.isAgree());
+            data.setAgree(agree.get());
+        });
         applicationEventPublisher.publishEvent(new AgreementEvent(user.getId()));
-        log.info("User has been agreed for user: {}, is agree: {}", user.getLogin(), user.isAgree());
+        log.info("User has been agreed for user: {}, is agree: {}", user.getLogin(), agree.get());
     }
 
     @Override
@@ -125,7 +136,7 @@ public class SettingsServiceImpl implements SettingsService {
                 performUserDeletion(user);
             } catch (AppException e) {
                 log.error("Failed to delete account for user {}: {}", user.getLogin(), e.getMessage(), e);
-                secureDataService.update(user.getId(), SecureEvent.deleteAccount, data -> data.addEvent(SecureEvent.deleteAccount));
+                secureDataService.update(user.getId(), data -> data.addEvent(SecureEvent.deleteAccount));
                 status.setRollbackOnly();
             }
             return null;
@@ -135,24 +146,27 @@ public class SettingsServiceImpl implements SettingsService {
     }
 
     private void performUserDeletion(UserProfile user) throws AppException {
-        authService.logout();
-        chatService.deleteAllByUserId(user.getId());
-        secureDataService.deleteByUserId(user.getId());
-        historyService.deleteAllByUserId(user.getId());
-        userProfileService.deleteById(user.getId());
+        lockService.withLock(LockUtil.USER.formatted(user.getId()), () -> {
+            authService.logout();
+            chatService.deleteAllByUserId(user.getId());
+            secureDataService.deleteByUserId(user.getId());
+            historyService.deleteAllByUserId(user.getId());
+            userProfileService.deleteById(user.getId());
+            return null;
+        });
     }
 
     @Override
+    @Transactional
     public boolean enable2fa() {
         UserProfile user = securityService.findCurrentUser();
         log.debug("Attempting to enable 2FA for user: {}", user.getLogin());
         secureDataService.validateNewEvent(user.getId(), SecureEvent.enable2fa);
         AtomicBoolean isEnabled = new AtomicBoolean(false);
-        secureDataService.update(user.getId(), SecureEvent.enable2fa, data -> {
+        secureDataService.update(user.getId(), data -> {
             isEnabled.set(!data.getSecondAuthPhaseRequire());
             data.setSecondAuthPhaseRequire(!data.getSecondAuthPhaseRequire());
-            user.setSecondAuthPhase(isEnabled.get());
-            userProfileService.update(user);
+            data.addEvent(SecureEvent.enable2fa);
             log.info("2FA has been enabled for user: {} / {}", user.getLogin(), data.getSecondAuthPhaseRequire());
         });
         return isEnabled.get();
@@ -166,8 +180,8 @@ public class SettingsServiceImpl implements SettingsService {
         UserSettings userSettings = new UserSettings();
         SecureData secureData = secureDataService.findByUserId(user.getId());
         userSettings.setPasswordSet(secureData.getPassword() != null);
-        userSettings.setSecondAuthPhaseEnabled(user.isSecondAuthPhase());
-        userSettings.setEmailIsVerified(user.isSecondAuthPhase());
+        userSettings.setSecondAuthPhaseEnabled(secureData.isSecondAuthPhase());
+        userSettings.setEmailIsVerified(secureData.getEmailVerified());
         userSettings.setNotificationEngine(secureData.getPreferableNotificationEngine());
         return userSettings;
     }

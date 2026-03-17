@@ -1,8 +1,10 @@
 package com.bsu.cvbuilder.annotation.email;
 
 
+import com.bsu.cvbuilder.domain.entity.SecureData;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
+import com.bsu.cvbuilder.service.SecureDataService;
 import com.bsu.cvbuilder.service.SecurityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,11 +20,13 @@ import org.springframework.stereotype.Component;
 public class EmailVerificationAspect {
 
     private final SecurityService securityService;
+    private final SecureDataService secureDataService;
 
     @SuppressWarnings("all")
     @Before("@annotation(emailVerification)")
     public void beforeMethod(JoinPoint joinPoint, EmailVerification emailVerification) {
         UserProfile user = securityService.findCurrentUser();
+        SecureData secureData = secureDataService.findByUserId(user.getId());
 
         log.debug("Checking email verification for user {}", user.getId());
 
@@ -34,7 +38,7 @@ public class EmailVerificationAspect {
             throw new AppException("This functionality allows for verified users, please provide and verify your email", 401);
         }
 
-        if (!user.getEmailVerified()) {
+        if (!secureData.getEmailVerified()) {
             throw new AppException("This functionality allows for verified users", 401);
         }
     }
