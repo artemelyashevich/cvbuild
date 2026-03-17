@@ -96,6 +96,7 @@ public class SecurityServiceImpl implements SecurityService {
             event.setData(data);
             applicationEventPublisher.publishEvent(event);
         }
+        response.setRole(user.getRole().name());
         return response;
     }
 

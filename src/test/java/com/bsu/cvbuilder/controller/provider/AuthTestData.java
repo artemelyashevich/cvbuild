@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 public class AuthTestData {
 
     public static AuthResponse createAuthResponse() {
-        return new AuthResponse("access-token-123", "refresh-token-456", false);
+        return new AuthResponse("access-token-123", "refresh-token-456", false, "USER");
     }
 
     public static Stream<Arguments> registerProvider() {

@@ -2,6 +2,9 @@ package com.bsu.cvbuilder.util;
 
 import lombok.experimental.UtilityClass;
 
+import java.util.Arrays;
+import java.util.List;
+
 @UtilityClass
 public class PathUtil {
 
@@ -11,6 +14,7 @@ public class PathUtil {
             "/favicon.ico",
             "/default-ui.css",
             "/api/v1/auth/**",
+            "/api/v1/templates/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/error",
@@ -23,11 +27,15 @@ public class PathUtil {
             "/api/v1/auth/reset-password"
     };
 
-    public static final String[] ADMIN_RESOURCES = {
+    public static final String[] ADMIN_RESOURCES = { // NOSONAR
             "/api/v1/stats/admin/**",
-            "/api/v1/templates/admin/**",
+            //"/api/v1/templates/admin/**",
             "/api/v1/history/admin/**"
     };
 
     public static final String LOGOUT_URL = "/api/v1/auth/logout";
+
+    public static List<String> toList(String[] resources) {
+        return Arrays.asList(resources);
+    }
 }

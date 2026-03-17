@@ -7,7 +7,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface ResumeTemplateService {
 
-    ResumeTemplate findByName(String name);
+    ResumeTemplate findById(String name);
 
     ResumeTemplate create(CreateTemplateRequest request);
 

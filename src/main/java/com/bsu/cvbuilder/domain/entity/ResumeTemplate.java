@@ -35,11 +35,21 @@ public class ResumeTemplate {
     @CreatedDate
     private LocalDateTime createdAt;
 
+    @Getter
+    @Setter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Layout {
         private List<String> sectionOrder;
         private Integer columns;
     }
 
+    @Getter
+    @Setter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Styles {
         private String header;
         private String sectionTitle;

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -72,8 +73,8 @@ public class GlobalRestExceptionHandler {
 
     private ExceptionBodyDto handleException(final Exception exception, final String defaultMessage, HttpServletRequest request) {
         var message = exception.getMessage() == null ? defaultMessage : exception.getMessage();
-        exception.printStackTrace();
-        log.warn("PATH: {} --- {} --- '{}'.", request.getServletPath(), defaultMessage, message);
+        var errorId = UUID.randomUUID();
+        log.warn("PATH: {} --- '{}'.\nSee error details here: {}", request.getServletPath(), message, errorId);
         return new ExceptionBodyDto(message);
     }
 }

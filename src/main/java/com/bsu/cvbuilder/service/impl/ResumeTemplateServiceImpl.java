@@ -28,16 +28,16 @@ public class ResumeTemplateServiceImpl implements ResumeTemplateService {
     private final ResumeTemplateRepository resumeTemplateRepository;
 
     @Override
-    public ResumeTemplate findByName(String name) {
-        log.debug("Attempting to find resume template by name {}", name);
-        ResumeTemplate resumeTemplate = resumeTemplateRepository.findByName(name).orElseThrow(
+    public ResumeTemplate findById(String name) {
+        log.debug("Attempting to find resume template by id {}", name);
+        ResumeTemplate resumeTemplate = resumeTemplateRepository.findById(name).orElseThrow(
                 () -> {
-                    String message = String.format("Resume template with name %s not found", name);
+                    String message = String.format("Resume template with id %s not found", name);
                     log.info(message);
                     return new AppException(message, 404);
                 }
         );
-        log.info("Resume template with name {} found", name);
+        log.info("Resume template with id {} found", name);
         return resumeTemplate;
     }
 
