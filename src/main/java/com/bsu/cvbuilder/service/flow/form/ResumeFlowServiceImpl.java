@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,8 +79,7 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
 
         String skillsContent = (String) skillsFuture.join();
         String summary = (String) goalFuture.join();
-        // fixme
-        Object job = JsonHelper.fromJson(((String)jobFuture.join()).replace("\n", ""), Map.class);
+        List<Object> job = Collections.singletonList(JsonHelper.fromJson(((String) jobFuture.join()), List.class));
 
         blocks.put("Personal Information", personalInfos);
         blocks.put("Professional Media", links);
@@ -93,6 +93,14 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
 
         log.info("Resume generation finished for user: {}", user.getLogin());
         return resumeService.save(resume);
+    }
+
+    @Override
+    public Resume regenerateField(String resumeId, ResumeField resumeField) {
+        log.debug("Attempting regenerate field: {} for resume: {}", resumeField, resumeId);
+        Resume resume = resumeService.findById(resumeId);
+        Object block = resume.getBlocks().get(resumeField.name());
+        return null;
     }
 
     private Resume createEmptyResume(UserProfile user) {

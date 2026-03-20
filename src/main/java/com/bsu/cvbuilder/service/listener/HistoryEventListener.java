@@ -15,7 +15,7 @@ public class HistoryEventListener {
 
     private final HistoryService historyService;
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void storeEvent(AbstractEvent event) {
         historyService.save(event);
     }

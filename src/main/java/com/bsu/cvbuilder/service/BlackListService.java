@@ -7,4 +7,6 @@ public interface BlackListService {
     void banToken(String token, Date expiration);
 
     Boolean validate(String token);
+
+    void banUser(String login);
 }

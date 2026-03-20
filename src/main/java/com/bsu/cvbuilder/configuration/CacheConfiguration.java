@@ -55,13 +55,15 @@ public class CacheConfiguration {
                 .prefixCacheNameWith(applicationProperties.getCache().getPrefix());
 
         var userCacheConfig = defaultConfig.entryTtl(Duration.ofMinutes(applicationProperties.getCache().getTtl()));
+        var banCacheConfig = defaultConfig.entryTtl(Duration.ofDays(1));
 
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(defaultConfig)
                 .withInitialCacheConfigurations(Map.of(
                         "user::id", userCacheConfig,
                         "user::login", userCacheConfig,
-                        "user::email", userCacheConfig
+                        "user::email", userCacheConfig,
+                        "ban::login", banCacheConfig
                 ))
                 .build();
     }

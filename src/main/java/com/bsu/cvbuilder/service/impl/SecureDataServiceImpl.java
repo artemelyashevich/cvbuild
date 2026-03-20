@@ -8,7 +8,7 @@ import com.bsu.cvbuilder.domain.entity.SecureEvent;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.SecureDataRepository;
-import com.bsu.cvbuilder.security.SecureDataRequestCache;
+import com.bsu.cvbuilder.security.SecureDataCacheSingleton;
 import com.bsu.cvbuilder.service.JwtService;
 import com.bsu.cvbuilder.service.LockService;
 import com.bsu.cvbuilder.service.SecureDataService;
@@ -39,7 +39,7 @@ public class SecureDataServiceImpl implements SecureDataService {
     private final SecureDataRepository secureDataRepository;
     private final LockService lockService;
     private final PasswordEncoder passwordEncoder;
-    private final SecureDataRequestCache secureDataRequestCache;
+    private final SecureDataCacheSingleton secureDataRequestCache;
 
     @Override
     @Transactional
@@ -85,18 +85,18 @@ public class SecureDataServiceImpl implements SecureDataService {
 
     @Override
     public SecureData findByUserId(String id) {
-        if (secureDataRequestCache.getSecureData() != null) {
-            return secureDataRequestCache.getSecureData();
+        if (secureDataRequestCache.get(id) != null) {
+            return secureDataRequestCache.get(id);
         }
         SecureData secureData = secureDataRepository.findByUserId(id)
                 .orElseThrow(() -> new AppException("User [SECURE] data not found", 404));
-        secureDataRequestCache.setSecureData(secureData);
+        secureDataRequestCache.set(id, secureData);
         return secureData;
     }
 
     public SecureData saveAndCache(SecureData secureData) {
         SecureData data = secureDataRepository.save(secureData);
-        secureDataRequestCache.setSecureData(data);
+        secureDataRequestCache.set(data.getUserId(), data);
         return data;
     }
 
@@ -104,7 +104,7 @@ public class SecureDataServiceImpl implements SecureDataService {
     public void deleteByUserId(String id) {
         log.debug("Attempting delete secure data for user with id: {}", id);
         secureDataRepository.deleteByUserId(id);
-        secureDataRequestCache.setSecureData(null);
+        secureDataRequestCache.clear(id);
         log.info("Deleted secure data for user with id: {}", id);
     }
 
@@ -130,7 +130,6 @@ public class SecureDataServiceImpl implements SecureDataService {
             persistentData.setPassword(passwordEncoder.encode(secureData.getPassword()));
         }
         SecureData data = secureDataRepository.save(persistentData);
-        secureDataRequestCache.setSecureData(data);
         return data;
     }
 
@@ -194,7 +193,7 @@ public class SecureDataServiceImpl implements SecureDataService {
             SecureData secureData = findByUserId(userId);
             updater.accept(secureData);
             SecureData updated = secureDataRepository.save(secureData);
-            secureDataRequestCache.setSecureData(updated);
+            secureDataRequestCache.set(userId, updated);
             return secureData;
         });
         log.info("Updated secure data for user: {}", userId);

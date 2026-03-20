@@ -58,7 +58,8 @@ public class SecurityOAuth2Configuration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PathUtil.PUBLIC_RESOURCES).permitAll()
                         .requestMatchers(PathUtil.AUTH_RESOURCES).authenticated()
-                        .requestMatchers(PathUtil.ADMIN_RESOURCES).hasRole(UserProfile.Role.ADMIN.name())
+                        .requestMatchers(PathUtil.ADMIN_RESOURCES).hasAnyRole(UserProfile.Role.ADMIN.name(), UserProfile.Role.SUPER_ADMIN.name())
+                        .requestMatchers(PathUtil.SUPER_ADMIN_RESOURCES).hasRole(UserProfile.Role.SUPER_ADMIN.name())
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2

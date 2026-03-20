@@ -77,6 +77,6 @@ public class UserProfile {
     private Long version;
 
     public enum Role {
-        USER, ADMIN
+        USER, SUPER_ADMIN, ADMIN
     }
 }

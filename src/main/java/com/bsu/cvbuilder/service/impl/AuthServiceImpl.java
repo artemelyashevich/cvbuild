@@ -8,6 +8,7 @@ import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.AbstractEvent;
 import com.bsu.cvbuilder.domain.event.LogoutEvent;
 import com.bsu.cvbuilder.exception.AppException;
+import com.bsu.cvbuilder.security.SecureDataCacheSingleton;
 import com.bsu.cvbuilder.service.*;
 import com.bsu.cvbuilder.service.mapper.UserMapper;
 import com.bsu.cvbuilder.util.OtpKeyUtil;
@@ -40,6 +41,7 @@ public class AuthServiceImpl implements AuthService {
     private final OtpService otpService;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final NotificationService notificationService;
+    private final SecureDataCacheSingleton secureDataCacheSingleton;
 
     @Override
     @Monitored(value = "calling_auth_authenticate", context = "api")
@@ -81,12 +83,27 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    public void registerWithRole(RegisterAuthDto authRequest, UserProfile.Role role) {
+        log.debug("Attempting register user with role: {} email: {}", role, authRequest.email());
+        UserProfile candidate = userMapper.toUserProfile(authRequest);
+        candidate.setLogin(authRequest.email());
+        candidate.setRole(role);
+        UserProfile userProfile = userProfileService.create(candidate);
+        secureDataService.loadSecureData(SecureData.builder()
+                .password(authRequest.password())
+                .userId(userProfile.getId())
+                .build());
+        auth(userProfile);
+        SecurityContextHolder.clearContext();
+    }
+
+    @Override
     public AuthResponse refreshToken(RefreshRequest refreshRequest) {
         String refreshToken = refreshRequest.refreshToken();
         jwtService.validateToken(refreshToken, TokenType.REFRESH);
         String login = jwtService.extractLogin(refreshToken, TokenType.REFRESH);
 
-        UserProfile user = userProfileService.findByEmail(login);
+        UserProfile user = userProfileService.findByLogin(login);
         SecureData secureData = secureDataService.findByUserId(user.getId());
 
         String currentEncoded = SecretDecodeUtil.encode(refreshToken, applicationProperties.getSecurity().getDecodeSignature());
@@ -104,11 +121,14 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout() {
+        log.debug("Logout attempt");
+        UserProfile userProfile = securityService.findCurrentUser();
         String token = securityService.getToken();
         Date expiration = jwtService.extractExpiration(token);
         blackListService.banToken(token, expiration);
         SecurityContextHolder.clearContext();
         publishLogoutEvent(token);
+        secureDataCacheSingleton.clear(userProfile.getId());
         log.info("User logged out");
     }
 

@@ -37,7 +37,6 @@ public class TemplateController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public ResumeTemplate save(@RequestBody CreateTemplateRequest resumeTemplate) {
         return resumeTemplateService.create(resumeTemplate);
     }

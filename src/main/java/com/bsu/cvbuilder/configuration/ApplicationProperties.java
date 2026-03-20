@@ -54,6 +54,8 @@ public class ApplicationProperties {
     @Getter
     @Setter
     public static class Security {
+        private String superUserEmail;
+        private String superUserPassword;
         private String oauthRedirectUrl;
         private String allowedOrigins;
         private String allowedMethods;

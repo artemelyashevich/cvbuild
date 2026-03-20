@@ -6,6 +6,7 @@ import com.bsu.cvbuilder.domain.event.AbstractEvent;
 import com.bsu.cvbuilder.domain.event.CheckOtpEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.OtpService;
+import com.bsu.cvbuilder.util.OtpKeyUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -24,8 +25,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class OtpServiceImpl implements OtpService {
 
-    private static final String ATTEMPTS_KEY = "otp:attempts:";
-    private static final String BLOCKED_KEY = "otp:blocked:";
+    private static final String ATTEMPTS_KEY = OtpKeyUtil.ATTEMPTS_KEY;
+    private static final String BLOCKED_KEY = OtpKeyUtil.BLOCKED_KEY;
     private static final String EVENT_KEY = "status";
 
     private static final int MAX_ATTEMPTS = 3;

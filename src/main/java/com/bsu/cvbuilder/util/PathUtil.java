@@ -33,6 +33,10 @@ public class PathUtil {
             "/api/v1/history/admin/**"
     };
 
+    public static final String[] SUPER_ADMIN_RESOURCES = { // NOSONAR
+            "api/v1/management/**"
+    };
+
     public static final String LOGOUT_URL = "/api/v1/auth/logout";
 
     public static List<String> toList(String[] resources) {
