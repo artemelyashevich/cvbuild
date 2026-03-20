@@ -11,6 +11,7 @@ import com.bsu.cvbuilder.domain.event.CallAnalyzerEvent;
 import com.bsu.cvbuilder.domain.event.CallAtsEvent;
 import com.bsu.cvbuilder.domain.event.CallExtractorEvent;
 import com.bsu.cvbuilder.domain.event.UserGenerateNewMessageEvent;
+import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.PromptRegistryService;
 import com.bsu.cvbuilder.service.SecurityService;
@@ -142,15 +143,17 @@ public class AiServiceImpl implements AiService {
         String atsPrompt = promptRegistryService.getPrompt(PROMPT_ATS);
         String renderedPrompt = null;
         try {
-            renderedPrompt = atsPrompt.formatted(objectMapper.writeValueAsString(resume), jobDescription);
+            renderedPrompt = atsPrompt.formatted(objectMapper.writeValueAsString(resume.getBlocks()), jobDescription);
         } catch (JsonProcessingException e) {
             log.error(e.getMessage(), e);
+        } catch (Exception e) {
+            throw new AppException(e, 500);
         }
 
         eventPublisher.publishEvent(new CallAtsEvent(userProfile.getId()));
 
         return chatClient.prompt()
-                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, resume.getChatId()))
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, "ignore"))
                 .user(renderedPrompt)
                 .options(OllamaOptions.builder()
                         .temperature((double) 0)

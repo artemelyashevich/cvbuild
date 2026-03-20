@@ -2,14 +2,13 @@ package com.bsu.cvbuilder.service.flow.form;
 
 import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
-import com.bsu.cvbuilder.service.AiService;
-import com.bsu.cvbuilder.service.ResumeService;
-import com.bsu.cvbuilder.service.SecurityService;
+import com.bsu.cvbuilder.service.*;
 import com.bsu.cvbuilder.service.flow.form.domain.FollowUpQuestion;
 import com.bsu.cvbuilder.service.flow.form.domain.ResumeField;
 import com.bsu.cvbuilder.service.flow.form.domain.ResumeFlowStep;
 import com.bsu.cvbuilder.service.flow.form.domain.ResumePayload;
 import com.bsu.cvbuilder.util.JsonHelper;
+import com.bsu.cvbuilder.util.MaskUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,6 +29,8 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
     private final SecurityService securityService;
     private final ResumeService resumeService;
     private final AiService aiService;
+    private final JobParserService jobParserService;
+    private final AnalyzerService analyzerService;
 
     @Override
     public Map<String, Object> getResumeFlowRoadmap() {
@@ -49,7 +50,7 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
 
     @Override
     public Resume generateResume(ResumePayload payload, UserProfile user) {
-        log.debug("Generating resume for user: {}", user.getLogin());
+        log.debug("[RESUME-FLOW] Generating resume for user: {}", user.getLogin());
 
         Resume resume = createEmptyResume(user);
 
@@ -91,16 +92,26 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
 
         resume.setBlocks(blocks);
 
-        log.info("Resume generation finished for user: {}", user.getLogin());
+        log.info("[RESUME-FLOW] Resume generation finished for user: {}", user.getLogin());
         return resumeService.save(resume);
     }
 
     @Override
     public Resume regenerateField(String resumeId, ResumeField resumeField) {
-        log.debug("Attempting regenerate field: {} for resume: {}", resumeField, resumeId);
+        log.debug("[RESUME-FLOW] Attempting regenerate field: {} for resume: {}", resumeField, resumeId);
         Resume resume = resumeService.findById(resumeId);
         Object block = resume.getBlocks().get(resumeField.name());
         return null;
+    }
+
+    @Override
+    public Resume ats(String resumeId, String jobLink) {
+        log.debug("[RESUME-FLOW] Attempting ats for resume: {} for job: {}", resumeId, MaskUtil.mask(jobLink, 10));
+        String jobDescription = jobParserService.parse(jobLink);
+        Resume resume = resumeService.findById(resumeId);
+        UserProfile userProfile = securityService.findCurrentUser();
+        analyzerService.ats(resume, jobDescription, userProfile);
+        return resume;
     }
 
     private Resume createEmptyResume(UserProfile user) {

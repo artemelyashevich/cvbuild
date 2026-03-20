@@ -113,7 +113,7 @@ public class SecureDataServiceImpl implements SecureDataService {
         SecureData secureData = findByUserId(profile.getId());
         switch (secureEvent){
             case verifyEmail -> {
-                validateNewEvent(profile.getEmail(), secureEvent);
+                validateNewEvent(profile.getId(), secureEvent);
                 secureData.setEmailVerified(true);
                 secureDataRepository.save(secureData);
             }

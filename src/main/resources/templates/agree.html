@@ -1,40 +1,102 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email 2fa</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-        }
-
-        .container {
-            max-width: 500px;
-            margin: 10px auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .activation-code {
-            font-size: 36px;
-            text-align: center;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: #fff;
-        }
-    </style>
+    <title>User Agreement Confirmation</title>
 </head>
-<body>
-<div class="container">
-    <h1>Agreement</h1>
-    <p>Please use the following one-time-password to provide agreement for this account:</p>
-    <div class="activation-code"><span th:text="${code}"></span></div>
-</div>
+<body style="margin:0; padding:0; background:#f4f4f5; font-family:Arial, sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 10px;">
+    <tr>
+        <td align="center">
+
+            <!-- Container -->
+            <table width="100%" cellpadding="0" cellspacing="0"
+                   style="max-width:520px; background:#ffffff; border-radius:28px; padding:36px 24px; box-shadow:0 12px 30px rgba(0,0,0,0.06); text-align:center;">
+
+                <!-- Header -->
+                <tr>
+                    <td>
+                        <h1 style="margin:0; font-size:28px; font-weight:900; letter-spacing:-1px; color:#111;">
+                            CVBUILD
+                        </h1>
+                        <p style="margin:6px 0 0; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#999;">
+                            Agreement Request
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Title -->
+                <tr>
+                    <td style="padding:30px 0 10px;">
+                        <h2 style="margin:0; font-size:22px; font-weight:800; color:#111;">
+                            Подтвердите согласие
+                        </h2>
+                    </td>
+                </tr>
+
+                <!-- Description -->
+                <tr>
+                    <td style="padding:10px 0 20px;">
+                        <p style="margin:0; font-size:15px; color:#555; line-height:1.6;">
+                            Используйте код ниже, чтобы подтвердить согласие на обработку данных и продолжить работу с сервисом.
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Code -->
+                <tr>
+                    <td style="padding:20px 0;">
+                        <div style="
+                            display:inline-block;
+                            padding:18px 30px;
+                            font-size:34px;
+                            font-weight:900;
+                            letter-spacing:8px;
+                            background:#D6FF00;
+                            color:#000;
+                            border-radius:18px;
+                            box-shadow:0 10px 25px rgba(214,255,0,0.35);
+                        ">
+                            <span th:text="${code}"></span>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- Info -->
+                <tr>
+                    <td style="padding-top:10px;">
+                        <p style="font-size:12px; color:#888; line-height:1.6;">
+                            Код действителен в течение нескольких минут.<br/>
+                            Без вашего подтверждения некоторые функции будут недоступны.
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Divider -->
+                <tr>
+                    <td style="padding:25px 0;">
+                        <div style="height:1px; background:#eee;"></div>
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td>
+                        <p style="margin:0; font-size:11px; color:#bbb; letter-spacing:1px;">
+                            © CVBUILD — Data Consent
+                        </p>
+                        <p style="margin:6px 0 0; font-size:11px; color:#ccc;">
+                            Если вы не запрашивали это действие — проигнорируйте письмо
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+
+        </td>
+    </tr>
+</table>
+
 </body>
 </html>

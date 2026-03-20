@@ -40,6 +40,7 @@ public class SettingsController {
 
     @EmailVerification
     @PostMapping("/agree")
+    @ResponseStatus(HttpStatus.ACCEPTED)
     //@OtpVerification(key = "agreement:agree:%s:", template = "agree")
     public void agree() {
         settingsService.agree();
@@ -47,12 +48,14 @@ public class SettingsController {
 
     @EmailVerification
     @PostMapping("/2fa")
+    @ResponseStatus(HttpStatus.ACCEPTED)
     public boolean enable2fa() {
         return settingsService.enable2fa();
     }
 
     @DeleteMapping
     @EmailVerification
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     //@OtpVerification(key = "delete:account:%s:", template = "delete")
     public void removeAll(@RequestParam(required = false) String otp) {
         settingsService.deleteAccount(otp);

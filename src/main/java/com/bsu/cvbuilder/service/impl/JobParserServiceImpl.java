@@ -4,6 +4,7 @@ import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.JobParserService;
+import com.bsu.cvbuilder.util.MaskUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
@@ -36,7 +37,7 @@ public class JobParserServiceImpl implements JobParserService {
         validateUrl(url);
 
         try {
-            log.debug("Connecting to URL: {}", url);
+            log.debug("Connecting to URL: {}", MaskUtil.mask(url, 10));
 
             Document doc = Jsoup.connect(url)
                     .userAgent(applicationProperties.getAnalyzer().getUserAgent())
@@ -47,15 +48,15 @@ public class JobParserServiceImpl implements JobParserService {
             String description = extractDescription(doc);
 
             if (description.isBlank()) {
-                log.warn("Could not find job description using known selectors for URL: {}", url);
+                log.warn("Could not find job description using known selectors for URL: {}", MaskUtil.mask(url, 10));
                 description = doc.body().text();
             }
 
-            log.info("Successfully parsed job description from: {}, length: {}", url, description.length());
+            log.info("Successfully parsed job description from: {}, length: {}", MaskUtil.mask(url, 10), description.length());
             return description;
 
         } catch (IOException e) {
-            log.error("Error fetching URL {}: {}", url, e.getMessage());
+            log.error("Error fetching URL {}: {}", MaskUtil.mask(url, 10), e.getMessage());
             throw new AppException("Failed to connect or parse job URL: " + url, 500);
         }
     }

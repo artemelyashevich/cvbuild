@@ -31,6 +31,7 @@ public class ManagementController {
     }
 
     @PostMapping("/ban/{userId}")
+    @ResponseStatus(HttpStatus.CREATED)
     public void banUser(@PathVariable String userId) {
         blackListService.banUser(userId);
     }

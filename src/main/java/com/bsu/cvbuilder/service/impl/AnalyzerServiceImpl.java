@@ -57,6 +57,7 @@ public class AnalyzerServiceImpl implements AnalyzerService {
             optimizedResume.setId(null); // NOSONAR
             optimizedResume.setChatId(resume.getChatId());
             optimizedResume.setAts(true);
+            optimizedResume.setResumeSettings(resume.getResumeSettings());
             transactionTemplate.execute(status -> {
                 Resume persistentResume = resumeService.save(optimizedResume);
                 resume.setAtsId(persistentResume.getId());

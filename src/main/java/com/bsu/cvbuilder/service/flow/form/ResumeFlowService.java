@@ -14,4 +14,6 @@ public interface ResumeFlowService {
     Resume generateResume(ResumePayload resumePayload, UserProfile userProfile);
 
     Resume regenerateField(String resumeId, ResumeField resumeField);
+
+    Resume ats(String resumeId, String jobLink);
 }

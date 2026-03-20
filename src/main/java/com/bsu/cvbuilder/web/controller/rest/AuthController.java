@@ -81,11 +81,13 @@ public class AuthController {
     }
 
     @PostMapping("/2fa")
+    @ResponseStatus(HttpStatus.ACCEPTED)
     public AuthResponse verify2fa(@Valid @RequestBody Verify2faRequest verify2faRequest) {
         return authService.verify2fa(verify2faRequest);
     }
 
     @PostMapping("/2fa/refresh")
+    @ResponseStatus(HttpStatus.ACCEPTED)
     public void verify2faRefresh(@Valid @RequestBody Verify2faRefreshRequest verify2faRefreshRequest) {
         authService.verify2faRefresh(verify2faRefreshRequest);
     }
