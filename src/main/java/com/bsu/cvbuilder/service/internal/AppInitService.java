@@ -88,6 +88,12 @@ public class AppInitService {
                 Thread.currentThread().interrupt();
                 log.warn("Shutdown wait interrupted", e);
             }
+            notificationService.sendNotification(
+                    NotificationDto.builder()
+                            .receiver("")
+                            .engine(NotificationEngine.TELEGRAM)
+                            .parameters(Map.of("message", "Stopped!"))
+                            .build());
 
             log.info(" --- Shutdown Complete ---");
         }));

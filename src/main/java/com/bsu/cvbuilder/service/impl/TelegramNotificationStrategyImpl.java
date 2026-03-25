@@ -8,10 +8,10 @@ import com.bsu.cvbuilder.service.NotificationStrategy;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -31,23 +31,24 @@ public class TelegramNotificationStrategyImpl implements NotificationStrategy {
     @PostConstruct
     public void init() {
         this.url = applicationProperties.getTelegram().getUrl().formatted(
-                applicationProperties.getTelegram().getToken(),
-                applicationProperties.getTelegram().getChatId()
+                applicationProperties.getTelegram().getToken()
         );
     }
 
     @Override
     public void sendNotification(NotificationDto notificationDto) {
         try {
-            String finalUrl = UriComponentsBuilder
-                    .fromUriString(url)
-                    .queryParamIfPresent("text", Optional.of(notificationDto.getParameters().get("message")))
-                    .toUriString();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+            MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+            params.add("chat_id", applicationProperties.getTelegram().getChatId());
+            params.add("text", (String) notificationDto.getParameters().get("message"));
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
             ResponseEntity<String> response = restTemplate.exchange(
-                    finalUrl,
-                    HttpMethod.GET,
-                    HttpEntity.EMPTY,
+                    url,
+                    HttpMethod.POST,
+                    request,
                     String.class
             );
 
@@ -56,6 +57,7 @@ public class TelegramNotificationStrategyImpl implements NotificationStrategy {
             }
         } catch (HttpClientErrorException e) {
             log.error(e.getMessage());
+            throw new AppException("retry", 5000);
         }
     }
 
@@ -63,4 +65,8 @@ public class TelegramNotificationStrategyImpl implements NotificationStrategy {
     public NotificationEngine getSupportedEngine() {
         return NotificationEngine.TELEGRAM;
     }
+
+    private record TelegramBody (
+            String chatId, String text
+    ){}
 }
