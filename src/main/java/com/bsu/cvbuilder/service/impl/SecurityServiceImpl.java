@@ -16,7 +16,7 @@ import com.bsu.cvbuilder.service.OtpService;
 import com.bsu.cvbuilder.service.SecureDataService;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.service.UserProfileService;
-import com.bsu.cvbuilder.util.OtpKeyUtil;
+import com.bsu.cvbuilder.util.CacheUtil;
 import com.bsu.cvbuilder.util.SecretDecodeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -104,7 +104,7 @@ public class SecurityServiceImpl implements SecurityService {
     @Transactional(rollbackFor = Exception.class)
     public void checkOtp(String otp, SecureEvent secureEvent) {
         UserProfile profile = findCurrentUser();
-        if (!otpService.validateOtp(profile, otp, OtpKeyUtil.EMAIL_KEY + profile.getEmail())) {
+        if (!otpService.validateOtp(profile, otp, CacheUtil.EMAIL_KEY + profile.getEmail())) {
             throw new AppException("Invalid OTP", 401);
         }
         secureDataService.performEvent(profile, secureEvent);
@@ -126,7 +126,7 @@ public class SecurityServiceImpl implements SecurityService {
             return;
         }
         secureDataService.validateNewEvent(userProfile.getId(), SecureEvent.verifyEmail);
-        String otp = otpService.create(userProfile, OtpKeyUtil.EMAIL_KEY + userProfile.getEmail());
+        String otp = otpService.create(userProfile, CacheUtil.EMAIL_KEY + userProfile.getEmail());
         notificationService.sendNotification(NotificationDto.builder()
                 .engine(NotificationEngine.EMAIL)
                 .receiver(userProfile.getEmail())

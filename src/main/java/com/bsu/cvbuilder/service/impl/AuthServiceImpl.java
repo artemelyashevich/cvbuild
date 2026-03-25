@@ -11,7 +11,7 @@ import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.security.SecureDataCacheSingleton;
 import com.bsu.cvbuilder.service.*;
 import com.bsu.cvbuilder.service.mapper.UserMapper;
-import com.bsu.cvbuilder.util.OtpKeyUtil;
+import com.bsu.cvbuilder.util.CacheUtil;
 import com.bsu.cvbuilder.util.SecretDecodeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,7 +51,7 @@ public class AuthServiceImpl implements AuthService {
         UserProfile user = userProfileService.findByEmail(authRequest.email());
 
         if (secureDataService.checkCredsAndIf2faIsRequire(user, authRequest)) {
-            String otp = otpService.create(user, OtpKeyUtil.SECOND_AUTH_PHASE_KEY + user.getLogin());
+            String otp = otpService.create(user, CacheUtil.SECOND_AUTH_PHASE_KEY + user.getLogin());
             notificationService.sendNotification(NotificationDto.builder()
                             .engine(NotificationEngine.EMAIL)
                             .receiver(user.getEmail())
@@ -136,7 +136,7 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse verify2fa(Verify2faRequest verify2faRequest) {
         log.debug("Attempting verify2fa user with email: {}", verify2faRequest.email());
         UserProfile user = userProfileService.findByEmail(verify2faRequest.email());
-        if (!otpService.validateOtp(user, verify2faRequest.code(), OtpKeyUtil.SECOND_AUTH_PHASE_KEY + user.getLogin())) {
+        if (!otpService.validateOtp(user, verify2faRequest.code(), CacheUtil.SECOND_AUTH_PHASE_KEY + user.getLogin())) {
             throw new AppException("Некорректный одноразовый пароль", 401);
         };
         log.info("Verify2fa user with email: {}", verify2faRequest.email());
@@ -153,8 +153,8 @@ public class AuthServiceImpl implements AuthService {
     public void verify2faRefresh(Verify2faRefreshRequest verify2faRefreshRequest) {
         log.debug("Attempting refresh verify2fa code user with email: {}", verify2faRefreshRequest.email());
         UserProfile user = userProfileService.findByEmail(verify2faRefreshRequest.email());
-        otpService.invalidate(OtpKeyUtil.SECOND_AUTH_PHASE_KEY + user.getLogin());
-        String otp = otpService.create(user, OtpKeyUtil.SECOND_AUTH_PHASE_KEY + user.getLogin());
+        otpService.invalidate(CacheUtil.SECOND_AUTH_PHASE_KEY + user.getLogin());
+        String otp = otpService.create(user, CacheUtil.SECOND_AUTH_PHASE_KEY + user.getLogin());
         notificationService.sendNotification(NotificationDto.builder()
                 .engine(NotificationEngine.EMAIL)
                 .receiver(user.getEmail())

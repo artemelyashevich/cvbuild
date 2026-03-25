@@ -21,6 +21,16 @@ public class ApplicationProperties {
     private Limit limit;
     private Analyzer analyzer;
     private Twilio twilio;
+    private Telegram telegram;
+
+    @Getter
+    @Setter
+    public static class Telegram {
+        private String token;
+        private String chatId;
+        private Boolean enabled;
+        private String url;
+    }
 
     @Getter
     @Setter
@@ -98,5 +108,6 @@ public class ApplicationProperties {
         private String accountSid;
         private String authToken;
         private String phoneNumber;
+        private boolean enabled;
     }
 }

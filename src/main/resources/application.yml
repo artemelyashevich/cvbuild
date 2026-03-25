@@ -71,7 +71,13 @@ server:
   port: 8888
 
 app:
+  telegram:
+    enabled: true
+    token: ${TELEGRAM_BOT_TOKEN_API}
+    chat-id: ${TELEGRAM_BOT_CHAT_ID}
+    url: ${TELEGRAM_BOT_URL}
   twilio:
+    enabled: false
     account-sid: ${TWILIO_ACCOUNT_SID:}
     auth-token: ${TWILIO_AUTH_TOKEN:}
     phone-number: ${TWILIO_PHONE_NUMBER:}

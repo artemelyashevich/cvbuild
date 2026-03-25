@@ -4,7 +4,7 @@ import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.OtpService;
 import com.bsu.cvbuilder.service.SecurityService;
-import com.bsu.cvbuilder.util.OtpKeyUtil;
+import com.bsu.cvbuilder.util.CacheUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
@@ -28,7 +28,7 @@ public class OtpRequireAspect {
         }
         UserProfile user = securityService.findCurrentUser();
         log.debug("Check if otp is present for user: {}", user.getLogin());
-        if (!otpService.exists(OtpKeyUtil.EMAIL_KEY + user.getLogin())) {
+        if (!otpService.exists(CacheUtil.EMAIL_KEY + user.getLogin())) {
             log.info("OTP NOT FOUND for user: {}", user.getLogin());
             throw new AppException("This functionality require otp code", 401);
         }

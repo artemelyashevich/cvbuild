@@ -7,7 +7,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.io.Serializable;
 import java.util.Map;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -15,13 +17,19 @@ import java.util.Map;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
-public class NotificationDto {
+public class NotificationDto implements Serializable {
+
+    @Builder.Default
+    private UUID id =  UUID.randomUUID();
 
     private NotificationEngine engine;
 
     private String receiver;
 
     private String templateName;
+
+    @Builder.Default
+    private Integer retryCount = 0;
 
     @ToString.Exclude
     private Map<String, Object> parameters;

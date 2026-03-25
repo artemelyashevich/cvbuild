@@ -1,6 +1,9 @@
 package com.bsu.cvbuilder.service.internal;
 
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
+import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
+import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
+import com.bsu.cvbuilder.service.NotificationService;
 import com.twilio.Twilio;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +15,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -23,13 +27,30 @@ public class AppInitService {
     private final ApplicationProperties applicationProperties;
     private final CacheManager cacheManager;
     private final RedissonClient redissonClient;
+    private final NotificationService notificationService;
 
     @PostConstruct
     public void init() {
         log.info(" --- Initializing Application ---");
 
         registerShutdownHook();
-        initTwilio();
+        if (applicationProperties.getTwilio().isEnabled()) {
+            initTwilio();
+        } else {
+            log.info(" --- Twilio is disabled ---");
+        }
+
+        if (applicationProperties.getTelegram().getEnabled()) {
+            notificationService.sendNotification(
+                    NotificationDto.builder()
+                            .receiver("")
+                            .engine(NotificationEngine.TELEGRAM)
+                            .parameters(Map.of("message", "Started!"))
+                            .build()
+            );
+        } else {
+            log.info(" --- Telegram is disabled ---");
+        }
 
         log.info(" --- Application Initialization Complete ---");
     }

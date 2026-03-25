@@ -10,4 +10,5 @@ public class LockUtil {
     public static final String SECURE_DATA = "l:secureData:%s";
     public static final String USER = "l:user:%s";
     public static final String STATS = "l:stats:%s";
+    public static final String NOTIFICATION_DQL = "l:notification:dlq:%s";
 }
