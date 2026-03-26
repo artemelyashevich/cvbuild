@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 public record ResumePayload(
+        String name,
         Map<String, String> personalInformation,
         Map<String, String> links,
         List<Map<String, String>> job,

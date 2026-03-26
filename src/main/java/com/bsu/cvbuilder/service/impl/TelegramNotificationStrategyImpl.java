@@ -5,6 +5,7 @@ import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
 import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.NotificationStrategy;
+import com.bsu.cvbuilder.util.JsonHelper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,9 +15,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import java.util.Optional;
 
 @Slf4j
 @Service

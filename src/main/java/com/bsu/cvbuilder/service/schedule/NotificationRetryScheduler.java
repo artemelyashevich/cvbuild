@@ -37,7 +37,7 @@ public class NotificationRetryScheduler {
         if (notification == null) return;
 
         NotificationDto dto = (NotificationDto) fromJson(notification, NotificationDto.class);
-
+        log.info("[NOTIFICATION-RETRY] queue started: {}", notification);
         try {
             notificationService.sendInternal(dto);
             notificationRepository.findByUuid(dto.getId())

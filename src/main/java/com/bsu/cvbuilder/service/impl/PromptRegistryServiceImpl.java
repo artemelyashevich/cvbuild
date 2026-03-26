@@ -82,9 +82,10 @@ public class PromptRegistryServiceImpl implements PromptRegistryService {
     }
 
     @PreDestroy
-    public void destroy() {
+    public void destroy() throws InterruptedException {
         log.debug("Destroying AI prompts from {}", promptsPath);
         prompts.clear();
+        Thread.sleep(500);
         log.info("Successfully destroyed AI prompts from {}", promptsPath);
     }
 

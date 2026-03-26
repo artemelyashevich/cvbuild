@@ -134,6 +134,7 @@ public class SettingsServiceImpl implements SettingsService {
             secureDataService.validateNewEvent(user.getId(), SecureEvent.deleteAccount);
             try {
                 performUserDeletion(user);
+                authService.logout();
             } catch (AppException e) {
                 log.error("Failed to delete account for user {}: {}", user.getLogin(), e.getMessage(), e);
                 secureDataService.update(user.getId(), data -> data.addEvent(SecureEvent.deleteAccount));
@@ -142,12 +143,12 @@ public class SettingsServiceImpl implements SettingsService {
             return null;
         });
 
+
         log.info("Account has been deleted: {}", user.getLogin());
     }
 
     private void performUserDeletion(UserProfile user) throws AppException {
         lockService.withLock(LockUtil.USER.formatted(user.getId()), () -> {
-            authService.logout();
             chatService.deleteAllByUserId(user.getId());
             secureDataService.deleteByUserId(user.getId());
             historyService.deleteAllByUserId(user.getId());
@@ -183,6 +184,7 @@ public class SettingsServiceImpl implements SettingsService {
         userSettings.setSecondAuthPhaseEnabled(secureData.isSecondAuthPhase());
         userSettings.setEmailIsVerified(secureData.getEmailVerified());
         userSettings.setNotificationEngine(secureData.getPreferableNotificationEngine());
+        userSettings.setAgree(secureData.isAgree());
         return userSettings;
     }
 }

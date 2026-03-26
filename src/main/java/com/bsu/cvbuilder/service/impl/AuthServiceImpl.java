@@ -128,7 +128,7 @@ public class AuthServiceImpl implements AuthService {
         blackListService.banToken(token, expiration);
         SecurityContextHolder.clearContext();
         publishLogoutEvent(token);
-        secureDataCacheSingleton.clear(userProfile.getId());
+        secureDataCacheSingleton.clearCache(userProfile.getId());
         log.info("User logged out");
     }
 
@@ -170,7 +170,8 @@ public class AuthServiceImpl implements AuthService {
             AbstractEvent logoutEvent = LogoutEvent.builder()
                     .userId(null)
                     .build();
-            logoutEvent.setData(Map.of("login", login));
+            Map<String, String> data = Map.of("login", login, "status", "success");
+            logoutEvent.setData(data);
             applicationEventPublisher.publishEvent(logoutEvent);
         } catch (Exception e) {
             log.warn("Could not publish logout event: user profile not found");

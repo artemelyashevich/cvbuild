@@ -29,11 +29,19 @@
         <bucket4j.version>8.0.1</bucket4j.version>
         <redisson.version>4.3.0</redisson.version>
         <guava.version>33.5.0-jre</guava.version>
+        <coffeine.version>3.2.3</coffeine.version>
     </properties>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>${coffeine.version}</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>

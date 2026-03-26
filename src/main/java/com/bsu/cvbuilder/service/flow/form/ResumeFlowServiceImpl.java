@@ -14,10 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -52,7 +49,7 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
     public Resume generateResume(ResumePayload payload, UserProfile user) {
         log.debug("[RESUME-FLOW] Generating resume for user: {}", user.getLogin());
 
-        Resume resume = createEmptyResume(user);
+        Resume resume = createEmptyResume(payload.name(), user);
 
         Map<String, Object> personalInfos = extractPersonalInformation(payload, user);
         Map<String, Object> links = extractLinks(payload);
@@ -80,7 +77,7 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
 
         String skillsContent = (String) skillsFuture.join();
         String summary = (String) goalFuture.join();
-        List<Object> job = Collections.singletonList(JsonHelper.fromJson(((String) jobFuture.join()), List.class));
+        List<Object> job = (List<Object>) JsonHelper.fromJson(((String) jobFuture.join()), List.class);
 
         blocks.put("Personal Information", personalInfos);
         blocks.put("Professional Media", links);
@@ -114,11 +111,14 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
         return resume;
     }
 
-    private Resume createEmptyResume(UserProfile user) {
+    private Resume createEmptyResume(String name, UserProfile user) {
+        if (name == null) {
+            name = String.format("resume__%s__%s__%s", user.getLogin(), LocalDate.now(), UUID.randomUUID());
+        }
         return Resume.builder()
                 .generatedWithChat(false)
                 .resumeSettings(Resume.ResumeSettings.builder()
-                        .name(String.format("resume_%s_%s", user.getLogin(), LocalDate.now()))
+                        .name(name)
                         .ownerId(user.getId())
                         .ownerLogin(user.getLogin())
                         .build())

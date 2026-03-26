@@ -85,8 +85,8 @@ public class SecureDataServiceImpl implements SecureDataService {
 
     @Override
     public SecureData findByUserId(String id) {
-        if (secureDataRequestCache.get(id) != null) {
-            return secureDataRequestCache.get(id);
+        if (secureDataRequestCache.getSecureData(id) != null) {
+            return secureDataRequestCache.getSecureData(id);
         }
         SecureData secureData = secureDataRepository.findByUserId(id)
                 .orElseThrow(() -> new AppException("User [SECURE] data not found", 404));
@@ -104,7 +104,7 @@ public class SecureDataServiceImpl implements SecureDataService {
     public void deleteByUserId(String id) {
         log.debug("Attempting delete secure data for user with id: {}", id);
         secureDataRepository.deleteByUserId(id);
-        secureDataRequestCache.clear(id);
+        secureDataRequestCache.clearCache(id);
         log.info("Deleted secure data for user with id: {}", id);
     }
 
@@ -181,7 +181,7 @@ public class SecureDataServiceImpl implements SecureDataService {
             long hoursRemaining = ChronoUnit.HOURS.between(now, nextAllowedTime);
             throw new AppException(
                     "Limit reached. You can perform this action in %d hours".formatted(hoursRemaining),
-                    401
+                    400
             );
         }
     }

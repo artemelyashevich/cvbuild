@@ -3,6 +3,7 @@ package com.bsu.cvbuilder.service.internal;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
 import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
+import com.bsu.cvbuilder.service.LockService;
 import com.bsu.cvbuilder.service.NotificationService;
 import com.twilio.Twilio;
 import jakarta.annotation.PostConstruct;
@@ -26,7 +27,7 @@ public class AppInitService {
 
     private final ApplicationProperties applicationProperties;
     private final CacheManager cacheManager;
-    private final RedissonClient redissonClient;
+    private final LockService lockService;
     private final NotificationService notificationService;
 
     @PostConstruct
@@ -71,14 +72,7 @@ public class AppInitService {
             }
 
             try {
-                redissonClient.getKeys().getKeys()
-                        .forEach(key -> {
-                            RLock lock = redissonClient.getLock(key);
-                            if (lock.isLocked() && lock.isHeldByCurrentThread()) {
-                                lock.unlock();
-                                log.info("Released lock '{}'", key);
-                            }
-                        });
+                lockService.clear();
             } catch (Exception e) {
                 log.error("Error releasing distributed locks on shutdown", e);
             }

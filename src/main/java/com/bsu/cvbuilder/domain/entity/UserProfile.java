@@ -73,9 +73,6 @@ public class UserProfile {
     @Builder.Default
     private Locale locale = Locale.ENGLISH;
 
-    @Version
-    private Long version;
-
     public enum Role {
         USER, SUPER_ADMIN, ADMIN
     }

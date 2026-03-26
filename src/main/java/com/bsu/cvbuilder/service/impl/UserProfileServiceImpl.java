@@ -6,6 +6,7 @@ import com.bsu.cvbuilder.domain.event.UserCreatedEvent;
 import com.bsu.cvbuilder.domain.event.UserUpdateEmailEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.UserProfileRepository;
+import com.bsu.cvbuilder.security.SecureDataCacheSingleton;
 import com.bsu.cvbuilder.service.ImageService;
 import com.bsu.cvbuilder.service.LockService;
 import com.bsu.cvbuilder.service.UserProfileService;
@@ -18,6 +19,7 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -41,6 +43,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final UserMapper userMapper;
     private final LockService lockService;
     private final TransactionTemplate transactionTemplate;
+    private final SecureDataCacheSingleton secureDataCacheSingleton;
 
     @Override
     @Transactional(readOnly = true)
@@ -65,8 +68,12 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Cacheable(value = CACHE_ID, key = "#id")
     public UserProfile findById(String id) {
         log.debug("Finding user profile by id: {}", id);
-        return userProfileRepository.findById(id)
-                .orElseThrow(notFound("id", id));
+        if (secureDataCacheSingleton.get(id) == null) {
+            UserProfile userProfile = userProfileRepository.findById(id)
+                    .orElseThrow(notFound("id", id));
+            secureDataCacheSingleton.set(userProfile);
+        }
+        return secureDataCacheSingleton.get(id);
     }
 
     @Override
@@ -121,15 +128,30 @@ public class UserProfileServiceImpl implements UserProfileService {
     })
     public UserProfile update(UserProfile profile) {
         log.debug("Updating user profile: {}", profile.getId());
-        return lockService.withLock(LockUtil.USER.formatted(profile.getId()), () -> transactionTemplate.execute(s -> {
-            UserProfile existingUser = findById(profile.getId());
-            if (userProfileRepository.existsByEmail(profile.getEmail()) && !existingUser.getEmail().equals(profile.getEmail())) {
-                throw new AppException("User this such email already exists", 400);
-            }
-            userMapper.updateEntity(profile, existingUser);
-            return userProfileRepository.save(existingUser);
-        }));
+        return lockService.withLock(LockUtil.USER.formatted(profile.getId()), () -> {
+            int retries = 3;
 
+            while (true) {
+                try {
+                    return transactionTemplate.execute(s -> {
+                        UserProfile existingUser = findById(profile.getId());
+
+                        if (userProfileRepository.existsByEmail(profile.getEmail())
+                                && !existingUser.getEmail().equals(profile.getEmail())) {
+                            throw new AppException("User this such email already exists", 400);
+                        }
+
+                        userMapper.updateEntity(profile, existingUser);
+
+                        UserProfile user = userProfileRepository.save(existingUser);
+                        secureDataCacheSingleton.set(user);
+                        return user;
+                    });
+                } catch (OptimisticLockingFailureException e) {
+                    if (--retries == 0) throw e;
+                }
+            }
+        });
     }
 
     @Override
@@ -139,13 +161,25 @@ public class UserProfileServiceImpl implements UserProfileService {
             @CacheEvict(value = CACHE_LOGIN, key = "#result.login", condition = "#result.login != null")
     })
     public UserProfile uploadAvatar(MultipartFile file, String id) {
-        return transactionTemplate.execute(s -> {
-            UserProfile userProfile = findById(id);
+        return lockService.withLock(LockUtil.USER.formatted(id), () -> {
+            int retries = 3;
 
-            ImageMetadata imageMetadata = imageService.create(file, id);
-            userProfile.setAvatarUrl(imageMetadata.getId());
+            while (true) {
+                try {
+                    return transactionTemplate.execute(s -> {
+                        UserProfile existingUser = findById(id);
 
-            return userProfileRepository.save(userProfile);
+                        ImageMetadata imageMetadata = imageService.create(file, id);
+                        existingUser.setAvatarUrl(imageMetadata.getId());
+
+                        UserProfile user = userProfileRepository.save(existingUser);
+                        secureDataCacheSingleton.set(user);
+                        return user;
+                    });
+                } catch (OptimisticLockingFailureException e) {
+                    if (--retries == 0) throw e;
+                }
+            }
         });
     }
 
@@ -163,6 +197,7 @@ public class UserProfileServiceImpl implements UserProfileService {
         UserProfile user = findById(id);
         user.setEmail(email);
         UserProfile saved = userProfileRepository.save(user);
+        secureDataCacheSingleton.set(saved);
         eventPublisher.publishEvent(UserUpdateEmailEvent.builder().user(saved).build());
         log.info("User profile updated: {}", saved);
     }
@@ -171,6 +206,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     public void deleteById(String id) {
         log.debug("Attempting delete user profile: {}", id);
         userProfileRepository.deleteById(id);
+        secureDataCacheSingleton.clearCache(id);
         log.info("User profile deleted: {}", id);
     }
 

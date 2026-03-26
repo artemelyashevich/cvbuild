@@ -3,6 +3,7 @@ package com.bsu.cvbuilder.service.schedule;
 import com.bsu.cvbuilder.service.LockService;
 import com.bsu.cvbuilder.util.LockUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import java.util.Set;
 
 import static com.bsu.cvbuilder.util.CacheUtil.NOTIFICATION_DELAYED_KEY;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationDelayScheduler {
@@ -28,6 +30,7 @@ public class NotificationDelayScheduler {
 
             if (ready == null || ready.isEmpty()) return null;
 
+            log.info("[NOTIFICATION-DELAY] queue started: {}", ready.size());
             for (String item : ready) {
 
                 redisTemplate.opsForZSet()

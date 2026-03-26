@@ -53,6 +53,10 @@ public class NotificationServiceImpl implements NotificationService {
             return;
         }
 
+        if (notificationDto.getReceiver() == null) {
+            notificationDto.setReceiver("[internal]");
+        }
+
         try {
             log.info("Sending {} notification to {}",
                     notificationDto.getEngine(),

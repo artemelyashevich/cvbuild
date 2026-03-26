@@ -14,8 +14,9 @@ import lombok.Setter;
 @NoArgsConstructor
 public class UserSettings {
 
-    boolean emailIsVerified;
-    boolean isSecondAuthPhaseEnabled;
-    boolean isPasswordSet;
-    NotificationEngine notificationEngine;
+    private boolean emailIsVerified;
+    private boolean isSecondAuthPhaseEnabled;
+    private boolean isPasswordSet;
+    private NotificationEngine notificationEngine;
+    private boolean isAgree;
 }

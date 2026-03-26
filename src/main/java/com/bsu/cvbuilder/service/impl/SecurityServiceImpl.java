@@ -119,11 +119,15 @@ public class SecurityServiceImpl implements SecurityService {
         AbstractEvent event = new VerifyEmailRequestEvent(userProfile.getId());
         Map<String, String> data = new HashMap<>();
 
+        if (userProfile.getEmail() == null) {
+            throw new AppException("Invalid email", 400);
+        }
+
         if (secureData.getEmailVerified()) { // NOSONAR
             data.put("status", "alreadyVerified");
             event.setData(data);
             applicationEventPublisher.publishEvent(event);
-            return;
+            throw  new AppException("Email already verified", 400);
         }
         secureDataService.validateNewEvent(userProfile.getId(), SecureEvent.verifyEmail);
         String otp = otpService.create(userProfile, CacheUtil.EMAIL_KEY + userProfile.getEmail());
