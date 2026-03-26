@@ -83,6 +83,5 @@ public class AuthFilter extends OncePerRequestFilter {
             OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(login, role, token);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
-
     }
 }

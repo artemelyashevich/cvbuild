@@ -84,7 +84,7 @@ public class BeanConfiguration {
     public Executor notificationExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(3);
-        executor.setMaxPoolSize(6);
+        executor.setMaxPoolSize(10);
         executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("cv-notification-");
         executor.setKeepAliveSeconds(60);

@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static com.bsu.cvbuilder.util.CacheUtil.NOTIFICATION_DELAYED_KEY;
-import static com.bsu.cvbuilder.util.CacheUtil.NOTIFICATION_PROCESSING;
 import static com.bsu.cvbuilder.util.JsonHelper.fromJson;
 
 @Slf4j
@@ -30,35 +29,40 @@ public class NotificationRetryScheduler {
 
     @Scheduled(fixedRate = 3000)
     public void job() {
+        int batchSize = 50;
 
-        String notification = redisTemplate.opsForList()
-                .rightPopAndLeftPush(CacheUtil.NOTIFICATION_RETRY_KEY, CacheUtil.NOTIFICATION_PROCESSING);
+        for (int i = 0; i < batchSize; i++) {
+            String notification = redisTemplate.opsForList()
+                    .rightPopAndLeftPush(CacheUtil.NOTIFICATION_RETRY_KEY, CacheUtil.NOTIFICATION_PROCESSING);
 
-        if (notification == null) return;
+            if (notification == null) break;
 
-        NotificationDto dto = (NotificationDto) fromJson(notification, NotificationDto.class);
-        log.info("[NOTIFICATION-RETRY] queue started: {}", notification);
-        try {
-            notificationService.sendInternal(dto);
-            notificationRepository.findByUuid(dto.getId())
-                    .ifPresent(n -> {
-                        n.setStatus(NotificationStatus.SUCCESS);
-                        notificationRepository.save(n);
-                    });
-            redisTemplate.opsForList()
-                    .remove(CacheUtil.NOTIFICATION_PROCESSING, 1, notification);
-        } catch (Exception e) {
+            NotificationDto dto = (NotificationDto) fromJson(notification, NotificationDto.class);
+            log.info("[NOTIFICATION-RETRY] queue started: {}", notification);
 
-            int retry = dto.getRetryCount() + 1;
+            try {
+                notificationService.sendInternal(dto);
 
-            if (retry >= 5) {
-                moveToDLQ(notification);
-            } else {
-                dto.setRetryCount(retry);
-                requeueWithDelay(dto);
+                notificationRepository.findByUuid(dto.getId())
+                        .ifPresent(n -> {
+                            n.setStatus(NotificationStatus.SUCCESS);
+                            notificationRepository.save(n);
+                        });
+
+                redisTemplate.opsForList().remove(CacheUtil.NOTIFICATION_PROCESSING, 1, notification);
+                log.info("[NOTIFICATION-RETRY] queue sent successfully: {}", notification);
+            } catch (Exception e) {
+                int retry = dto.getRetryCount() + 1;
+
+                if (retry >= 5) {
+                    moveToDLQ(notification);
+                } else {
+                    dto.setRetryCount(retry);
+                    requeueWithDelay(dto);
+                }
+
+                redisTemplate.opsForList().remove(CacheUtil.NOTIFICATION_PROCESSING, 1, notification);
             }
-            redisTemplate.opsForList()
-                    .remove(NOTIFICATION_PROCESSING, 1, notification);
         }
     }
 
