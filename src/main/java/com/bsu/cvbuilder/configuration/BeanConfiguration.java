@@ -96,6 +96,19 @@ public class BeanConfiguration {
         return executor;
     }
 
+    @Bean(name = "notificationScheduleExecutor")
+    public ScheduledExecutorService notificationExecutorService() {
+        return Executors.newScheduledThreadPool(
+                5,
+                r -> {
+                    Thread t = new Thread(r);
+                    t.setName("cv-notif-");
+                    t.setDaemon(true);
+                    return t;
+                }
+        );
+    }
+
     @Bean(name = "cleanUpExecutor", destroyMethod = "shutdown")
     public ScheduledExecutorService cleanUpExecutor() {
         return Executors.newScheduledThreadPool(

@@ -1,8 +1,11 @@
 package com.bsu.cvbuilder.web.controller.rest.exception;
 
+import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
+import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
 import com.bsu.cvbuilder.domain.dto.exception.ExceptionBodyDto;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.exception.AuthTokenException;
+import com.bsu.cvbuilder.service.NotificationService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +29,8 @@ public class GlobalRestExceptionHandler {
 
     private static final String FAILED_VALIDATION_MESSAGE = "Validation failed.";
     private static final String UNEXPECTED_ERROR_MESSAGE = "Something went wrong.";
+
+    private final NotificationService notificationService;
 
     @ExceptionHandler(IncorrectResultSizeDataAccessException.class)
     public ResponseEntity<Map<String, String>> handleIncorrectResultSize(IncorrectResultSizeDataAccessException ex) {
@@ -75,7 +80,17 @@ public class GlobalRestExceptionHandler {
     private ExceptionBodyDto handleException(final Exception exception, final String defaultMessage, HttpServletRequest request) {
         var message = exception.getMessage() == null ? defaultMessage : exception.getMessage();
         var errorId = UUID.randomUUID();
-        log.warn("PATH: {} --- '{}'.\nSee error details here: {}", request.getServletPath(), message, errorId);
+        String path = request.getServletPath();
+        String messageToNotification = "[EXCEPTION]\nPATH: %s \nMessage: %s \nError id: %s".formatted(
+                path, message, errorId
+        );
+        notificationService.sendNotification(
+                NotificationDto.builder()
+                        .parameters(Map.of("message", messageToNotification))
+                        .engine(NotificationEngine.TELEGRAM)
+                        .build()
+        );
+        log.warn("PATH: {} --- '{}'.\nSee error details here: {}", path, message, errorId);
         return new ExceptionBodyDto(message, Map.of("error", errorId.toString()));
     }
 }

@@ -20,7 +20,7 @@ public class NotificationDelayScheduler {
     private final RedisTemplate<String, String> redisTemplate;
     private final LockService lockService;
 
-    @Scheduled(fixedRate = 2000)
+    @Scheduled(fixedRate = 2000, scheduler = "notificationScheduleExecutor")
     public void processDelayedQueue() {
         lockService.withLock(LockUtil.NOTIFICATION_DQL, () -> {
             long now = System.currentTimeMillis();

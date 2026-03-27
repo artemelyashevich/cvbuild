@@ -27,7 +27,7 @@ public class NotificationRetryScheduler {
     private final NotificationService notificationService;
     private final NotificationRepository notificationRepository;
 
-    @Scheduled(fixedRate = 3000)
+    @Scheduled(fixedRate = 3000, scheduler = "notificationScheduleExecutor")
     public void job() {
         int batchSize = 50;
 

@@ -22,6 +22,4 @@ public interface SecureDataService {
     void update(String id, Consumer<SecureData> updater);
 
     void deleteByUserId(String id);
-
-    void performEvent(UserProfile profile, SecureEvent secureEvent);
 }

@@ -96,7 +96,7 @@ app:
   security:
     super-user-email: ${SUPER_USER_EMAIL}
     super-user-password: ${SUPER_USER_PASSWORD}
-    oauth-redirect-url: "http://localhost:3000/profile"
+    oauth-redirect-url: "http://localhost:3000"
     allowed-origins: "http://localhost:3000"
     allowed-methods: "*"
     allowed-headers: "*"

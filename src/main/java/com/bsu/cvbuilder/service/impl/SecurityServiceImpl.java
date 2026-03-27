@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 @Slf4j
 @Service
@@ -102,13 +103,13 @@ public class SecurityServiceImpl implements SecurityService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void checkOtp(String otp, SecureEvent secureEvent) {
+    public void checkOtp(String otp, SecureEvent secureEvent, Consumer<SecureData> updater) {
         UserProfile profile = findCurrentUser();
         if (!otpService.validateOtp(profile, otp, CacheUtil.EMAIL_KEY + profile.getEmail())) {
             throw new AppException("Invalid OTP", 401);
         }
-        secureDataService.performEvent(profile, secureEvent);
-        sendVerificationSuccessNotification(profile);
+        secureDataService.validateNewEvent(profile.getId(), secureEvent);
+        secureDataService.update(profile.getId(), updater);
     }
 
     @Override
@@ -181,15 +182,6 @@ public class SecurityServiceImpl implements SecurityService {
             throw new AppException("Unsupported authentication type", 401);
         }
         return authToken;
-    }
-
-    private void sendVerificationSuccessNotification(UserProfile profile) {
-        notificationService.sendNotification(NotificationDto.builder()
-                .engine(NotificationEngine.EMAIL)
-                .receiver(profile.getEmail())
-                .templateName("email_verification_success")
-                .parameters(Map.of("login", profile.getLogin()))
-                .build());
     }
 
     private DefaultOAuth2User extractPrincipal(AbstractAuthenticationToken authToken) {

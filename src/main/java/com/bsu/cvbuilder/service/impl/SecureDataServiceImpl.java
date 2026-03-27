@@ -109,19 +109,6 @@ public class SecureDataServiceImpl implements SecureDataService {
     }
 
     @Override
-    public void performEvent(UserProfile profile, SecureEvent secureEvent) {
-        SecureData secureData = findByUserId(profile.getId());
-        switch (secureEvent){
-            case verifyEmail -> {
-                validateNewEvent(profile.getId(), secureEvent);
-                secureData.setEmailVerified(true);
-                secureDataRepository.save(secureData);
-            }
-            default -> throw new AppException("Invalid event type", 500);
-        }
-    }
-
-    @Override
     @Transactional
     public SecureData loadSecureData(SecureData secureData) {
         SecureData persistentData = secureDataRepository.findByUserId(secureData.getUserId())
@@ -129,8 +116,7 @@ public class SecureDataServiceImpl implements SecureDataService {
         if (StringUtils.hasText(secureData.getPassword())) {
             persistentData.setPassword(passwordEncoder.encode(secureData.getPassword()));
         }
-        SecureData data = secureDataRepository.save(persistentData);
-        return data;
+        return secureDataRepository.save(persistentData);
     }
 
     private boolean isTokenValid(String encodedToken) {
@@ -189,13 +175,12 @@ public class SecureDataServiceImpl implements SecureDataService {
     @Override
     @Transactional
     public void update(String userId, Consumer<SecureData> updater) {
-        lockService.withLock(LockUtil.SECURE_DATA.formatted(userId), ()-> {
+        SecureData data = lockService.withLock(LockUtil.SECURE_DATA.formatted(userId), ()-> {
             SecureData secureData = findByUserId(userId);
             updater.accept(secureData);
-            SecureData updated = secureDataRepository.save(secureData);
-            secureDataRequestCache.set(userId, updated);
-            return secureData;
+            return secureDataRepository.save(secureData);
         });
+        secureDataRequestCache.set(userId, data);
         log.info("Updated secure data for user: {}", userId);
     }
 }
