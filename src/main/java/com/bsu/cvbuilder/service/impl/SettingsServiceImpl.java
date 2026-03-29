@@ -187,4 +187,16 @@ public class SettingsServiceImpl implements SettingsService {
         userSettings.setAgree(secureData.isAgree());
         return userSettings;
     }
+
+    @Override
+    @Transactional
+    public void setVerification() {
+        log.debug("[SECURE-EVENT] attempting set verification");
+        UserProfile userProfile = securityService.findCurrentUser();
+        secureDataService.validateNewEvent(userProfile.getId(), SecureEvent.verifyEmail);
+        secureDataService.update(userProfile.getId(), data -> {
+            data.setEmailVerified(true);
+            data.addEvent(SecureEvent.verifyEmail);
+        });
+    }
 }

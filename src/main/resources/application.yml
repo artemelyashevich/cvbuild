@@ -72,7 +72,7 @@ server:
 
 app:
   telegram:
-    enabled: true
+    enabled: false
     token: ${TELEGRAM_BOT_TOKEN_API}
     chat-id: ${TELEGRAM_BOT_CHAT_ID}
     url: ${TELEGRAM_BOT_URL}

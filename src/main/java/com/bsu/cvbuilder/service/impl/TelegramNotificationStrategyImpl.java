@@ -9,6 +9,7 @@ import com.bsu.cvbuilder.util.JsonHelper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -18,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Service
+@ConditionalOnProperty("app.telegram.enabled")
 @RequiredArgsConstructor
 public class TelegramNotificationStrategyImpl implements NotificationStrategy {
 

@@ -18,4 +18,5 @@ public interface SettingsService {
 
     UserSettings findSettings();
 
+    void setVerification();
 }

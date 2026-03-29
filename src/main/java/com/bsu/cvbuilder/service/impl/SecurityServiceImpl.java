@@ -10,14 +10,10 @@ import com.bsu.cvbuilder.domain.event.AbstractEvent;
 import com.bsu.cvbuilder.domain.event.LoginEvent;
 import com.bsu.cvbuilder.domain.event.VerifyEmailRequestEvent;
 import com.bsu.cvbuilder.exception.AppException;
-import com.bsu.cvbuilder.service.JwtService;
-import com.bsu.cvbuilder.service.NotificationService;
-import com.bsu.cvbuilder.service.OtpService;
-import com.bsu.cvbuilder.service.SecureDataService;
-import com.bsu.cvbuilder.service.SecurityService;
-import com.bsu.cvbuilder.service.UserProfileService;
+import com.bsu.cvbuilder.service.*;
 import com.bsu.cvbuilder.util.CacheUtil;
 import com.bsu.cvbuilder.util.SecretDecodeUtil;
+import com.bsu.cvbuilder.web.dto.otp.OtpRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 @Slf4j
 @Service
@@ -47,6 +42,7 @@ public class SecurityServiceImpl implements SecurityService {
     private final SecureDataService secureDataService;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final OtpService otpService;
+    private final SecureEventService secureEventService;
 
     @Value("${app.security.oauth2.enabled:false}")
     private boolean oauth2Enabled;
@@ -103,13 +99,12 @@ public class SecurityServiceImpl implements SecurityService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void checkOtp(String otp, SecureEvent secureEvent, Consumer<SecureData> updater) {
+    public void checkOtp(OtpRequest otp, SecureEvent secureEvent) {
         UserProfile profile = findCurrentUser();
-        if (!otpService.validateOtp(profile, otp, CacheUtil.EMAIL_KEY + profile.getEmail())) {
+        if (!otpService.validateOtp(profile, otp.getOtp(), CacheUtil.EMAIL_KEY + profile.getEmail())) {
             throw new AppException("Invalid OTP", 401);
         }
-        secureDataService.validateNewEvent(profile.getId(), secureEvent);
-        secureDataService.update(profile.getId(), updater);
+        secureEventService.handleEvent(secureEvent, otp.getBody());
     }
 
     @Override

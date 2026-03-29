@@ -7,6 +7,7 @@ import com.bsu.cvbuilder.service.NotificationStrategy;
 import com.twilio.type.PhoneNumber;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import com.twilio.rest.api.v2010.account.Message;
 
@@ -14,6 +15,7 @@ import java.util.Map;
 
 @Slf4j
 @Service("sms")
+@ConditionalOnProperty("app.twilio.enabled")
 @RequiredArgsConstructor
 public class SmsNotificationStrategyImpl implements NotificationStrategy {
 
