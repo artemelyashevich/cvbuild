@@ -4,7 +4,6 @@ import com.bsu.cvbuilder.domain.dto.auth.EmailVerificationDto;
 import com.bsu.cvbuilder.domain.dto.auth.EmailVerificationRequestDto;
 import com.bsu.cvbuilder.domain.entity.SecureEvent;
 import com.bsu.cvbuilder.service.SecurityService;
-import com.bsu.cvbuilder.web.dto.otp.OtpRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,8 +21,8 @@ public class VerificationController {
 
     @PostMapping("/check")
     @ResponseStatus(HttpStatus.OK)
-    public void verify(@RequestBody OtpRequest dto) {
-        securityService.checkOtp(dto, SecureEvent.verifyEmail);
+    public void verify(@RequestBody EmailVerificationDto emailVerificationDto) {
+        securityService.checkOtp(emailVerificationDto.otp(), SecureEvent.verifyEmail, d -> d.setEmailVerified(true));
     }
 
     @PostMapping
