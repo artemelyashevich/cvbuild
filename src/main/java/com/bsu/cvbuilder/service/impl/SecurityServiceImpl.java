@@ -42,7 +42,6 @@ public class SecurityServiceImpl implements SecurityService {
     private final SecureDataService secureDataService;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final OtpService otpService;
-    private final SecureEventService secureEventService;
 
     @Value("${app.security.oauth2.enabled:false}")
     private boolean oauth2Enabled;
@@ -104,7 +103,6 @@ public class SecurityServiceImpl implements SecurityService {
         if (!otpService.validateOtp(profile, otp.getOtp(), CacheUtil.EMAIL_KEY + profile.getEmail())) {
             throw new AppException("Invalid OTP", 401);
         }
-        secureEventService.handleEvent(secureEvent, otp.getBody());
     }
 
     @Override
