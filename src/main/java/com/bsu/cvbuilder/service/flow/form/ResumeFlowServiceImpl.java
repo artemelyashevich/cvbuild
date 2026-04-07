@@ -2,7 +2,14 @@ package com.bsu.cvbuilder.service.flow.form;
 
 import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
-import com.bsu.cvbuilder.service.*;
+import com.bsu.cvbuilder.domain.event.CreateResumeEvent;
+import com.bsu.cvbuilder.domain.event.FormAiGenerationEvent;
+import com.bsu.cvbuilder.domain.event.UserGenerateNewMessageEvent;
+import com.bsu.cvbuilder.service.AiService;
+import com.bsu.cvbuilder.service.AnalyzerService;
+import com.bsu.cvbuilder.service.JobParserService;
+import com.bsu.cvbuilder.service.ResumeService;
+import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.service.flow.form.domain.FollowUpQuestion;
 import com.bsu.cvbuilder.service.flow.form.domain.ResumeField;
 import com.bsu.cvbuilder.service.flow.form.domain.ResumeFlowStep;
@@ -11,10 +18,14 @@ import com.bsu.cvbuilder.util.JsonHelper;
 import com.bsu.cvbuilder.util.MaskUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -28,6 +39,7 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
     private final AiService aiService;
     private final JobParserService jobParserService;
     private final AnalyzerService analyzerService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public Map<String, Object> getResumeFlowRoadmap() {
@@ -46,8 +58,13 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Resume generateResume(ResumePayload payload, UserProfile user) {
         log.debug("[RESUME-FLOW] Generating resume for user: {}", user.getLogin());
+
+        applicationEventPublisher.publishEvent(CreateResumeEvent.builder()
+                        .userId(user.getId())
+                .build());
 
         Resume resume = createEmptyResume(payload.name(), user);
 
@@ -90,14 +107,16 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
         resume.setBlocks(blocks);
 
         log.info("[RESUME-FLOW] Resume generation finished for user: {}", user.getLogin());
-        return resumeService.save(resume);
+        Resume save = resumeService.save(resume);
+        applicationEventPublisher.publishEvent(new FormAiGenerationEvent(user.getId()));
+        applicationEventPublisher.publishEvent(new UserGenerateNewMessageEvent(user.getId()));
+        return save;
     }
 
     @Override
     public Resume regenerateField(String resumeId, ResumeField resumeField) {
         log.debug("[RESUME-FLOW] Attempting regenerate field: {} for resume: {}", resumeField, resumeId);
         Resume resume = resumeService.findById(resumeId);
-        Object block = resume.getBlocks().get(resumeField.name());
         return null;
     }
 

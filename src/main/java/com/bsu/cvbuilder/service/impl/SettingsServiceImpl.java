@@ -9,6 +9,7 @@ import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.AgreementEvent;
 import com.bsu.cvbuilder.domain.event.ResetPasswordEvent;
 import com.bsu.cvbuilder.domain.event.SetPasswordEvent;
+import com.bsu.cvbuilder.domain.event.UserDeletedEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.AuthService;
 import com.bsu.cvbuilder.service.ChatService;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -96,7 +98,7 @@ public class SettingsServiceImpl implements SettingsService {
         SecureData secureData = secureDataService.findByUserId(currentUser.getId());
 
         if (!passwordEncoder.matches(resetPasswordDto.oldPassword(), secureData.getPassword())) {
-            throw new AppException("Old password do not match for user: %s".formatted(currentUser.getLogin()), 401);
+            throw new AppException("Old password do not match", 401);
         }
 
         secureDataService.validateNewEvent(currentUser.getId(), SecureEvent.resetPassword);
@@ -130,7 +132,7 @@ public class SettingsServiceImpl implements SettingsService {
     public void deleteAccount(String otp) {
         UserProfile user = securityService.findCurrentUser();
         log.debug("Attempting to delete account: {}", user.getLogin());
-        transactionTemplate.execute(status -> {
+        boolean success = Boolean.TRUE.equals(transactionTemplate.execute(status -> {
             secureDataService.validateNewEvent(user.getId(), SecureEvent.deleteAccount);
             try {
                 performUserDeletion(user);
@@ -140,11 +142,13 @@ public class SettingsServiceImpl implements SettingsService {
                 secureDataService.update(user.getId(), data -> data.addEvent(SecureEvent.deleteAccount));
                 status.setRollbackOnly();
             }
-            return null;
-        });
+            return true;
+        }));
 
-
-        log.info("Account has been deleted: {}", user.getLogin());
+        if (success) {
+            applicationEventPublisher.publishEvent(new UserDeletedEvent(user.getId()));
+            log.info("Account has been deleted: {}", user.getLogin());
+        }
     }
 
     private void performUserDeletion(UserProfile user) throws AppException {
@@ -181,10 +185,18 @@ public class SettingsServiceImpl implements SettingsService {
         UserSettings userSettings = new UserSettings();
         SecureData secureData = secureDataService.findByUserId(user.getId());
         userSettings.setPasswordSet(secureData.getPassword() != null);
-        userSettings.setSecondAuthPhaseEnabled(secureData.isSecondAuthPhase());
+        userSettings.setSecondAuthPhaseEnabled(secureData.getSecondAuthPhaseRequire());
         userSettings.setEmailIsVerified(secureData.getEmailVerified());
         userSettings.setNotificationEngine(secureData.getPreferableNotificationEngine());
         userSettings.setAgree(secureData.isAgree());
         return userSettings;
+    }
+
+    @Override
+    public void deactivateLimits(String userId) {
+        UserProfile user = securityService.findCurrentUser();
+        log.debug("Attempting to deactivate limits for user: {}", user.getLogin());
+        secureDataService.update(user.getId(), SecureData::clearEvents);
+        log.info("Limits have been deactivated for user: {}", user.getLogin());
     }
 }

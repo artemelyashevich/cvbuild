@@ -23,7 +23,7 @@ public enum ResumeFlowStep {
                     new FollowUpQuestion(ResumeField.FIRST_NAME, "Как вас зовут?"),
                     new FollowUpQuestion(ResumeField.LAST_NAME, "Ваша фамилия?"),
                     new FollowUpQuestion(ResumeField.EMAIL, "Введите ваш email для связи."),
-                    new FollowUpQuestion(ResumeField.PHONE, "Введите номер телефона (по желанию).")
+                    new FollowUpQuestion(ResumeField.PHONE, "Введите номер телефона.")
             ),
             false
     ),
@@ -38,8 +38,7 @@ public enum ResumeFlowStep {
             ),
             List.of(
                     new FollowUpQuestion(ResumeField.LINKEDIN, "Есть ли у вас LinkedIn профиль?"),
-                    new FollowUpQuestion(ResumeField.GITHUB, "Укажите ссылку на GitHub (если есть)."),
-                    new FollowUpQuestion(ResumeField.PORTFOLIO, "Есть ли у вас портфолио или личный сайт?")
+                    new FollowUpQuestion(ResumeField.GITHUB, "Укажите ссылку на GitHub (если есть).")
             ),
             false
     ),
@@ -48,16 +47,16 @@ public enum ResumeFlowStep {
             3,
             "Опишите опыт работы",
             List.of(
-                    ResumeField.COMPANY,
+                    ResumeField.COMPANIES,
                     ResumeField.POSITION,
                     ResumeField.JOB_PERIOD,
                     ResumeField.RESPONSIBILITIES,
                     ResumeField.ACHIEVEMENTS
             ),
             List.of(
-                    new FollowUpQuestion(ResumeField.COMPANY, "В какой компании вы работали?"),
+                    new FollowUpQuestion(ResumeField.COMPANIES, "Перечислите компании, в которых вы работали"),
                     new FollowUpQuestion(ResumeField.POSITION, "Какая у вас была должность?"),
-                    new FollowUpQuestion(ResumeField.JOB_PERIOD, "В какой период вы работали?"),
+                    new FollowUpQuestion(ResumeField.JOB_PERIOD, "Какой опыт работы (например, 3 года)?"),
                     new FollowUpQuestion(ResumeField.RESPONSIBILITIES, "Какие были основные обязанности?"),
                     new FollowUpQuestion(ResumeField.ACHIEVEMENTS, "Какие ключевые достижения?")
             ),
@@ -75,7 +74,7 @@ public enum ResumeFlowStep {
             ),
             List.of(
                     new FollowUpQuestion(ResumeField.UNIVERSITY, "В каком университете вы учились?"),
-                    new FollowUpQuestion(ResumeField.DEGREE, "Какая степень? (Bachelor / Master)"),
+                    new FollowUpQuestion(ResumeField.DEGREE, "Какая степень?"),
                     new FollowUpQuestion(ResumeField.FIELD_OF_STUDY, "Какая специальность?"),
                     new FollowUpQuestion(ResumeField.EDUCATION_PERIOD, "Годы обучения?")
             ),

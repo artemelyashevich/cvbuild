@@ -72,6 +72,14 @@ public class SecureData {
                 .add(LocalDateTime.now());
     }
 
+    public void clearEvents() {
+        if (this.secureEvents != null) {
+            this.secureEvents.clear();
+        } else {
+            this.secureEvents = new EnumMap<>(SecureEvent.class);
+        }
+    }
+
     @Getter
     @Setter
     @Builder

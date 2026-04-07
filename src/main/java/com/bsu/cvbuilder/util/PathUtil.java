@@ -19,7 +19,8 @@ public class PathUtil {
             "/v3/api-docs/**",
             "/error",
             "/actuator/**",
-            "/test/**"
+            "/test/**",
+            "/api/v1/settings/limits/*"
     };
 
     public static final String[] AUTH_RESOURCES = { // NOSONAR

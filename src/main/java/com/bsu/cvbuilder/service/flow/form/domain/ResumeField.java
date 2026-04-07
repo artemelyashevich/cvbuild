@@ -11,7 +11,7 @@ public enum ResumeField {
     GITHUB(false),
     PORTFOLIO(false),
 
-    COMPANY(true),
+    COMPANIES(true),
     POSITION(true),
     JOB_PERIOD(true),
     RESPONSIBILITIES(true),

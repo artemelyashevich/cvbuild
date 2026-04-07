@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
+import com.bsu.cvbuilder.annotation.agreement.AgreementRequire;
 import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.service.SecurityService;
@@ -19,6 +20,7 @@ public class ResumeFormFlowController {
     private final ResumeFlowService resumeFlowService;
     private final SecurityService securityService;
 
+    @AgreementRequire
     @GetMapping("/roadmap")
     public Map<String, Object> roadmap() {
         return resumeFlowService.getResumeFlowRoadmap();

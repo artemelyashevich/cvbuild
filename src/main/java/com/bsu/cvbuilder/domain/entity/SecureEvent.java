@@ -13,7 +13,7 @@ public enum SecureEvent {
     enable2fa(Duration.ofMinutes(10)),
     verifyEmail(Duration.ofDays(7)),
     changeNotificationEngine(Duration.ofMinutes(5)),
-    agreement(Duration.ofMinutes(10)),
+    agreement(Duration.ofSeconds(10)),
     deleteAccount(Duration.ofDays(1));
 
     private final Duration duration;

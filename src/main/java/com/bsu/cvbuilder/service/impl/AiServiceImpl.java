@@ -68,7 +68,7 @@ public class AiServiceImpl implements AiService {
                 .user(dto.content())
                 .call()
                 .content();
-
+        log.info("[RESPONSE]: {}", response);
         if (response == null) {
             log.warn("AI returned empty response for chatId: {}", dto.chatId());
             return "Извините, я не смог обработать ваш запрос. Попробуйте еще раз.";

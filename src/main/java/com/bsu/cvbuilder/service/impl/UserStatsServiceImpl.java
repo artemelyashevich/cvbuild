@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.function.Consumer;
@@ -53,7 +52,7 @@ public class UserStatsServiceImpl implements UserStatsService {
         return userStats;
     }
 
-    @CacheEvict(value = CACHE_ID, allEntries = true)
+    @CacheEvict(value = CACHE_ID, key = "#userId")
     @Monitored(value = "user_stats_increment", context = "internal")
     public void incrementStats(String userId, Consumer<UserStats> updater) {
         lockService.withLock(LockUtil.STATS.formatted(userId), () -> {
@@ -74,8 +73,8 @@ public class UserStatsServiceImpl implements UserStatsService {
         LocalDateTime now = LocalDateTime.now();
         UserStats.MonthlyUsage monthly = stats.getCurrentMonthUsage();
 
-        if (monthly == null) {
-            stats.setCurrentMonthUsage(new UserStats.MonthlyUsage());
+        if (monthly == null || monthly.getPeriodStart() == null) {
+            stats.setCurrentMonthUsage(createNewMonthlyUsage(now));
             return;
         }
 
@@ -83,13 +82,16 @@ public class UserStatsServiceImpl implements UserStatsService {
                 monthly.getPeriodStart().getYear() != now.getYear()) {
 
             log.info("Resetting monthly stats for user {} for new month {}", stats.getUserId(), now.getMonth());
-
-            stats.setCurrentMonthUsage(UserStats.MonthlyUsage.builder()
-                    .periodStart(now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0))
-                    .aiRequests(0)
-                    .resumesCreated(0)
-                    .jobAnalyses(0)
-                    .build());
+            stats.setCurrentMonthUsage(createNewMonthlyUsage(now));
         }
+    }
+
+    private UserStats.MonthlyUsage createNewMonthlyUsage(LocalDateTime now) {
+        return UserStats.MonthlyUsage.builder()
+                .periodStart(now.withDayOfMonth(1).toLocalDate().atStartOfDay())
+                .aiRequests(0)
+                .resumesCreated(0)
+                .jobAnalyses(0)
+                .build();
     }
 }
