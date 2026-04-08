@@ -40,7 +40,7 @@ public class AiChat {
     private boolean isFinished;
 
     @Builder.Default
-    private ChatFlowStep chatFlowStep = ChatFlowStep.PERSONAL_INFO;
+    private ChatFlowStep chatFlowStep = ChatFlowStep.START;
 
     @Version
     private Long version;

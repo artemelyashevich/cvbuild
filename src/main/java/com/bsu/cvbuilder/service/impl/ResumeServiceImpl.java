@@ -20,7 +20,9 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +41,7 @@ public class ResumeServiceImpl implements ResumeService {
     private final MongoTemplate mongoTemplate;
     private final LockService lockService;
     private final SecurityService securityService;
+    private final TransactionTemplate transactionTemplate;
 
     @Override
     public Resume save(Resume resume) {
@@ -70,7 +73,6 @@ public class ResumeServiceImpl implements ResumeService {
     }
 
     @Override
-    @Transactional
     @Cacheable(value = "resume:chatId:", key = "#chatId")
     @Limited(value = LimitType.RESUME_GENERATE, capacity = 5)
     public Resume findByChatId(UUID chatId) {
@@ -124,20 +126,23 @@ public class ResumeServiceImpl implements ResumeService {
 
         return lockService.withLock(LockUtil.RESUME.formatted(chatId), () -> {
             try {
+
                 log.debug("Calling AI Extractor for chat {}", chatId);
                 var responseSpec = aiService.callExtractor(promptWithFormat, chatId);
 
                 Resume extractedResume = responseSpec.entity(converter);
 
-                if (extractedResume == null) {
-                    throw new AppException("AI returned empty resume data", 500);
-                }
+                return transactionTemplate.execute(s -> {
+                    if (extractedResume == null) {
+                        throw new AppException("AI returned empty resume data", 500);
+                    }
 
-                extractedResume.setChatId(chatId.toString());
-                Resume saved = mongoTemplate.save(extractedResume);
+                    extractedResume.setChatId(chatId.toString());
+                    Resume saved = mongoTemplate.save(extractedResume);
 
-                log.info("Successfully generated and saved resume for chat {}", chatId);
-                return saved;
+                    log.info("Successfully generated and saved resume for chat {}", chatId);
+                    return saved;
+                });
 
             } catch (Exception e) {
                 log.error("Failed to generate resume for chat {}: {}", chatId, e.getMessage());

@@ -112,7 +112,7 @@ app:
     decode-signature: ${DECODE_SIGNATURE}
   chat:
     max-messages: 25
-    temperature: 0.2
+    temperature: 0.3
     topp: 0.7
     expansion-topp: 0.4
     expansion-temperature: 0.1

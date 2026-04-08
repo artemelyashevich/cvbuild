@@ -28,9 +28,9 @@ public class AiConfiguration {
     public ChatClient chatClient(ChatClient.Builder builder) {
         return builder
                 .defaultAdvisors(
-                      //  expansionQueryAdvisor,
-                        addMongoChatMemoryAdvisor(1),
-                        SimpleLoggerAdvisor.builder().order(2).build()
+                        expansionQueryAdvisor,
+                        addMongoChatMemoryAdvisor(2),
+                        SimpleLoggerAdvisor.builder().order(3).build()
                 )
                 .defaultOptions(
                         OllamaOptions.builder()

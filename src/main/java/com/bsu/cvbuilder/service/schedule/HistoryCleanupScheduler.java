@@ -19,7 +19,7 @@ import java.util.Objects;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class HistoryCleanupScheduler {
+public class        HistoryCleanupScheduler {
 
     private static final Duration DUPLICATE_TTL = Duration.ofMinutes(10);
 

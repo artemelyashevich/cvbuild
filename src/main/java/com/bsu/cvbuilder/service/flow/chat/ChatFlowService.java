@@ -119,7 +119,7 @@ public class ChatFlowService {
     private String buildIncompletePrompt(AbstractChatStepHandler handler,
                                          StepAnalysisResult analysis) {
 
-        log.info("Step {} incomplete. Missing info: {}",
+        log.info("[STEP] {} incomplete. Missing info: {}",
                 handler.getStep(),
                 analysis.missingInfo());
 
