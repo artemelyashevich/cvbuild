@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 @Service
 public class ChatFlowService {
 
-    private static final int HISTORY_LIMIT = 10;
+    private static final int HISTORY_LIMIT = 15;
     private static final long SSE_TIMEOUT = Duration.ofMinutes(5).toMillis();
 
     private final ChatClient chatClient;
