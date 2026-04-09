@@ -13,6 +13,8 @@ public interface AiService {
 
     ChatClient.CallResponseSpec callExtractor(String history, UUID chatId);
 
+    ChatClient.CallResponseSpec callExpansion(Resume resume);
+
     String callAnalyzer(String text, UUID chatId);
 
     ChatClient.CallResponseSpec callAtsOptimization(Resume resume, String jobDescription);

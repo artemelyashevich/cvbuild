@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.domain.entity;
 
-import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
+import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

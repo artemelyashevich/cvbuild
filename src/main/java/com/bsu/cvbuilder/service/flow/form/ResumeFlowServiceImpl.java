@@ -1,15 +1,14 @@
 package com.bsu.cvbuilder.service.flow.form;
 
+import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
+import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
+import com.bsu.cvbuilder.domain.dto.notification.WsType;
 import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.CreateResumeEvent;
 import com.bsu.cvbuilder.domain.event.FormAiGenerationEvent;
 import com.bsu.cvbuilder.domain.event.UserGenerateNewMessageEvent;
-import com.bsu.cvbuilder.service.AiService;
-import com.bsu.cvbuilder.service.AnalyzerService;
-import com.bsu.cvbuilder.service.JobParserService;
-import com.bsu.cvbuilder.service.ResumeService;
-import com.bsu.cvbuilder.service.SecurityService;
+import com.bsu.cvbuilder.service.*;
 import com.bsu.cvbuilder.service.flow.form.domain.FollowUpQuestion;
 import com.bsu.cvbuilder.service.flow.form.domain.ResumeField;
 import com.bsu.cvbuilder.service.flow.form.domain.ResumeFlowStep;
@@ -19,6 +18,7 @@ import com.bsu.cvbuilder.util.MaskUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -40,6 +40,7 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
     private final JobParserService jobParserService;
     private final AnalyzerService analyzerService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final NotificationService notificationService;
 
     @Override
     public Map<String, Object> getResumeFlowRoadmap() {
@@ -110,6 +111,13 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
         Resume save = resumeService.save(resume);
         applicationEventPublisher.publishEvent(new FormAiGenerationEvent(user.getId()));
         applicationEventPublisher.publishEvent(new UserGenerateNewMessageEvent(user.getId()));
+        notificationService.sendNotification(
+                NotificationDto.builder()
+                        .receiver(SecurityContextHolder.getContext().getAuthentication().getName())
+                        .engine(NotificationEngine.WS)
+                        .parameters(Map.of("message", "Конструктор готов!", "type", WsType.SUCCESS))
+                        .build()
+        );
         return save;
     }
 

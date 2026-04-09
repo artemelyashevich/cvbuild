@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.domain.dto.auth;
+package com.bsu.cvbuilder.domain.dto.notification;
 
 public enum NotificationEngine {
     EMAIL, WS, SMS, TELEGRAM

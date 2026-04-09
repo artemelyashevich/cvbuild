@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.annotation.otp;
 
-import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
+import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

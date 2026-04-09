@@ -3,7 +3,8 @@ package com.bsu.cvbuilder.service.impl;
 import com.bsu.cvbuilder.annotation.limit.LimitType;
 import com.bsu.cvbuilder.annotation.limit.Limited;
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
-import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
+import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
+import com.bsu.cvbuilder.domain.dto.notification.WsType;
 import com.bsu.cvbuilder.domain.entity.AiChat;
 import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
@@ -19,6 +20,7 @@ import com.bsu.cvbuilder.util.LockUtil;
 import com.bsu.cvbuilder.web.dto.resume.UpdateResumeRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
@@ -28,6 +30,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -145,13 +148,17 @@ public class ResumeServiceImpl implements ResumeService {
 
                 Resume extractedResume = responseSpec.entity(converter);
 
+                ChatClient.CallResponseSpec expansionResumeSpec = aiService.callExpansion(extractedResume);
+
+                Resume resume = expansionResumeSpec.entity(converter);
+
                 return transactionTemplate.execute(s -> {
-                    if (extractedResume == null) {
+                    if (resume == null) {
                         throw new AppException("AI returned empty resume data", 500);
                     }
 
-                    extractedResume.setChatId(chatId.toString());
-                    Resume saved = mongoTemplate.save(extractedResume);
+                    resume.setChatId(chatId.toString());
+                    Resume saved = mongoTemplate.save(resume);
 
                     log.info("Successfully generated and saved resume for chat {}", chatId);
                     params.put("resumeId", saved.getId());
@@ -159,11 +166,25 @@ public class ResumeServiceImpl implements ResumeService {
                     applicationEventPublisher.publishEvent(CreateResumeEvent.builder()
                             .userId(userProfile.getId())
                             .build());
+                    notificationService.sendNotification(
+                            NotificationDto.builder()
+                                    .receiver(SecurityContextHolder.getContext().getAuthentication().getName())
+                                    .engine(NotificationEngine.WS)
+                                    .parameters(Map.of("message", "Резюме сгенерировано, проверьте email", "type", WsType.SUCCESS))
+                                    .build()
+                    );
                     return saved;
                 });
 
             } catch (Exception e) {
                 log.error("Failed to generate resume for chat {}: {}", chatId, e.getMessage());
+                notificationService.sendNotification(
+                        NotificationDto.builder()
+                                .receiver(SecurityContextHolder.getContext().getAuthentication().getName())
+                                .engine(NotificationEngine.WS)
+                                .parameters(Map.of("message", "Произошла ошибка во время генерации резюме, попробуйте еще раз позже...", "type", WsType.ERROR))
+                                .build()
+                );
                 throw new AppException("Failed to generate resume via AI. Please try to chat more.", e, 500);
             } finally {
                 if (params.get("status").equals("success")) {

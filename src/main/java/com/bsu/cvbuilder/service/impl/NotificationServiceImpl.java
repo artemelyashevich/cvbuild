@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
-import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
+import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
 import com.bsu.cvbuilder.domain.entity.Notification;
 import com.bsu.cvbuilder.domain.entity.NotificationStatus;
 import com.bsu.cvbuilder.repository.NotificationRepository;

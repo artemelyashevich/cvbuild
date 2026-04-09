@@ -3,6 +3,7 @@ package com.bsu.cvbuilder.service.impl;
 import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.auth.*;
+import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
 import com.bsu.cvbuilder.domain.entity.SecureData;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.AbstractEvent;

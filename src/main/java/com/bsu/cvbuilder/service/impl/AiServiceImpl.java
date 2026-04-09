@@ -15,6 +15,7 @@ import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.PromptRegistryService;
 import com.bsu.cvbuilder.service.SecurityService;
+import com.bsu.cvbuilder.util.JsonHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,7 @@ public class AiServiceImpl implements AiService {
     private static final String PROMPT_EXTRACTOR = "extractor";
     private static final String PROMPT_ANALYZER = "analyzer";
     private static final String PROMPT_ATS = "ats";
+    private static final String PROMPT_EXPANSION = "resume_expansion";
     private static final String COMPLETED_SIGNAL = "COMPLETED";
 
     private final ChatClient chatClient;
@@ -103,8 +105,19 @@ public class AiServiceImpl implements AiService {
         String extractorPrompt = promptRegistryService.getPrompt(PROMPT_EXTRACTOR);
         eventPublisher.publishEvent(new CallExtractorEvent(userProfile.getId()));
         return chatClient.prompt()
-                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId))
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, "ignore"))
                 .user(u -> u.text(extractorPrompt.formatted(history)))
+                .options(defaultOptions())
+                .call();
+    }
+
+    @Override
+    public ChatClient.CallResponseSpec callExpansion(Resume resume) {
+        log.debug("AI Call [EPANSION] for resume: {}", resume.getId());
+        String expansionPrompt = promptRegistryService.getPrompt(PROMPT_EXPANSION);
+        return chatClient.prompt()
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, "ignore"))
+                .user(u -> u.text(expansionPrompt.formatted(JsonHelper.toJson(resume.getBlocks()))))
                 .options(defaultOptions())
                 .call();
     }

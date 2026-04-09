@@ -5,7 +5,7 @@ import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.auth.AuthResponse;
 import com.bsu.cvbuilder.domain.dto.auth.EmailVerificationRequestDto;
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
-import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
+import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
 import com.bsu.cvbuilder.domain.dto.auth.TokenType;
 import com.bsu.cvbuilder.domain.entity.SecureData;
 import com.bsu.cvbuilder.domain.entity.SecureEvent;

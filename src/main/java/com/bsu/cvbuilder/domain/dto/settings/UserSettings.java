@@ -1,6 +1,6 @@
 package com.bsu.cvbuilder.domain.dto.settings;
 
-import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
+import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

@@ -1,11 +1,10 @@
 package com.bsu.cvbuilder.service.listener;
 
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
-import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
+import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
 import com.bsu.cvbuilder.domain.event.AbstractEvent;
 import com.bsu.cvbuilder.service.HistoryService;
 import com.bsu.cvbuilder.service.NotificationService;
-import com.bsu.cvbuilder.util.JsonHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

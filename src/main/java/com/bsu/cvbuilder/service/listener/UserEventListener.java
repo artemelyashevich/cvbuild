@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.service.listener;
 
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
-import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
+import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.entity.UserStats;
 import com.bsu.cvbuilder.domain.event.CreateResumeEvent;
@@ -13,12 +13,10 @@ import com.bsu.cvbuilder.service.NotificationService;
 import com.bsu.cvbuilder.service.UserStatsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.function.Consumer;
 

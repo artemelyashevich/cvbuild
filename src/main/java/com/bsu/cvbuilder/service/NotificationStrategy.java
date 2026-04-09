@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.service;
 
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
-import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
+import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
 
 public interface NotificationStrategy {
 

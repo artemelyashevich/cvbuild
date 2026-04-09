@@ -150,4 +150,4 @@ management:
 
 logging:
   level:
-    com.bsu.cvbuilder.service: debug
+    com.bsu.cvbuilder.service: info

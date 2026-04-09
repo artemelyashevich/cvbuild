@@ -1,7 +1,7 @@
 package com.bsu.cvbuilder.web.controller.rest.exception;
 
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
-import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
+import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
 import com.bsu.cvbuilder.domain.dto.exception.ExceptionBodyDto;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.exception.AuthTokenException;

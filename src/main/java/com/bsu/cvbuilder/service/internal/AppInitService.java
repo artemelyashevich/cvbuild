@@ -2,15 +2,13 @@ package com.bsu.cvbuilder.service.internal;
 
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
-import com.bsu.cvbuilder.domain.dto.auth.NotificationEngine;
+import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
 import com.bsu.cvbuilder.service.LockService;
 import com.bsu.cvbuilder.service.NotificationService;
 import com.twilio.Twilio;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 import org.springframework.cache.CacheManager;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
