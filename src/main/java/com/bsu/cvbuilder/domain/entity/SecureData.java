@@ -61,9 +61,6 @@ public class SecureData {
     @Builder.Default
     private Map<SecureEvent, List<LocalDateTime>> secureEvents = new EnumMap<>(SecureEvent.class);
 
-    @Version
-    private Long version;
-
     public void addEvent(SecureEvent event) {
         if (this.secureEvents == null) {
             this.secureEvents = new EnumMap<>(SecureEvent.class);

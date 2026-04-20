@@ -1,14 +1,15 @@
 package com.bsu.cvbuilder.service.schedule;
 
-import com.bsu.cvbuilder.service.LockService;
-import com.bsu.cvbuilder.util.LockUtil;
+import com.bsu.cvbuilder.util.CacheUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.connection.ReturnType;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
+import java.util.List;
 
 import static com.bsu.cvbuilder.util.CacheUtil.NOTIFICATION_DELAYED_KEY;
 
@@ -16,31 +17,43 @@ import static com.bsu.cvbuilder.util.CacheUtil.NOTIFICATION_DELAYED_KEY;
 @Service
 @RequiredArgsConstructor
 public class NotificationDelayScheduler {
-
+    private static final String MOVE_SCRIPT = """
+            local zset = KEYS[1]
+            local list = KEYS[2]
+            local now = tonumber(ARGV[1])
+            local limit = tonumber(ARGV[2])
+            
+            local items = redis.call('ZRANGEBYSCORE', zset, 0, now, 'LIMIT', 0, limit)
+            
+            for i, item in ipairs(items) do
+                redis.call('ZREM', zset, item)
+                redis.call('LPUSH', list, item)
+            end
+            
+            return items
+            """;
     private final RedisTemplate<String, String> redisTemplate;
-    private final LockService lockService;
 
-    @Scheduled(fixedRate = 2000, scheduler = "notificationScheduleExecutor")
+    @Scheduled(fixedRate = 2000)
     public void processDelayedQueue() {
-        lockService.withLock(LockUtil.NOTIFICATION_DQL, () -> {
-            long now = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
+        int batchSize = 100;
 
-            Set<String> ready = redisTemplate.opsForZSet()
-                    .rangeByScore(NOTIFICATION_DELAYED_KEY, 0, now);
+        List<String> moved = redisTemplate.execute(
+                (RedisCallback<List<String>>) connection ->
+                        connection.eval(
+                                MOVE_SCRIPT.getBytes(),
+                                ReturnType.MULTI,
+                                2,
+                                NOTIFICATION_DELAYED_KEY.getBytes(),
+                                CacheUtil.NOTIFICATION_RETRY_KEY.getBytes(),
+                                String.valueOf(now).getBytes(),
+                                String.valueOf(batchSize).getBytes()
+                        )
+        );
 
-            if (ready == null || ready.isEmpty()) return null;
-
-            log.info("[NOTIFICATION-DELAY] queue started: {}", ready.size());
-            for (String item : ready) {
-
-                redisTemplate.opsForZSet()
-                        .remove(NOTIFICATION_DELAYED_KEY, item);
-
-                redisTemplate.opsForList()
-                        .leftPush("notification:retry", item);
-            }
-
-            return null;
-        });
+        if (moved != null && !moved.isEmpty()) {
+            log.info("Moved {} notifications from delayed → retry", moved.size());
+        }
     }
 }

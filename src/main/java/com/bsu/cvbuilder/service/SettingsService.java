@@ -10,7 +10,7 @@ public interface SettingsService {
 
     void resetPassword(ResetPasswordDto resetPasswordDto);
 
-    void agree();
+    boolean agree();
 
     void deleteAccount(String otp);
 

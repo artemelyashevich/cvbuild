@@ -74,8 +74,8 @@ public class SettingsController {
     @PostMapping("/agree")
     @ResponseStatus(HttpStatus.ACCEPTED)
     //@OtpVerification(key = "agreement:agree:%s:", template = "agree")
-    public void agree() {
-        settingsService.agree();
+    public boolean agree() {
+        return settingsService.agree();
     }
 
     @EmailVerification
