@@ -18,4 +18,6 @@ public interface ResumeService {
     Resume findById(String id);
 
     Resume update(String resumeId, UpdateResumeRequest updateResumeRequest);
+
+    void ats(String resumeId, String url);
 }

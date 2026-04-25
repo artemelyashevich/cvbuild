@@ -53,7 +53,8 @@ public class NotificationDelayScheduler {
         );
 
         if (moved != null && !moved.isEmpty()) {
-            log.info("Moved {} notifications from delayed → retry", moved.size());
+            long proceedTime  = System.currentTimeMillis() - now;
+            log.info("[NOTIFICATION-DELAY] Moved {} notifications from delayed → retry. Proceed time: {}", moved.size(), proceedTime);
         }
     }
 }

@@ -27,8 +27,6 @@ public class SecureDataCleanupScheduler {
 
         long start = System.currentTimeMillis();
 
-        log.info("[CLEAN UP JOB]: SecureData cleanup job started");
-
         List<SecureData> all = repository.findWithMultipleSecureEvents();
 
         int totalDocuments = all.size();
@@ -38,6 +36,7 @@ public class SecureDataCleanupScheduler {
         int totalEventsRemoved = 0;
 
         for (SecureData secureData : all) {
+            log.info("[CLEAN UP JOB]: SecureData cleanup job started");
 
             boolean changed = false;
 
@@ -48,7 +47,7 @@ public class SecureDataCleanupScheduler {
 
             documentsWithEvents++;
 
-            for (Iterator<Map.Entry<SecureEvent, List<LocalDateTime>>> it = events.entrySet().iterator(); it.hasNext();) {
+            for (Iterator<Map.Entry<SecureEvent, List<LocalDateTime>>> it = events.entrySet().iterator(); it.hasNext(); ) {
                 Map.Entry<SecureEvent, List<LocalDateTime>> entry = it.next();
 
                 SecureEvent eventType = entry.getKey();
@@ -64,9 +63,8 @@ public class SecureDataCleanupScheduler {
 
                 int before = timestamps.size();
 
-                timestamps.removeIf(time ->
-                        timestamps.size() > 1 &&
-                                time.plus(eventType.getDuration()).isBefore(now)
+                timestamps.removeIf(time -> timestamps.size() > 1
+                        && time.plus(eventType.getDuration()).isBefore(now)
                 );
 
                 int removed = before - timestamps.size();

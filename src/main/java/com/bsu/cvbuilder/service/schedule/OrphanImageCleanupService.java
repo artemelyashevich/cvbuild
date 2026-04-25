@@ -38,13 +38,13 @@ public class OrphanImageCleanupService {
     @Monitored(value = "scheduling.orphan_image", context = "cleanup")
     public void cleanupOrphanImages() {
 
-        log.info("[ORPHAN_IMAGE_CLEANUP] Started");
 
         int page = 0;
         int totalDeleted = 0;
         Page<ImageMetadata> imagePage;
 
         do {
+            log.info("[ORPHAN_IMAGE_CLEANUP] Started");
             imagePage = imageMetadataRepository.findAll(PageRequest.of(page, BATCH_SIZE));
             List<ImageMetadata> images = imagePage.getContent();
 

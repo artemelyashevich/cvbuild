@@ -10,12 +10,7 @@ import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.CreateResumeEvent;
 import com.bsu.cvbuilder.exception.AppException;
-import com.bsu.cvbuilder.service.AiService;
-import com.bsu.cvbuilder.service.ChatService;
-import com.bsu.cvbuilder.service.LockService;
-import com.bsu.cvbuilder.service.NotificationService;
-import com.bsu.cvbuilder.service.ResumeService;
-import com.bsu.cvbuilder.service.SecurityService;
+import com.bsu.cvbuilder.service.*;
 import com.bsu.cvbuilder.util.LockUtil;
 import com.bsu.cvbuilder.web.dto.resume.UpdateResumeRequest;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -57,6 +54,8 @@ public class ResumeServiceImpl implements ResumeService {
     private final NotificationService notificationService;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TransactionTemplate transactionTemplate;
+    private final ApplicationContext applicationContext;
+    private final JobParserService jobParserService;
 
     @Override
     public Resume save(Resume resume) {
@@ -124,6 +123,44 @@ public class ResumeServiceImpl implements ResumeService {
 
             return mongoTemplate.save(resume);
         });
+    }
+
+    @Override
+    public void ats(String resumeId, String url) {
+        UserProfile user = securityService.findCurrentUser();
+        log.debug("ATS for resume: {}", resumeId);
+        notificationService.sendNotification(NotificationDto.builder()
+                .engine(NotificationEngine.WS)
+                .parameters(Map.of("message", "Резюме успешно отправлено в обработку!", "status", WsType.SUCCESS))
+                .receiver(user.getLogin())
+                .build());
+        Resume byId = findById(resumeId);
+        String parse = jobParserService.parse(url);
+        CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> applicationContext.getBean(AnalyzerServiceImpl.class).ats(byId, parse, user));
+        completableFuture.thenAccept(e -> {
+                    notificationService.sendNotification(NotificationDto.builder()
+                            .engine(NotificationEngine.WS)
+                            .parameters(Map.of("message", "Резюме адаптировано успешно, проверьте почту!", "status", WsType.SUCCESS))
+                            .receiver(user.getLogin())
+                            .build());
+                    Map<String, Object> params = new HashMap<>();
+                    params.put("resumeId", byId.getId());
+                    params.put("status", "success");
+                    sendNotification(user.getEmail(), params, "resume_success");
+                })
+                .exceptionally(e -> {
+                    log.warn("Exception in ATS for resume: {}", resumeId, e);
+                    Map<String, Object> params = new HashMap<>();
+                    params.put("resumeId", byId.getId());
+                    params.put("status", "rejected");
+                    sendNotification(user.getEmail(), params, "resume_rejected");
+                    notificationService.sendNotification(NotificationDto.builder()
+                            .engine(NotificationEngine.WS)
+                            .parameters(Map.of("message", "Ошибка адаптации резюме!", "status", WsType.ERROR))
+                            .receiver(user.getLogin())
+                            .build());
+                    return null;
+                });
     }
 
     private Resume generateAndSave(UUID chatId) {

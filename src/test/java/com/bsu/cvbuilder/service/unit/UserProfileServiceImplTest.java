@@ -5,6 +5,7 @@ import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.UserCreatedEvent;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.UserProfileRepository;
+import com.bsu.cvbuilder.security.SecureDataCacheSingleton;
 import com.bsu.cvbuilder.service.impl.UserProfileServiceImpl;
 import com.bsu.cvbuilder.service.mapper.UserMapper;
 import org.junit.jupiter.api.Disabled;
@@ -36,6 +37,9 @@ class UserProfileServiceImplTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private SecureDataCacheSingleton  secureDataCacheSingleton;
 
     @Mock
     private UserMapper userMapper;

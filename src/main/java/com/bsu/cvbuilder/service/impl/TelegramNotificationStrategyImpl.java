@@ -8,6 +8,7 @@ import com.bsu.cvbuilder.service.NotificationStrategy;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -21,6 +22,12 @@ import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Service
+@ConditionalOnProperty(
+        prefix = "app.telegram",
+        name = "enabled",
+        havingValue = "true",
+        matchIfMissing = true
+)
 @RequiredArgsConstructor
 public class TelegramNotificationStrategyImpl implements NotificationStrategy {
 

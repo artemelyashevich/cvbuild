@@ -102,7 +102,7 @@ public class BeanConfiguration {
                 5,
                 r -> {
                     Thread t = new Thread(r);
-                    t.setName("cv-notif-");
+                    t.setName("cv-notification-%s".formatted(t.threadId()));
                     t.setDaemon(true);
                     return t;
                 }
@@ -115,7 +115,7 @@ public class BeanConfiguration {
                 3,
                 r -> {
                     Thread t = new Thread(r);
-                    t.setName("cv-cleanup-");
+                    t.setName("cv-cleanup-%s".formatted(t.threadId()));
                     t.setDaemon(true);
                     return t;
                 }

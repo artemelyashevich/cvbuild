@@ -30,8 +30,6 @@ public class NotificationRetryScheduler {
     @Scheduled(fixedRate = 1000, scheduler = "notificationScheduleExecutor")
     public void job() {
         int batchSize = 50;
-        log.debug("[NOTIFICATION-RETRY] Starting job execution with batch size: {}", batchSize);
-
         long startTime = System.currentTimeMillis();
         int processedInBatch = 0;
         int successCount = 0;
@@ -39,15 +37,14 @@ public class NotificationRetryScheduler {
         int dlqCount = 0;
 
         for (int i = 0; i < batchSize; i++) {
-            log.trace("[NOTIFICATION-RETRY] Batch iteration {}/{}", i + 1, batchSize);
 
             String notification = redisTemplate.opsForList()
                     .rightPopAndLeftPush(CacheUtil.NOTIFICATION_RETRY_KEY, CacheUtil.NOTIFICATION_PROCESSING);
 
             if (notification == null) {
-                log.debug("[NOTIFICATION-RETRY] No more notifications in retry queue, breaking after {} iterations", i);
                 break;
             }
+            log.debug("[NOTIFICATION-RETRY] Batch iteration {}/{}", i + 1, batchSize);
 
             processedInBatch++;
             log.info("[NOTIFICATION-RETRY] Processing notification from retry queue (item {}/{}): {}",
@@ -64,9 +61,6 @@ public class NotificationRetryScheduler {
                     continue;
                 }
 
-                log.debug("[NOTIFICATION-RETRY] Deserialized notification - ID: {}, Receiver: {}, Engine: {}, RetryCount: {}",
-                        dto.getId(), dto.getReceiver(), dto.getEngine(), dto.getRetryCount());
-
                 log.info("[NOTIFICATION-RETRY] Sending notification to: {}", dto.getReceiver());
                 long sendStartTime = System.currentTimeMillis();
 
@@ -80,12 +74,10 @@ public class NotificationRetryScheduler {
                             n.setStatus(NotificationStatus.SUCCESS);
                             notificationRepository.save(n);
                             log.debug("[NOTIFICATION-RETRY] Updated notification status to SUCCESS for ID: {}", dto.getId());
-                        }, () -> {
-                            log.warn("[NOTIFICATION-RETRY] Notification entity not found for ID: {}", dto.getId());
-                        });
+                        }, () -> log.warn("[NOTIFICATION-RETRY] Notification entity not found for ID: {}", dto.getId()));
 
                 Long removed = redisTemplate.opsForList().remove(CacheUtil.NOTIFICATION_PROCESSING, 1, notification);
-                log.info("[NOTIFICATION-RETRY] Notification sent successfully - ID: {}, Receiver: {}, Removed from processing queue: {}",
+                log.info("[NOTIFICATION-RETRY] Notification sent successfully\n - ID: {}, Receiver: {}, Removed from processing queue: {}",
                         dto.getId(), dto.getReceiver(), removed != null && removed > 0);
 
                 successCount++;
@@ -102,18 +94,18 @@ public class NotificationRetryScheduler {
                         dlqCount++;
                     } else {
                         int retry = dto.getRetryCount() + 1;
-                        log.warn("[NOTIFICATION-RETRY] Notification failed - ID: {}, Receiver: {}, Current retry: {}, New retry: {}",
+                        log.warn("[NOTIFICATION-RETRY] Notification failed\n - ID: {}, Receiver: {}, Current retry: {}, New retry: {}",
                                 dto.getId(), dto.getReceiver(), dto.getRetryCount(), retry);
 
                         if (retry >= 5) {
-                            log.error("[NOTIFICATION-RETRY] Max retries (5) exceeded for notification ID: {}, moving to DLQ", dto.getId());
+                            log.error("[NOTIFICATION-RETRY] Max retries (5) exceeded for notification\n ID: {}, moving to DLQ", dto.getId());
                             moveToDLQ(notification);
                             dlqCount++;
                         } else {
                             dto.setRetryCount(retry);
                             requeueWithDelay(dto);
                             retryCount++;
-                            log.info("[NOTIFICATION-RETRY] Notification requeued with delay - ID: {}, Retry count: {}/5",
+                            log.info("[NOTIFICATION-RETRY] Notification requeued with delay\n - ID: {}, Retry count: {}/5",
                                     dto.getId(), retry);
                         }
                     }
@@ -129,8 +121,10 @@ public class NotificationRetryScheduler {
         }
 
         long executionTime = System.currentTimeMillis() - startTime;
-        log.trace("[NOTIFICATION-RETRY] Job completed - Processed: {}, Success: {}, Retried: {}, DLQ: {}, Time: {}ms",
-                processedInBatch, successCount, retryCount, dlqCount, executionTime);
+        if (processedInBatch != 0) {
+            log.info("[NOTIFICATION-RETRY] Job completed\n - Processed: {}, Success: {}, Retried: {}, DLQ: {}, Time: {}ms",
+                    processedInBatch, successCount, retryCount, dlqCount, executionTime);
+        }
     }
 
     private void moveToDLQ(String notificationJson) {
@@ -149,7 +143,7 @@ public class NotificationRetryScheduler {
                 return;
             }
 
-            log.error("[NOTIFICATION-RETRY-DLQ] Moving to DLQ - ID: {}, Receiver: {}, Engine: {}, Final retry count: {}",
+            log.error("[NOTIFICATION-RETRY-DLQ] Moving to DLQ\n - ID: {}, Receiver: {}, Engine: {}, Final retry count: {}",
                     dto.getId(), dto.getReceiver(), dto.getEngine(), dto.getRetryCount());
 
             Notification entity = Notification.builder()
@@ -171,7 +165,7 @@ public class NotificationRetryScheduler {
         long delayMillis = calculateBackoff(dto.getRetryCount());
         long score = System.currentTimeMillis() + delayMillis;
 
-        log.info("[NOTIFICATION-RETRY] Requeuing with delay - ID: {}, Delay: {}ms, Scheduled time: {}, Retry count: {}",
+        log.info("[NOTIFICATION-RETRY] Requeuing with delay\n - ID: {}, Delay: {}ms, Scheduled time: {}, Retry count: {}",
                 dto.getId(), delayMillis, score, dto.getRetryCount());
 
         String json = JsonHelper.toJson(dto);
@@ -201,7 +195,7 @@ public class NotificationRetryScheduler {
         long jitter = ThreadLocalRandom.current().nextLong(0, 3000);
         long delay = base + jitter;
 
-        log.debug("[NOTIFICATION-RETRY] Calculated backoff - Retry: {}, Base delay: {}ms, Jitter: {}ms, Total: {}ms",
+        log.debug("[NOTIFICATION-RETRY] Calculated backoff\n - Retry: {}, Base delay: {}ms, Jitter: {}ms, Total: {}ms",
                 retry, base, jitter, delay);
 
         return delay;

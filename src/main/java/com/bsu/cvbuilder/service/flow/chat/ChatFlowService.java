@@ -2,6 +2,9 @@ package com.bsu.cvbuilder.service.flow.chat;
 
 import com.bsu.cvbuilder.domain.dto.ai.ChatFlowStep;
 import com.bsu.cvbuilder.domain.dto.ai.StepAnalysisResult;
+import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
+import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
+import com.bsu.cvbuilder.domain.dto.notification.WsType;
 import com.bsu.cvbuilder.domain.entity.AiChat;
 import com.bsu.cvbuilder.domain.entity.ChatMessage;
 import com.bsu.cvbuilder.domain.entity.Resume;
@@ -19,11 +22,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -39,19 +39,21 @@ public class ChatFlowService {
     private final ResumeService resumeService;
     private final JobParserService jobParserService;
     private final AnalyzerService analyzerService;
+    private final NotificationService notificationService;
     private final SecurityService securityService;
     private final Map<ChatFlowStep, AbstractChatStepHandler> stepHandlers;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     public ChatFlowService(ChatClient chatClient,
                            ChatService chatService,
-                           ResumeService resumeService, JobParserService jobParserService, AnalyzerService analyzerService, SecurityService securityService,
+                           ResumeService resumeService, JobParserService jobParserService, AnalyzerService analyzerService, NotificationService notificationService, SecurityService securityService,
                            List<AbstractChatStepHandler> handlers, ApplicationEventPublisher applicationEventPublisher) {
         this.chatClient = chatClient;
         this.chatService = chatService;
         this.resumeService = resumeService;
         this.jobParserService = jobParserService;
         this.analyzerService = analyzerService;
+        this.notificationService = notificationService;
         this.securityService = securityService;
         this.stepHandlers = handlers.stream()
                 .collect(Collectors.toUnmodifiableMap(
@@ -129,7 +131,7 @@ public class ChatFlowService {
 
         return """
                 %s
-
+                
                 [SYSTEM NOTICE]
                 The user has provided incomplete data.
                 Current status: DATA INCOMPLETE.
@@ -192,11 +194,44 @@ public class ChatFlowService {
         return history + "\nUSER: " + currentUserMessage;
     }
 
+    public String ats(String resumeId, String link) {
+        log.debug("Attempting process ats for chatId={} and vacancy={}", resumeId, link);
+        UserProfile user = securityService.findCurrentUser();
+        Resume resume = resumeService.findById(resumeId);
+        String jobDescription = jobParserService.parse(link);
+        try {
+            analyzerService.ats(resume, jobDescription, securityService.findCurrentUser());
+        } catch (Exception e) {
+            log.warn("Exception in ATS for resume: {}", resumeId, e);
+            Map<String, Object> params = new HashMap<>();
+            params.put("resumeId", resume.getId());
+            params.put("status", "rejected");
+            sendNotification(user.getEmail(), params, "resume_rejected");
+            notificationService.sendNotification(NotificationDto.builder()
+                    .engine(NotificationEngine.WS)
+                    .parameters(Map.of("message", "Ошибка адаптации резюме!", "status", WsType.ERROR))
+                    .receiver(user.getLogin())
+                    .build());
+        }
+        return null;
+    }
+
     public String ats(UUID chatId, String link) {
-        log.debug("Attempting process ats for chatId={} and vacancy={}", chatId,  link);
+        log.debug("Attempting process ats for chatId={} and vacancy={}", chatId, link);
         Resume resume = resumeService.findByChatId(chatId);
         String jobDescription = jobParserService.parse(link);
         analyzerService.ats(resume, jobDescription, securityService.findCurrentUser());
         return null;
+    }
+
+    private void sendNotification(String email, Map<String, Object> params, String templateName) {
+        notificationService.sendNotification(
+                NotificationDto.builder()
+                        .engine(NotificationEngine.EMAIL)
+                        .receiver(email)
+                        .parameters(params)
+                        .templateName(templateName)
+                        .build()
+        );
     }
 }

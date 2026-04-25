@@ -1,8 +1,11 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
+import com.bsu.cvbuilder.annotation.agreement.AgreementRequire;
+import com.bsu.cvbuilder.annotation.email.EmailVerification;
 import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.service.ResumeGeneratorService;
 import com.bsu.cvbuilder.service.ResumeService;
+import com.bsu.cvbuilder.service.flow.chat.ChatFlowService;
 import com.bsu.cvbuilder.web.dto.resume.UpdateResumeRequest;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.UUID;
 
 @Tag(name = "Resume")
@@ -34,6 +38,15 @@ public class ResumeController {
 
     private final ResumeService resumeService;
     private final ResumeGeneratorService resumeGeneratorService;
+    private final ChatFlowService chatFlowService;
+
+    @AgreementRequire
+    @EmailVerification
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @PostMapping(value = "/ats/{resumeId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public void ats(@PathVariable String resumeId, @RequestBody Map<String, String> body) {
+        chatFlowService.ats(resumeId, body.get("url"));
+    }
 
     @GetMapping
     public Page<Resume> findAll(
