@@ -19,9 +19,10 @@ import java.util.Objects;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class HistoryCleanupScheduler {
+public class HistoryCleanupScheduler extends AbstractScheduler {
 
     private static final Duration DUPLICATE_TTL = Duration.ofMinutes(10);
+    private static final String JOB = "history-cleanup";
 
     private final HistoryRepository historyRepository;
 
@@ -29,50 +30,49 @@ public class HistoryCleanupScheduler {
     @Monitored(value = "scheduling.history", context = "cleanup")
     public void cleanupHistoryDuplicates() {
 
-        long start = System.currentTimeMillis();
-        log.info("[CLEAN UP JOB]: History duplicate cleanup started");
+        execute(JOB, () -> {
 
-        List<History> histories = historyRepository.findWithMultipleEvents();
+            List<History> histories = historyRepository.findWithMultipleEvents();
 
-        int totalDocs = histories.size();
-        int updatedDocs = 0;
-        int totalRemoved = 0;
+            int totalDocs = histories.size();
+            int updatedDocs = 0;
+            int totalRemoved = 0;
 
-        LocalDateTime now = LocalDateTime.now();
+            LocalDateTime now = LocalDateTime.now();
 
-        for (History history : histories) {
+            log.info("{} {cleanup} started docs={}", LOG_PREFIX, totalDocs);
 
-            try {
-                int removed = processHistory(history, now);
-                if (removed > 0) {
-                    historyRepository.save(history);
-                    updatedDocs++;
-                    totalRemoved += removed;
+            for (History history : histories) {
 
-                    log.debug("User {}: removed {} duplicate events",
-                            history.getUserId(), removed);
+                try {
+                    int removed = processHistory(history, now);
+
+                    if (removed > 0) {
+                        historyRepository.save(history);
+
+                        updatedDocs++;
+                        totalRemoved += removed;
+
+                        log.info("{} {cleanup} userId={} removed={}",
+                                LOG_PREFIX,
+                                history.getUserId(),
+                                removed);
+                    }
+
+                } catch (Exception ex) {
+                    log.error("{} {cleanup} failed userId={}",
+                            LOG_PREFIX,
+                            history.getUserId(),
+                            ex);
                 }
-            } catch (Exception e) {
-                log.error("Failed to cleanup history for user {}",
-                        history.getUserId(), e);
             }
-        }
 
-        long duration = System.currentTimeMillis() - start;
-
-        log.info("""
-                [CLEAN UP JOB]:
-                History duplicate cleanup finished:
-                - Documents scanned: {}
-                - Documents updated: {}
-                - Duplicates removed: {}
-                - Execution time: {} ms
-                """,
-                totalDocs,
-                updatedDocs,
-                totalRemoved,
-                duration
-        );
+            log.info("{} {cleanup} finished docs={} updated={} removed={}",
+                    LOG_PREFIX,
+                    totalDocs,
+                    updatedDocs,
+                    totalRemoved);
+        });
     }
 
     private int processHistory(History history, LocalDateTime now) {
@@ -91,7 +91,7 @@ public class HistoryCleanupScheduler {
         int removedCount = 0;
 
         String previousEvent = null;
-        List<String> currentGroupKeys = new ArrayList<>();
+        List<String> groupKeys = new ArrayList<>();
 
         for (Map.Entry<String, String> entry : sorted) {
 
@@ -101,21 +101,22 @@ public class HistoryCleanupScheduler {
             if (eventType == null) {
                 events.remove(key);
                 removedCount++;
+
+                log.debug("{} {cleanup} null-event removed key={} userId={}",
+                        LOG_PREFIX, key, history.getUserId());
                 continue;
             }
 
             if (!Objects.equals(previousEvent, eventType)) {
-
-                removedCount += cleanupGroup(currentGroupKeys, previousEvent, events, now);
-
-                currentGroupKeys.clear();
+                removedCount += cleanupGroup(groupKeys, previousEvent, events, now, history.getUserId());
+                groupKeys.clear();
                 previousEvent = eventType;
             }
 
-            currentGroupKeys.add(key);
+            groupKeys.add(key);
         }
 
-        removedCount += cleanupGroup(currentGroupKeys, previousEvent, events, now);
+        removedCount += cleanupGroup(groupKeys, previousEvent, events, now, history.getUserId());
 
         return removedCount;
     }
@@ -123,19 +124,21 @@ public class HistoryCleanupScheduler {
     private int cleanupGroup(List<String> groupKeys,
                              String eventType,
                              Map<String, String> events,
-                             LocalDateTime now) {
+                             LocalDateTime now,
+                             String userId) {
 
         if (groupKeys.size() <= 1 || eventType == null) {
             return 0;
         }
 
-        String lastKey = groupKeys.getLast();
+        String lastKey = groupKeys.get(groupKeys.size() - 1);
 
         LocalDateTime lastTime;
         try {
             lastTime = extractTime(lastKey);
         } catch (DateTimeParseException e) {
-            log.warn("Invalid history timestamp key: {}", lastKey);
+            log.warn("{} {cleanup} invalid timestamp key={} userId={}",
+                    LOG_PREFIX, lastKey, userId);
             return 0;
         }
 
@@ -143,19 +146,24 @@ public class HistoryCleanupScheduler {
             return 0;
         }
 
-        int removed = 0;
+        int removed = groupKeys.size() - 1;
 
         for (int i = 0; i < groupKeys.size() - 1; i++) {
             events.remove(groupKeys.get(i));
-            removed++;
         }
+
+        log.debug("{} {cleanup} group processed userId={} eventType={} removed={}",
+                LOG_PREFIX,
+                userId,
+                eventType,
+                removed);
 
         return removed;
     }
 
     private LocalDateTime extractTime(String key) {
-        int separatorIndex = key.indexOf('_');
-        String timePart = separatorIndex > 0 ? key.substring(0, separatorIndex) : key;
+        int idx = key.indexOf('_');
+        String timePart = (idx > 0) ? key.substring(0, idx) : key;
         return LocalDateTime.parse(timePart);
     }
 }

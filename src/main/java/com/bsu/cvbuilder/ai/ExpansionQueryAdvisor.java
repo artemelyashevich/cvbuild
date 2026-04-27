@@ -51,15 +51,15 @@ public record ExpansionQueryAdvisor(
     @NonNull
     public ChatClientRequest before(ChatClientRequest chatClientRequest, @NonNull AdvisorChain advisorChain) {
         String originalQuestion = chatClientRequest.prompt().getUserMessage().getText();
-        log.info("Expansion: original='{}'", originalQuestion);
+        log.debug("Expansion: original='{}'", originalQuestion);
 
         String enrichedQuestion = expand(originalQuestion);
 
         if (enrichedQuestion == null || enrichedQuestion.isBlank()) {
-            log.warn("Expansion: failed expanding '{}', using original", originalQuestion);
+            log.debug("Expansion: failed expanding '{}', using original", originalQuestion);
             enrichedQuestion = originalQuestion;
         } else {
-            log.info("Expansion: enriched='{}'", enrichedQuestion);
+            log.debug("Expansion: enriched='{}'", enrichedQuestion);
         }
 
         return chatClientRequest.mutate()
@@ -86,7 +86,7 @@ public record ExpansionQueryAdvisor(
                     .call()
                     .content();
         } catch (Exception e) {
-            log.error("Expansion: failed expand question '{}'", originalQuestion, e);
+            log.debug("Expansion: failed expand question '{}'", originalQuestion, e);
             return null;
         }
     }

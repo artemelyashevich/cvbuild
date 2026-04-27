@@ -10,8 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -25,9 +23,10 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class OrphanImageCleanupService {
+public class OrphanImageCleanupService extends AbstractScheduler {
 
     private static final int BATCH_SIZE = 500;
+    private static final String JOB = "orphan-image-cleanup";
 
     private final ImageMetadataRepository imageMetadataRepository;
     private final UserProfileRepository userProfileRepository;
@@ -38,26 +37,47 @@ public class OrphanImageCleanupService {
     @Monitored(value = "scheduling.orphan_image", context = "cleanup")
     public void cleanupOrphanImages() {
 
+        execute(JOB, () -> {
 
-        int page = 0;
-        int totalDeleted = 0;
-        Page<ImageMetadata> imagePage;
+            long start = System.currentTimeMillis();
 
-        do {
-            log.info("[ORPHAN_IMAGE_CLEANUP] Started");
-            imagePage = imageMetadataRepository.findAll(PageRequest.of(page, BATCH_SIZE));
-            List<ImageMetadata> images = imagePage.getContent();
+            int page = 0;
+            int totalDeleted = 0;
+            int totalProcessed = 0;
 
-            if (images.isEmpty()) {
-                break;
-            }
+            log.info("{} {cleanup} started batchSize={}", LOG_PREFIX, BATCH_SIZE);
 
-            totalDeleted += processBatch(images);
-            page++;
+            Page<ImageMetadata> imagePage;
 
-        } while (imagePage.hasNext());
+            do {
+                imagePage = imageMetadataRepository.findAll(PageRequest.of(page, BATCH_SIZE));
+                List<ImageMetadata> images = imagePage.getContent();
 
-        log.info("[ORPHAN_IMAGE_CLEANUP] Finished. Total deleted: {}", totalDeleted);
+                if (images.isEmpty()) {
+                    break;
+                }
+
+                int deleted = processBatch(images);
+
+                totalDeleted += deleted;
+                totalProcessed += images.size();
+
+                log.info("{} {cleanup} page={} processed={} deleted={}",
+                        LOG_PREFIX, page, images.size(), deleted);
+
+                page++;
+
+            } while (imagePage.hasNext());
+
+            long duration = System.currentTimeMillis() - start;
+
+            log.info("{} {cleanup} finished processed={} deleted={} pages={} durationMs={}",
+                    LOG_PREFIX,
+                    totalProcessed,
+                    totalDeleted,
+                    page,
+                    duration);
+        });
     }
 
     private int processBatch(List<ImageMetadata> images) {
@@ -90,19 +110,23 @@ public class OrphanImageCleanupService {
     private boolean deleteImageSafely(ImageMetadata image) {
 
         try {
-            log.debug("Deleting orphan image: {}", image.getId());
-
             gridFsTemplate.delete(
-                    new Query(Criteria.where("_id")
-                            .is(new ObjectId(image.getId())))
+                    new org.springframework.data.mongodb.core.query.Query(
+                            org.springframework.data.mongodb.core.query.Criteria.where("_id")
+                                    .is(new ObjectId(image.getId()))
+                    )
             );
 
             imageMetadataRepository.deleteById(image.getId());
 
+            log.debug("{} {delete} orphan image removed imageId={}",
+                    LOG_PREFIX, image.getId());
+
             return true;
 
         } catch (Exception ex) {
-            log.error("Failed to delete orphan image: {}", image.getId(), ex);
+            log.error("{} {delete} failed imageId={}",
+                    LOG_PREFIX, image.getId(), ex);
             return false;
         }
     }

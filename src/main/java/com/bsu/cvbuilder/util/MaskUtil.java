@@ -12,7 +12,7 @@ public class MaskUtil {
 
     public static String maskFraction(String input) {
         if (input == null || input.isEmpty()) return input;
-        int visible = Math.max(1, (int) Math.floor(input.length() * 0.4));
+        int visible = Math.max(1, (int) Math.floor(input.length() * 0.5));
         return input.substring(0, visible) + "*".repeat(input.length() - visible);
     }
 

@@ -57,9 +57,11 @@ public class NotificationServiceImpl implements NotificationService {
         }
 
         try {
+            String maskReceiver = notificationDto.getReceiver().equalsIgnoreCase("[internal]") ?
+                    "[internal]" : MaskUtil.maskFraction(notificationDto.getReceiver());
             log.info("Sending {} notification to {}",
                     notificationDto.getEngine(),
-                    notificationDto.getReceiver());
+                    maskReceiver);
 
             strategy.sendNotification(notificationDto);
 
@@ -71,7 +73,7 @@ public class NotificationServiceImpl implements NotificationService {
                     .uuid(notificationDto.getId())
                     .build());
 
-            log.info("Successfully sent notification to {}", MaskUtil.maskFirstFive(notificationDto.getReceiver()));
+            log.info("Successfully sent notification to {}", maskReceiver);
         } catch (Exception e) {
             log.error("Failed to send notification to {}. Error: {}",
                     notificationDto.getReceiver(), e.getMessage());

@@ -10,14 +10,16 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SecureDataCleanupScheduler {
+public class SecureDataCleanupScheduler extends AbstractScheduler {
+
+    private static final String JOB = "secure-data-cleanup";
+    private static final String LOG_PREFIX = "{[SECURE_DATA_CLEANUP]}";
 
     private final SecureDataRepository repository;
 
@@ -25,85 +27,86 @@ public class SecureDataCleanupScheduler {
     @Monitored(value = "scheduling.secure_data", context = "cleanup")
     public void cleanupExpiredSecureEvents() {
 
-        long start = System.currentTimeMillis();
+        execute(JOB, () -> {
 
-        List<SecureData> all = repository.findWithMultipleSecureEvents();
+            long start = System.currentTimeMillis();
+            LocalDateTime now = LocalDateTime.now();
 
-        int totalDocuments = all.size();
-        int documentsWithEvents = 0;
-        int updatedDocuments = 0;
-        int totalEventsChecked = 0;
-        int totalEventsRemoved = 0;
+            List<SecureData> all = repository.findWithMultipleSecureEvents();
 
-        for (SecureData secureData : all) {
-            log.info("[CLEAN UP JOB]: SecureData cleanup job started");
+            int totalDocuments = all.size();
+            int documentsWithEvents = 0;
+            int updatedDocuments = 0;
+            int totalEventsChecked = 0;
+            int totalEventsRemoved = 0;
 
-            boolean changed = false;
+            log.debug("{} {cleanup} started documents={}", LOG_PREFIX, totalDocuments);
 
-            Map<SecureEvent, List<LocalDateTime>> events = secureData.getSecureEvents();
-            if (events == null || events.isEmpty()) {
-                continue;
-            }
+            for (SecureData secureData : all) {
 
-            documentsWithEvents++;
+                Map<SecureEvent, List<LocalDateTime>> events = secureData.getSecureEvents();
 
-            for (Iterator<Map.Entry<SecureEvent, List<LocalDateTime>>> it = events.entrySet().iterator(); it.hasNext(); ) {
-                Map.Entry<SecureEvent, List<LocalDateTime>> entry = it.next();
-
-                SecureEvent eventType = entry.getKey();
-                List<LocalDateTime> timestamps = entry.getValue();
-
-                if (timestamps == null || timestamps.size() <= 1) {
+                if (events == null || events.isEmpty()) {
                     continue;
                 }
 
-                totalEventsChecked += timestamps.size();
+                documentsWithEvents++;
 
-                LocalDateTime now = LocalDateTime.now();
+                boolean changed = false;
 
-                int before = timestamps.size();
+                for (var entry : events.entrySet()) {
 
-                timestamps.removeIf(time -> timestamps.size() > 1
-                        && time.plus(eventType.getDuration()).isBefore(now)
-                );
+                    SecureEvent eventType = entry.getKey();
+                    List<LocalDateTime> timestamps = entry.getValue();
 
-                int removed = before - timestamps.size();
-                if (removed > 0) {
-                    totalEventsRemoved += removed;
-                    changed = true;
+                    if (timestamps == null || timestamps.size() <= 1) {
+                        continue;
+                    }
 
-                    log.debug("UserId={} | Event={} | Removed {} expired entries | Remaining={}",
-                            secureData.getUserId(),
-                            eventType.name(),
-                            removed,
-                            timestamps.size());
+                    totalEventsChecked += timestamps.size();
+
+                    int before = timestamps.size();
+
+                    timestamps.removeIf(time ->
+                            timestamps.size() > 1 &&
+                                    time.plus(eventType.getDuration()).isBefore(now)
+                    );
+
+                    int removed = before - timestamps.size();
+
+                    if (removed > 0) {
+                        totalEventsRemoved += removed;
+                        changed = true;
+
+                        log.debug("{} {cleanup} expired-events removed userId={} event={} removed={} remaining={}",
+                                LOG_PREFIX,
+                                secureData.getUserId(),
+                                eventType,
+                                removed,
+                                timestamps.size());
+                    }
+                }
+
+                if (changed) {
+                    repository.save(secureData);
+                    updatedDocuments++;
+
+                    log.info("{} {cleanup} document-updated userId={}",
+                            LOG_PREFIX,
+                            secureData.getUserId());
                 }
             }
 
-            if (changed) {
-                repository.save(secureData);
-                updatedDocuments++;
-            }
-        }
+            long duration = System.currentTimeMillis() - start;
 
-        long duration = System.currentTimeMillis() - start;
-
-        log.info("""
-                [CLEAN UP JOB]:
-                SecureData cleanup job finished:
-                - Total documents scanned: {}
-                - Documents with events: {}
-                - Documents updated: {}
-                - Total event entries checked: {}
-                - Total expired entries removed: {}
-                - Execution time: {} ms
-                """,
-                totalDocuments,
-                documentsWithEvents,
-                updatedDocuments,
-                totalEventsChecked,
-                totalEventsRemoved,
-                duration
-        );
+            log.info("{} {cleanup} finished scannedDocs={} docsWithEvents={} updatedDocs={} checkedEvents={} removedEvents={} durationMs={}",
+                    LOG_PREFIX,
+                    totalDocuments,
+                    documentsWithEvents,
+                    updatedDocuments,
+                    totalEventsChecked,
+                    totalEventsRemoved,
+                    duration);
+        });
     }
 }
