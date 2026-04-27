@@ -1,11 +1,16 @@
 package com.bsu.cvbuilder.exception;
 
 import lombok.Getter;
+import lombok.Setter;
 
 public class AppException extends RuntimeException {
 
     @Getter
     private final Integer statusCode;
+
+    @Getter
+    @Setter
+    private Boolean skipped;
 
     public AppException(Integer statusCode) {
         this.statusCode = statusCode;

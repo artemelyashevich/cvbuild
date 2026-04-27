@@ -9,11 +9,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -61,10 +57,12 @@ public class TelegramNotificationStrategyImpl implements NotificationStrategy {
             );
 
             if (!response.getStatusCode().is2xxSuccessful()) {
-                throw new AppException("retry", 5000);
+                if (response.getStatusCode().equals(HttpStatus.TOO_MANY_REQUESTS)) {
+                    throw new AppException("[TELEGRAM]: too many requests", 5000);
+                }
+                throw new AppException("[TELEGRAM]: something went wrong", 5000);
             }
         } catch (HttpClientErrorException e) {
-            log.error(e.getMessage());
             throw new AppException("retry", 5000);
         }
     }
@@ -73,8 +71,4 @@ public class TelegramNotificationStrategyImpl implements NotificationStrategy {
     public NotificationEngine getSupportedEngine() {
         return NotificationEngine.TELEGRAM;
     }
-
-    private record TelegramBody (
-            String chatId, String text
-    ){}
 }
