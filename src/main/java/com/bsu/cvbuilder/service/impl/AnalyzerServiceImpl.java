@@ -1,9 +1,6 @@
 package com.bsu.cvbuilder.service.impl;
 
-import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
-import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
 import com.bsu.cvbuilder.domain.entity.Resume;
-import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.AnalyzerService;
@@ -15,15 +12,15 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.converter.BeanOutputConverter;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
 @Service
+@Primary
 @RequiredArgsConstructor
 public class AnalyzerServiceImpl implements AnalyzerService {
     private static final BeanOutputConverter<Resume> converter = new BeanOutputConverter<>(Resume.class);
@@ -44,10 +41,10 @@ public class AnalyzerServiceImpl implements AnalyzerService {
         return response;
     }
 
-    @Async
+   // @Async("taskFlowExecutor")
     @Override
-    public void ats(Resume resume, String jobDescription, UserProfile currentUser) {
-        log.debug("[ANALYZER] Attempting to analyze resume {}", resume.getChatId());
+    public void ats(Resume resume, String jobDescription) {
+        log.info("[ANALYZER] Attempting to analyze resume {}", resume.getId());
         try {
             ChatClient.CallResponseSpec callResponseSpec = aiService.callAtsOptimization(resume, jobDescription);
             Resume optimizedResume = callResponseSpec.entity(converter);
@@ -65,12 +62,6 @@ public class AnalyzerServiceImpl implements AnalyzerService {
                 return persistentResume;
             });
             log.info("[ANALYZER] Persisted resume {}", optimizedResume.getChatId());
-            notificationService.sendNotification(NotificationDto.builder()
-                            .templateName("common")
-                            .engine(NotificationEngine.EMAIL)
-                            .receiver(currentUser.getEmail())
-                            .parameters(Map.of("message", "Congratulations! Ats - success"))
-                    .build());
         }  catch (Exception e) {
             log.error("Failed to generate ats optimization for resume {}: {}", resume.getId(), e.getMessage());
             throw new AppException("Failed to generate resume via AI. Please try to chat more.", e, 500);

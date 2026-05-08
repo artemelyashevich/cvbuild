@@ -16,6 +16,7 @@ import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.PromptRegistryService;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.util.JsonHelper;
+import com.bsu.cvbuilder.util.MaskUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -46,11 +47,14 @@ public class AiServiceImpl implements AiService {
     private static final String PROMPT_ANALYZER = "analyzer";
     private static final String PROMPT_ATS = "ats";
     private static final String PROMPT_EXPANSION = "resume_expansion";
+    private static final String PROMPT_JOB_EXPANSION = "job_expansion";
     private static final String COMPLETED_SIGNAL = "COMPLETED";
 
     private final ChatClient chatClient;
-    private final PromptRegistryService promptRegistryService;
+    @Qualifier("expansionChatClient")
+    private final ChatClient expansionClient;
     private final ApplicationProperties applicationProperties;
+    private final PromptRegistryService promptRegistryService;
     private final SecurityService securityService;
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
@@ -123,6 +127,22 @@ public class AiServiceImpl implements AiService {
     }
 
     @Override
+    @Monitored(value = "calling_ai_job_expansion", context = "ai")
+    public ChatClient.CallResponseSpec callExpansion(String jobDescription) {
+        log.debug("AI Call [EXPANSION] for jobDescription");
+        String jobExpansionPrompt =  promptRegistryService.getPrompt(PROMPT_JOB_EXPANSION);
+        String prompt = jobExpansionPrompt.formatted(jobDescription);
+        return expansionClient.prompt()
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, "ignore"))
+                .user(prompt)
+                .options(OllamaOptions.builder()
+                        .temperature((double) 0)
+                        .numPredict(2000)
+                        .build())
+                .call();
+    }
+
+    @Override
     @Transactional
     @Monitored(value = "calling_ai_analyzer", context = "ai")
     public String callAnalyzer(String text, UUID chatId) {
@@ -160,12 +180,13 @@ public class AiServiceImpl implements AiService {
         } catch (JsonProcessingException e) {
             log.error(e.getMessage(), e);
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             throw new AppException(e, 500);
         }
 
         eventPublisher.publishEvent(new CallAtsEvent(userProfile.getId()));
 
-        return chatClient.prompt()
+        return expansionClient.prompt()
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, "ignore"))
                 .user(renderedPrompt)
                 .options(OllamaOptions.builder()

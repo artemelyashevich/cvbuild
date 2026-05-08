@@ -32,6 +32,7 @@ public class NotificationRetryScheduler extends AbstractScheduler {
     @CircuitBreaker(maxAttempts = 5)
     @Scheduled(fixedRate = 1000, scheduler = "notificationScheduleExecutor")
     public void job() {
+        setEnabled(false);
         execute("NOTIFICATION-RETRY", () -> {
             int batchSize = 50;
             long startTime = System.currentTimeMillis();
@@ -48,6 +49,7 @@ public class NotificationRetryScheduler extends AbstractScheduler {
                 if (notification == null) {
                     break;
                 }
+                setEnabled(true);
                 log.debug("[NOTIFICATION-RETRY] Batch iteration {}/{}", i + 1, batchSize);
 
                 processedInBatch++;

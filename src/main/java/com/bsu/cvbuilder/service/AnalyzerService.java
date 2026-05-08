@@ -7,5 +7,5 @@ public interface AnalyzerService {
 
     String analyze(String resumeId);
 
-    void ats(Resume resume, String jobDescription, UserProfile currentUser);
+    void ats(Resume resume, String jobDescription);
 }

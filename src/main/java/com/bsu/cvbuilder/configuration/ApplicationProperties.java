@@ -22,6 +22,7 @@ public class ApplicationProperties {
     private Analyzer analyzer;
     private Twilio twilio;
     private Telegram telegram;
+    private String volkModel;
 
     @Getter
     @Setter

@@ -68,6 +68,24 @@ public class ChatFlowService {
         return resumeService.findByChatId(chatId);
     }
 
+    public String processMessageSync(UUID chatId, String userMessage) {
+        UserProfile userProfile = securityService.findCurrentUser();
+        log.info("Processing sync message for chatId={}", chatId);
+        applicationEventPublisher.publishEvent(new UserGenerateNewMessageEvent(userProfile.getId()));
+        AiChat chat = chatService.getChatById(chatId);
+        AbstractChatStepHandler currentHandler = resolveHandler(chat.getChatFlowStep());
+
+        StepAnalysisResult analysis = analyzeStep(chat, userMessage, currentHandler);
+
+        String systemPrompt = resolveSystemPrompt(chat, currentHandler, analysis);
+        return chatClient.prompt()
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId))
+                .system(systemPrompt)
+                .user(userMessage)
+                .call()
+                .content();
+    }
+
     @Transactional
     public SseEmitter processMessage(UUID chatId, String userMessage) {
         UserProfile userProfile = securityService.findCurrentUser();
@@ -200,7 +218,7 @@ public class ChatFlowService {
         Resume resume = resumeService.findById(resumeId);
         String jobDescription = jobParserService.parse(link);
         try {
-            analyzerService.ats(resume, jobDescription, securityService.findCurrentUser());
+            analyzerService.ats(resume, jobDescription);
         } catch (Exception e) {
             log.warn("Exception in ATS for resume: {}", resumeId, e);
             Map<String, Object> params = new HashMap<>();
@@ -220,7 +238,7 @@ public class ChatFlowService {
         log.debug("Attempting process ats for chatId={} and vacancy={}", chatId, link);
         Resume resume = resumeService.findByChatId(chatId);
         String jobDescription = jobParserService.parse(link);
-        analyzerService.ats(resume, jobDescription, securityService.findCurrentUser());
+        analyzerService.ats(resume, jobDescription);
         return null;
     }
 

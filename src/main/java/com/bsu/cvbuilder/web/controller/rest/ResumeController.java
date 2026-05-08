@@ -45,7 +45,7 @@ public class ResumeController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PostMapping(value = "/ats/{resumeId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public void ats(@PathVariable String resumeId, @RequestBody Map<String, String> body) {
-        chatFlowService.ats(resumeId, body.get("url"));
+        resumeService.ats(resumeId, body.get("url"));
     }
 
     @GetMapping

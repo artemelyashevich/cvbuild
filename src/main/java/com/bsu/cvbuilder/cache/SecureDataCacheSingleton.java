@@ -1,4 +1,4 @@
-package com.bsu.cvbuilder.security;
+package com.bsu.cvbuilder.cache;
 
 import com.bsu.cvbuilder.domain.entity.SecureData;
 import com.bsu.cvbuilder.domain.entity.UserProfile;

@@ -15,6 +15,8 @@ public interface AiService {
 
     ChatClient.CallResponseSpec callExpansion(Resume resume);
 
+    ChatClient.CallResponseSpec callExpansion(String jobDescription);
+
     String callAnalyzer(String text, UUID chatId);
 
     ChatClient.CallResponseSpec callAtsOptimization(Resume resume, String jobDescription);

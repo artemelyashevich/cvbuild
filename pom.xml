@@ -134,6 +134,13 @@
         </dependency>
 
         <dependency>
+            <groupId>com.alphacephei</groupId>
+            <artifactId>vosk</artifactId>
+            <version>0.3.45</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
             <groupId>com.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-pdfbox</artifactId>
             <version>${openhtmltopdf.version}</version>

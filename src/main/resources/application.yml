@@ -130,6 +130,7 @@ app:
     user-agent: ${USER_AGENT}
     trust-urls:
       - "rabota.by"
+  volk-model: ${VOLK_MODEL}
 
 management:
   endpoint:
@@ -149,5 +150,7 @@ management:
       probability: 1.0
 
 logging:
+  file:
+    name: logs/app.log
   level:
     com.bsu.cvbuilder.service: info

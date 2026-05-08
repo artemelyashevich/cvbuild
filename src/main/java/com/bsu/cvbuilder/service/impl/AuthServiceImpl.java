@@ -9,7 +9,7 @@ import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.AbstractEvent;
 import com.bsu.cvbuilder.domain.event.LogoutEvent;
 import com.bsu.cvbuilder.exception.AppException;
-import com.bsu.cvbuilder.security.SecureDataCacheSingleton;
+import com.bsu.cvbuilder.cache.SecureDataCacheSingleton;
 import com.bsu.cvbuilder.service.*;
 import com.bsu.cvbuilder.service.mapper.UserMapper;
 import com.bsu.cvbuilder.util.CacheUtil;

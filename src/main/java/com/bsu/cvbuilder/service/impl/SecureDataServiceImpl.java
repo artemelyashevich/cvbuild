@@ -8,7 +8,7 @@ import com.bsu.cvbuilder.domain.entity.SecureEvent;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.SecureDataRepository;
-import com.bsu.cvbuilder.security.SecureDataCacheSingleton;
+import com.bsu.cvbuilder.cache.SecureDataCacheSingleton;
 import com.bsu.cvbuilder.service.JwtService;
 import com.bsu.cvbuilder.service.LockService;
 import com.bsu.cvbuilder.service.SecureDataService;

@@ -133,8 +133,7 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
         log.debug("[RESUME-FLOW] Attempting ats for resume: {} for job: {}", resumeId, MaskUtil.mask(jobLink, 10));
         String jobDescription = jobParserService.parse(jobLink);
         Resume resume = resumeService.findById(resumeId);
-        UserProfile userProfile = securityService.findCurrentUser();
-        analyzerService.ats(resume, jobDescription, userProfile);
+        analyzerService.ats(resume, jobDescription);
         return resume;
     }
 

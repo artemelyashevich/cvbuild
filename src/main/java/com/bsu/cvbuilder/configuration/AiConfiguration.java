@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.context.annotation.Primary;
 
 
 @Configuration
@@ -25,12 +26,28 @@ public class AiConfiguration {
     private final ApplicationProperties applicationProperties;
 
     @Bean
+    @Primary
     public ChatClient chatClient(ChatClient.Builder builder) {
         return builder
                 .defaultAdvisors(
                         expansionQueryAdvisor,
                         addMongoChatMemoryAdvisor(2),
                         SimpleLoggerAdvisor.builder().order(3).build()
+                )
+                .defaultOptions(
+                        OllamaOptions.builder()
+                                .temperature(applicationProperties.getChat().getTemperature())
+                                .topP(applicationProperties.getChat().getTopp())
+                                .build()
+                )
+                .build();
+    }
+
+    @Bean("expansionChatClient")
+    public ChatClient expansionChatClient(ChatClient.Builder builder) {
+        return builder
+                .defaultAdvisors(
+                        SimpleLoggerAdvisor.builder().order(1).build()
                 )
                 .defaultOptions(
                         OllamaOptions.builder()

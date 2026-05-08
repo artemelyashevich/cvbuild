@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.converter.BeanOutputConverter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
@@ -37,6 +38,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -56,6 +59,9 @@ public class ResumeServiceImpl implements ResumeService {
     private final TransactionTemplate transactionTemplate;
     private final ApplicationContext applicationContext;
     private final JobParserService jobParserService;
+
+    @Qualifier("taskFlowExecutor")
+    private final Executor executor;
 
     @Override
     public Resume save(Resume resume) {
@@ -127,40 +133,20 @@ public class ResumeServiceImpl implements ResumeService {
 
     @Override
     public void ats(String resumeId, String url) {
-        UserProfile user = securityService.findCurrentUser();
+        AtomicReference<UserProfile> user = new AtomicReference<>(securityService.findCurrentUser());
         log.debug("ATS for resume: {}", resumeId);
         notificationService.sendNotification(NotificationDto.builder()
                 .engine(NotificationEngine.WS)
                 .parameters(Map.of("message", "Резюме успешно отправлено в обработку!", "status", WsType.SUCCESS))
-                .receiver(user.getLogin())
+                .receiver(user.get().getLogin())
                 .build());
         Resume byId = findById(resumeId);
         String parse = jobParserService.parse(url);
-        CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> applicationContext.getBean(AnalyzerServiceImpl.class).ats(byId, parse, user));
-        completableFuture.thenAccept(e -> {
-                    notificationService.sendNotification(NotificationDto.builder()
-                            .engine(NotificationEngine.WS)
-                            .parameters(Map.of("message", "Резюме адаптировано успешно, проверьте почту!", "status", WsType.SUCCESS))
-                            .receiver(user.getLogin())
-                            .build());
-                    Map<String, Object> params = new HashMap<>();
-                    params.put("resumeId", byId.getId());
-                    params.put("status", "success");
-                    sendNotification(user.getEmail(), params, "resume_success");
-                })
-                .exceptionally(e -> {
-                    log.warn("Exception in ATS for resume: {}", resumeId, e);
-                    Map<String, Object> params = new HashMap<>();
-                    params.put("resumeId", byId.getId());
-                    params.put("status", "rejected");
-                    sendNotification(user.getEmail(), params, "resume_rejected");
-                    notificationService.sendNotification(NotificationDto.builder()
-                            .engine(NotificationEngine.WS)
-                            .parameters(Map.of("message", "Ошибка адаптации резюме!", "status", WsType.ERROR))
-                            .receiver(user.getLogin())
-                            .build());
-                    return null;
-                });
+        CompletableFuture.runAsync(() -> {
+            ChatClient.CallResponseSpec jobSpec = aiService.callExpansion(parse);
+            log.info("Job parsing for resume: {} {}", resumeId, jobSpec.content());
+            applicationContext.getBean(AnalyzerServiceImpl.class).ats(byId, jobSpec.content());
+        }, executor);
     }
 
     private Resume generateAndSave(UUID chatId) {
