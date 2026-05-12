@@ -170,7 +170,7 @@ public class UserProfileServiceImpl implements UserProfileService {
                         UserProfile existingUser = findById(id);
 
                         ImageMetadata imageMetadata = imageService.create(file, id);
-                        existingUser.setAvatarUrl(imageMetadata.getId());
+                        existingUser.setAvatarUrl(imageMetadata.getUrl());
 
                         UserProfile user = userProfileRepository.save(existingUser);
                         secureDataCacheSingleton.set(user);

@@ -1,10 +1,17 @@
 package com.bsu.cvbuilder.configuration;
 
+import com.bsu.cvbuilder.cache.AudioWSCache;
+import com.bsu.cvbuilder.service.flow.chat.ChatFlowService;
+import com.bsu.cvbuilder.service.ws.AudioHandshakeInterceptor;
+import com.bsu.cvbuilder.service.ws.AudioWebSocketHandler;
+import com.bsu.cvbuilder.util.MinioUtil;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.minio.MinioClient;
 import io.prometheus.client.CollectorRegistry;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +28,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 import java.util.concurrent.Executor;
@@ -142,5 +150,38 @@ public class BeanConfiguration {
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
+    }
+
+    @Bean
+    @ConditionalOnProperty(
+            prefix = "app.volk",
+            name = "enabled",
+            havingValue = "true"
+    )
+    public AudioHandshakeInterceptor  audioHandshakeInterceptor() {
+        return new AudioHandshakeInterceptor();
+    }
+
+    @Bean
+    @ConditionalOnProperty(
+            prefix = "app.volk",
+            name = "enabled",
+            havingValue = "true"
+    )
+    public AudioWebSocketHandler audioWebSocketHandler(
+            ChatFlowService chatFlowService,
+            AudioWSCache audioWSCache,
+            ObjectMapper objectMapper,
+            ApplicationProperties applicationProperties
+    ) throws IOException {
+        return new AudioWebSocketHandler(audioWSCache, chatFlowService, objectMapper, applicationProperties);
+    }
+
+    @Bean
+    public MinioUtil minioUtil(
+            MinioClient minioClient,
+            ApplicationProperties applicationProperties
+    ) {
+        return new MinioUtil(minioClient, applicationProperties);
     }
 }

@@ -9,6 +9,7 @@ import com.mongodb.client.gridfs.model.GridFSFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.gridfs.GridFsResource;
@@ -24,6 +25,7 @@ import java.util.Optional;
 
 @Slf4j
 @Service
+@Deprecated(since = "12.05")
 @RequiredArgsConstructor
 public class ImageServiceImpl implements ImageService {
 

@@ -23,6 +23,16 @@ public class ApplicationProperties {
     private Twilio twilio;
     private Telegram telegram;
     private String volkModel;
+    private Minio minio;
+
+    @Getter
+    @Setter
+    public static class Minio {
+        private String url;
+        private String bucket;
+        private String accessKey;
+        private String secretKey;
+    }
 
     @Getter
     @Setter

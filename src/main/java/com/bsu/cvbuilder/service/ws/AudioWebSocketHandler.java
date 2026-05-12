@@ -4,7 +4,6 @@ import com.bsu.cvbuilder.cache.AudioWSCache;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.service.flow.chat.ChatFlowService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -16,7 +15,6 @@ import org.vosk.Recognizer;
 import java.io.IOException;
 import java.util.UUID;
 
-@Component
 public class AudioWebSocketHandler extends BinaryWebSocketHandler {
 
     private final AudioWSCache cache;

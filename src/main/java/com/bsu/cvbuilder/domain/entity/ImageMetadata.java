@@ -32,6 +32,11 @@ public class ImageMetadata {
 
     private String ownerId;
 
+    private String url;
+
+    @Builder.Default
+    private boolean isAvatar = true;
+
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @CreatedDate

@@ -2,7 +2,6 @@ package com.bsu.cvbuilder.service.ws;
 
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
-import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
@@ -12,7 +11,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Component
 public class AudioHandshakeInterceptor implements HandshakeInterceptor {
 
     private static final String CHAT_ID = "chatId";
