@@ -146,7 +146,10 @@ public class ResumeServiceImpl implements ResumeService {
             ChatClient.CallResponseSpec jobSpec = aiService.callExpansion(parse);
             log.info("Job parsing for resume: {} {}", resumeId, jobSpec.content());
             applicationContext.getBean(AnalyzerServiceImpl.class).ats(byId, jobSpec.content());
-        }, executor);
+        }, executor).exceptionally(e -> {
+            log.error("ATS processing failed for resume {}", resumeId, e);
+            return null;
+        });
     }
 
     private Resume generateAndSave(UUID chatId) {

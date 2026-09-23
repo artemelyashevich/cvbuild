@@ -8,16 +8,19 @@ import com.bsu.cvbuilder.domain.event.CreateResumeEvent;
 import com.bsu.cvbuilder.domain.event.DownloadResumeEvent;
 import com.bsu.cvbuilder.domain.event.LoginEvent;
 import com.bsu.cvbuilder.domain.event.UserCreatedEvent;
+import com.bsu.cvbuilder.domain.event.TokenUsageEvent;
 import com.bsu.cvbuilder.domain.event.UserGenerateNewMessageEvent;
 import com.bsu.cvbuilder.service.NotificationService;
 import com.bsu.cvbuilder.service.UserStatsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -68,6 +71,18 @@ public class UserEventListener {
             stats.setAiRequestsUsed(stats.getAiRequestsUsed() + 1);
             var monthly = stats.getCurrentMonthUsage();
             monthly.setAiRequests(monthly.getAiRequests() + 1);
+        });
+    }
+
+    @Async
+    @EventListener
+    public void handleTokenUsage(TokenUsageEvent event) {
+        updateStat(event.userId(), "tokens", stats -> {
+            long total = event.promptTokens() + event.completionTokens();
+            stats.setTotalTokens(Objects.requireNonNullElse(stats.getTotalTokens(), 0L) + total);
+            var monthly = stats.getCurrentMonthUsage();
+            monthly.setPromptTokens(Objects.requireNonNullElse(monthly.getPromptTokens(), 0L) + event.promptTokens());
+            monthly.setCompletionTokens(Objects.requireNonNullElse(monthly.getCompletionTokens(), 0L) + event.completionTokens());
         });
     }
 

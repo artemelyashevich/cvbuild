@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.service.flow.chat;
 
+import com.bsu.cvbuilder.ai.TokenUsageAdvisor;
 import com.bsu.cvbuilder.domain.dto.ai.ChatFlowStep;
 import com.bsu.cvbuilder.domain.dto.ai.StepAnalysisResult;
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
@@ -11,7 +12,20 @@ import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.UserGenerateNewMessageEvent;
 import com.bsu.cvbuilder.exception.AppException;
-import com.bsu.cvbuilder.service.*;
+import com.bsu.cvbuilder.service.AnalyzerService;
+import com.bsu.cvbuilder.service.ChatService;
+import com.bsu.cvbuilder.service.JobParserService;
+import com.bsu.cvbuilder.service.NotificationService;
+import com.bsu.cvbuilder.service.ResumeService;
+import com.bsu.cvbuilder.service.SecurityService;
+import com.bsu.cvbuilder.service.TokenUsageService;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -19,11 +33,11 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.Disposable;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -43,11 +57,14 @@ public class ChatFlowService {
     private final SecurityService securityService;
     private final Map<ChatFlowStep, AbstractChatStepHandler> stepHandlers;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final TokenUsageService tokenUsageService;
+    private final TokenUsageAdvisor tokenUsageAdvisor;
 
     public ChatFlowService(ChatClient chatClient,
                            ChatService chatService,
                            ResumeService resumeService, JobParserService jobParserService, AnalyzerService analyzerService, NotificationService notificationService, SecurityService securityService,
-                           List<AbstractChatStepHandler> handlers, ApplicationEventPublisher applicationEventPublisher) {
+                           List<AbstractChatStepHandler> handlers, ApplicationEventPublisher applicationEventPublisher,
+                           TokenUsageService tokenUsageService, TokenUsageAdvisor tokenUsageAdvisor) {
         this.chatClient = chatClient;
         this.chatService = chatService;
         this.resumeService = resumeService;
@@ -61,6 +78,8 @@ public class ChatFlowService {
                         Function.identity()
                 ));
         this.applicationEventPublisher = applicationEventPublisher;
+        this.tokenUsageService = tokenUsageService;
+        this.tokenUsageAdvisor = tokenUsageAdvisor;
     }
 
     public Resume extractFromChat(UUID chatId) {
@@ -68,37 +87,55 @@ public class ChatFlowService {
         return resumeService.findByChatId(chatId);
     }
 
-    public String processMessageSync(UUID chatId, String userMessage) {
+    public Flux<String> streamMessage(UUID chatId, String userMessage) {
         UserProfile userProfile = securityService.findCurrentUser();
-        log.info("Processing sync message for chatId={}", chatId);
-        applicationEventPublisher.publishEvent(new UserGenerateNewMessageEvent(userProfile.getId()));
-        AiChat chat = chatService.getChatById(chatId);
-        AbstractChatStepHandler currentHandler = resolveHandler(chat.getChatFlowStep());
+        String systemPrompt = prepareSystemPrompt(userProfile, chatId, userMessage);
 
-        StepAnalysisResult analysis = analyzeStep(chat, userMessage, currentHandler);
-
-        String systemPrompt = resolveSystemPrompt(chat, currentHandler, analysis);
         return chatClient.prompt()
-                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId))
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId)
+                        .param(TokenUsageAdvisor.USER_ID, userProfile.getId())
+                        .advisors(tokenUsageAdvisor))
                 .system(systemPrompt)
                 .user(userMessage)
-                .call()
+                .stream()
                 .content();
     }
 
     @Transactional
     public SseEmitter processMessage(UUID chatId, String userMessage) {
-        UserProfile userProfile = securityService.findCurrentUser();
+        SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);
+
+        Disposable subscription = streamMessage(chatId, userMessage)
+                .subscribe(
+                        chunk -> sendChunk(emitter, chunk),
+                        error -> handleError(emitter, error),
+                        emitter::complete
+                );
+
+        emitter.onCompletion(subscription::dispose);
+        emitter.onTimeout(subscription::dispose);
+        emitter.onError(e -> subscription.dispose());
+
+        return emitter;
+    }
+
+    private String prepareSystemPrompt(UserProfile userProfile, UUID chatId, String userMessage) {
         log.info("Processing message for chatId={}", chatId);
-        applicationEventPublisher.publishEvent(new UserGenerateNewMessageEvent(userProfile.getId()));
         AiChat chat = chatService.getChatById(chatId);
+
+        if (!Objects.equals(chat.getUserId(), userProfile.getId())) {
+            throw new AppException("Access to chat %s is denied".formatted(chatId), 403);
+        }
+
+        tokenUsageService.checkLimit(userProfile);
+
+        applicationEventPublisher.publishEvent(new UserGenerateNewMessageEvent(userProfile.getId()));
+
         AbstractChatStepHandler currentHandler = resolveHandler(chat.getChatFlowStep());
 
         StepAnalysisResult analysis = analyzeStep(chat, userMessage, currentHandler);
 
-        String systemPrompt = resolveSystemPrompt(chat, currentHandler, analysis);
-
-        return streamResponse(chatId, userMessage, systemPrompt);
+        return resolveSystemPrompt(chat, currentHandler, analysis);
     }
 
     private StepAnalysisResult analyzeStep(AiChat chat,
@@ -156,26 +193,6 @@ public class ChatFlowService {
                 Please politely ask for the following:
                 %s
                 """.formatted(handler.getSystemPrompt(), analysis.missingInfo());
-    }
-
-    private SseEmitter streamResponse(UUID chatId,
-                                      String userMessage,
-                                      String systemPrompt) {
-
-        SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);
-
-        chatClient.prompt()
-                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId))
-                .system(systemPrompt)
-                .user(userMessage)
-                .stream()
-                .content()
-                .doOnNext(chunk -> sendChunk(emitter, chunk))
-                .doOnError(error -> handleError(emitter, error))
-                .doOnComplete(emitter::complete)
-                .subscribe();
-
-        return emitter;
     }
 
     private void sendChunk(SseEmitter emitter, String chunk) {

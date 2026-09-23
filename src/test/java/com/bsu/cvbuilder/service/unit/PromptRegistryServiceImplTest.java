@@ -31,10 +31,13 @@ class PromptRegistryServiceImplTest {
     private PromptRegistryServiceImpl promptRegistryService;
 
     private static final String PROMPTS_PATH = "classpath:/prompt/*.txt";
+    private static final String FLOW_PROMPTS_PATH = "classpath:/prompt/flow/*.txt";
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
         ReflectionTestUtils.setField(promptRegistryService, "promptsPath", PROMPTS_PATH);
+        ReflectionTestUtils.setField(promptRegistryService, "promptsFlowPath", FLOW_PROMPTS_PATH);
+        lenient().when(resourcePatternResolver.getResources(FLOW_PROMPTS_PATH)).thenReturn(new Resource[]{});
     }
 
     // --- init Tests ---

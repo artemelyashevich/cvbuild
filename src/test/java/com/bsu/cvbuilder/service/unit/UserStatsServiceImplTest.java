@@ -1,9 +1,10 @@
 package com.bsu.cvbuilder.service.unit;
 
 import com.bsu.cvbuilder.domain.entity.UserStats;
-import com.bsu.cvbuilder.exception.AppException;
+import com.bsu.cvbuilder.service.LockService;
 import com.bsu.cvbuilder.repository.UserStatsRepository;
 import com.bsu.cvbuilder.service.impl.UserStatsServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,8 +17,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,9 +29,16 @@ class UserStatsServiceImplTest {
 
     @Mock
     private UserStatsRepository userStatsRepository;
+    @Mock
+    private LockService lockService;
 
     @InjectMocks
     private UserStatsServiceImpl userStatsService;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(lockService.withLock(anyString(), any())).thenAnswer(inv -> inv.<Supplier<?>>getArgument(1).get());
+    }
 
     // --- save Tests ---
 
@@ -46,6 +57,21 @@ class UserStatsServiceImplTest {
                 () -> assertEquals("user-1", result.getUserId()),
                 () -> verify(userStatsRepository).save(inputStats)
         );
+    }
+
+    @Test
+    @DisplayName("save: should return existing stats of the user instead of inserting a duplicate")
+    void save_ExistingUserStats_ReturnsExistingWithoutInsert() {
+        // Arrange
+        var existing = TestDataFactory.createStats("user-1", 3);
+        when(userStatsRepository.findByUserId("user-1")).thenReturn(Optional.of(existing));
+
+        // Act
+        var result = userStatsService.save(TestDataFactory.createStats("user-1", 0));
+
+        // Assert
+        assertSame(existing, result);
+        verify(userStatsRepository, never()).save(any());
     }
 
     // --- findByUserId Tests ---
@@ -67,14 +93,21 @@ class UserStatsServiceImplTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"invalid-id", "non-existent"})
-    @DisplayName("findByUserId: should throw AppException with 404 when not found")
-    void findByUserId_NonExistentId_ThrowsAppException(String userId) {
+    @DisplayName("findByUserId: should create empty stats when none exist yet")
+    void findByUserId_NonExistentId_CreatesStats(String userId) {
         // Arrange
         when(userStatsRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        when(userStatsRepository.save(any(UserStats.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        // Act & Assert
-        var exception = assertThrows(AppException.class, () -> userStatsService.findByUserId(userId));
-        assertEquals(404, exception.getStatusCode());
+        // Act
+        var stats = userStatsService.findByUserId(userId);
+
+        // Assert
+        assertAll(
+                () -> assertEquals(userId, stats.getUserId()),
+                () -> assertEquals(0L, stats.getTotalTokens()),
+                () -> verify(userStatsRepository).save(any(UserStats.class))
+        );
     }
 
     // --- incrementStats Tests ---

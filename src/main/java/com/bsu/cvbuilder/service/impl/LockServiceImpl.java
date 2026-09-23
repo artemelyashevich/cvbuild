@@ -12,26 +12,34 @@ import java.util.function.Supplier;
 @RequiredArgsConstructor
 public class LockServiceImpl implements LockService {
 
-    private final ConcurrentHashMap<String, ReentrantLock> locks = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, LockHolder> locks = new ConcurrentHashMap<>();
 
     @Override
     public <T> T withLock(String key, Supplier<T> action) {
-        ReentrantLock lock = locks.computeIfAbsent(key, k -> new ReentrantLock());
+        LockHolder holder = locks.compute(key, (k, existing) -> {
+            LockHolder h = existing == null ? new LockHolder() : existing;
+            h.users++;
+            return h;
+        });
 
-        lock.lock();
+        holder.lock.lock();
         try {
             return action.get();
         } finally {
-            lock.unlock();
-
-            if (!lock.hasQueuedThreads()) {
-                locks.remove(key, lock);
-            }
+            holder.lock.unlock();
+            // existing is null only if clear() ran while the lock was held (shutdown)
+            locks.compute(key, (k, existing) -> existing == null || --existing.users == 0 ? null : existing);
         }
     }
 
     @Override
     public void clear() {
         locks.clear();
+    }
+
+    private static final class LockHolder {
+
+        private final ReentrantLock lock = new ReentrantLock();
+        private int users;
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Builder
@@ -25,18 +26,18 @@ public record MongoChatMemory(ChatService chatService, int maxMessages) implemen
 
         AiChat aiChat = chatService.getChatById(UUID.fromString(conversationId));
 
+        List<ChatMessage> chatMessages = aiChat.getMessages();
         for (Message message : messages) {
-            boolean isAlreadyExists = aiChat.getMessages().stream()
-                    .anyMatch(existing ->
-                            existing.getContent().equals(message.getText())
-                                    && existing.getRole().equals(getAirole(message))
-                    );
-            if (!isAlreadyExists) {
-                ChatMessage chatMessage = ChatMessage.builder()
+            MessageRole role = getAirole(message);
+            ChatMessage last = chatMessages.isEmpty() ? null : chatMessages.getLast();
+            boolean isDuplicateOfLast = last != null
+                    && Objects.equals(last.getContent(), message.getText())
+                    && Objects.equals(last.getRole(), role);
+            if (!isDuplicateOfLast) {
+                chatMessages.add(ChatMessage.builder()
                         .content(message.getText())
-                        .role(getAirole(message))
-                        .build();
-                aiChat.getMessages().add(chatMessage);
+                        .role(role)
+                        .build());
             }
         }
         chatService.saveAiChat(aiChat);
@@ -52,7 +53,6 @@ public record MongoChatMemory(ChatService chatService, int maxMessages) implemen
         return aiChat.getMessages().stream()
                 .skip(Math.max(0, aiChat.getMessages().size() - maxMessages))
                 .map(this::getMessage)
-                .limit(maxMessages)
                 .toList();
     }
 

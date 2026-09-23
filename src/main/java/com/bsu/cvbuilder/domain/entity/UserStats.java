@@ -42,6 +42,9 @@ public class UserStats implements Serializable {
     private Integer totalViews = 0;
 
     @Builder.Default
+    private Long totalTokens = 0L;
+
+    @Builder.Default
     private MonthlyUsage currentMonthUsage = new MonthlyUsage();
 
     @Getter
@@ -58,6 +61,12 @@ public class UserStats implements Serializable {
 
         @Builder.Default
         private Integer resumesCreated = 0;
+
+        @Builder.Default
+        private Long promptTokens = 0L;
+
+        @Builder.Default
+        private Long completionTokens = 0L;
 
         private LocalDateTime periodStart = LocalDateTime.now().withDayOfMonth(1);
     }

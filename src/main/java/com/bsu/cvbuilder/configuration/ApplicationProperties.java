@@ -24,6 +24,14 @@ public class ApplicationProperties {
     private Telegram telegram;
     private String volkModel;
     private Minio minio;
+    private Tokens tokens;
+
+    @Getter
+    @Setter
+    public static class Tokens {
+        private Long freeMonthlyLimit;
+        private boolean enforce;
+    }
 
     @Getter
     @Setter
@@ -102,6 +110,7 @@ public class ApplicationProperties {
         private Double extractionTemperature;
         private Integer memoryMaxMessages;
         private String stopCondition;
+        private Duration flowTimeout = Duration.ofMinutes(2);
     }
 
     @Getter

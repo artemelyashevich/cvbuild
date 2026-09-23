@@ -4,9 +4,12 @@ import com.bsu.cvbuilder.domain.entity.AiChat;
 import com.bsu.cvbuilder.domain.entity.ChatMessage;
 import com.bsu.cvbuilder.domain.entity.MessageRole;
 import com.bsu.cvbuilder.domain.entity.Resume;
+import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.ChatService;
+import com.bsu.cvbuilder.service.LockService;
+import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.service.impl.ResumeServiceImpl;
 import com.bsu.cvbuilder.web.dto.resume.UpdateResumeRequest;
 import org.junit.jupiter.api.DisplayName;
@@ -27,9 +30,11 @@ import org.springframework.data.mongodb.core.query.Query;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -42,6 +47,10 @@ class ResumeServiceImplTest {
     private ChatService chatService;
     @Mock
     private MongoTemplate mongoTemplate;
+    @Mock
+    private SecurityService securityService;
+    @Mock
+    private LockService lockService;
 
     @InjectMocks
     private ResumeServiceImpl resumeService;
@@ -56,6 +65,7 @@ class ResumeServiceImplTest {
         var pageable = PageRequest.of(0, pageSize);
         var resumes = List.of(new Resume(), new Resume());
 
+        when(securityService.findCurrentUser()).thenReturn(UserProfile.builder().id("user-1").build());
         when(mongoTemplate.find(any(Query.class), eq(Resume.class))).thenReturn(resumes);
         when(mongoTemplate.count(any(Query.class), eq(Resume.class))).thenReturn(10L);
 
@@ -127,6 +137,7 @@ class ResumeServiceImplTest {
         var existingResume = Resume.builder().id(id).blocks(Map.of("bio", "Old")).build();
         var updateRequest = new UpdateResumeRequest(Map.of("bio", "New Bio"));
 
+        when(lockService.withLock(anyString(), any())).thenAnswer(inv -> inv.<Supplier<?>>getArgument(1).get());
         when(mongoTemplate.findById(id, Resume.class)).thenReturn(existingResume);
         when(mongoTemplate.save(any(Resume.class))).thenAnswer(inv -> inv.getArgument(0));
 

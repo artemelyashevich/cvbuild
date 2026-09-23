@@ -3,7 +3,9 @@ package com.bsu.cvbuilder.service.flow.form;
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
 import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
 import com.bsu.cvbuilder.domain.dto.notification.WsType;
+import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.entity.Resume;
+import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.CreateResumeEvent;
 import com.bsu.cvbuilder.domain.event.FormAiGenerationEvent;
@@ -21,12 +23,17 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -41,6 +48,7 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
     private final AnalyzerService analyzerService;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final NotificationService notificationService;
+    private final ApplicationProperties applicationProperties;
 
     @Override
     public Map<String, Object> getResumeFlowRoadmap() {
@@ -91,7 +99,7 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
         CompletableFuture<Object> jobFuture = aiService.callFlow("job", userContent);
         CompletableFuture<Object> goalFuture = aiService.callFlow("goals", userContent);
 
-        CompletableFuture.allOf(skillsFuture, jobFuture, goalFuture).join();
+        awaitAll(skillsFuture, jobFuture, goalFuture);
 
         String skillsContent = (String) skillsFuture.join();
         String summary = (String) goalFuture.join();
@@ -119,6 +127,21 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
                         .build()
         );
         return save;
+    }
+
+    private void awaitAll(CompletableFuture<?>... futures) {
+        Duration timeout = applicationProperties.getChat().getFlowTimeout();
+        try {
+            CompletableFuture.allOf(futures).get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            Arrays.stream(futures).forEach(f -> f.cancel(true));
+            throw new AppException("AI did not respond within " + timeout, e, 504);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new AppException("Resume generation was interrupted", e, 500);
+        } catch (ExecutionException e) {
+            throw new AppException("Resume generation failed", e.getCause(), 500);
+        }
     }
 
     @Override

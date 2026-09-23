@@ -29,6 +29,8 @@ public class AiLimit {
 
     private String description;
 
+    private Long monthlyTokens;
+
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @CreatedDate

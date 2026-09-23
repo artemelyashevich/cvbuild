@@ -4,6 +4,7 @@ import com.bsu.cvbuilder.annotation.metrics.Monitored;
 import com.bsu.cvbuilder.domain.entity.AiChat;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.CreateChatEvent;
+import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.AiChatRepository;
 import com.bsu.cvbuilder.service.ChatService;
 import com.bsu.cvbuilder.service.LockService;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -34,8 +36,11 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public AiChat createAiChat(UUID chatId) {
+        return createAiChat(chatId, securityService.findCurrentUser());
+    }
+
+    private AiChat createAiChat(UUID chatId, UserProfile user) {
         log.debug("Attempting to create a new AiChat with id {}", chatId);
-        UserProfile user = securityService.findCurrentUser();
         AiChat aiChat = aiChatRepository.save(AiChat.builder()
                 .id(chatId)
                 .userId(user.getId())
@@ -53,6 +58,24 @@ public class ChatServiceImpl implements ChatService {
             Optional<AiChat> byId = aiChatRepository.findById(chatId);
             return byId.orElseGet(() -> createAiChat(chatId));
         });
+    }
+
+    @Override
+    public boolean isAccessible(UUID chatId, String userId) {
+        return aiChatRepository.findById(chatId)
+                .map(chat -> Objects.equals(chat.getUserId(), userId))
+                .orElse(true);
+    }
+
+    @Override
+    public AiChat getOrCreateOwnChat(UUID chatId, UserProfile user) {
+        AiChat chat = transactionTemplate.execute(s -> aiChatRepository.findById(chatId)
+                .orElseGet(() -> createAiChat(chatId, user)));
+
+        if (!Objects.equals(chat.getUserId(), user.getId())) {
+            throw new AppException("Access to chat %s is denied".formatted(chatId), 403);
+        }
+        return chat;
     }
 
     @Override

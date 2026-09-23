@@ -112,6 +112,8 @@ class UserProfileServiceImplTest {
         var id = "uuid-123";
         var expectedUser = UserProfile.builder().id(id).email("user@mail.com").build();
         when(userProfileRepository.findById(id)).thenReturn(Optional.of(expectedUser));
+        // the service loads the profile into the cache and then reads it back from there
+        when(secureDataCacheSingleton.get(id)).thenReturn(null, expectedUser);
 
         // Act
         var actualUser = userProfileService.findById(id);

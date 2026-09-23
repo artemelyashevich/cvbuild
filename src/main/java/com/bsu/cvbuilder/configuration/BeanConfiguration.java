@@ -11,6 +11,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.minio.MinioClient;
 import io.prometheus.client.CollectorRegistry;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
@@ -162,7 +163,7 @@ public class BeanConfiguration {
         return new AudioHandshakeInterceptor();
     }
 
-    @Bean
+    @Bean(destroyMethod = "close")
     @ConditionalOnProperty(
             prefix = "app.volk",
             name = "enabled",
@@ -172,9 +173,10 @@ public class BeanConfiguration {
             ChatFlowService chatFlowService,
             AudioWSCache audioWSCache,
             ObjectMapper objectMapper,
-            ApplicationProperties applicationProperties
+            ApplicationProperties applicationProperties,
+            @Qualifier("taskFlowExecutor") Executor taskFlowExecutor
     ) throws IOException {
-        return new AudioWebSocketHandler(audioWSCache, chatFlowService, objectMapper, applicationProperties);
+        return new AudioWebSocketHandler(audioWSCache, chatFlowService, objectMapper, applicationProperties, taskFlowExecutor);
     }
 
     @Bean

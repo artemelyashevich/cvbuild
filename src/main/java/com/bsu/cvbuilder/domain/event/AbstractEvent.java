@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 public abstract class AbstractEvent implements Serializable {
@@ -18,26 +17,23 @@ public abstract class AbstractEvent implements Serializable {
     private final String userId;
 
     @ToString.Exclude
-    private final transient ThreadLocal<Object> data;
+    private transient volatile Object data;
 
     public void setData(@NonNull Object value) {
-        data.set(value);
+        data = value;
     }
 
     public Map<String, Object> getData() {
         Map<String, Object> map = new HashMap<>();
         map.put("event", this.getClass().getSimpleName());
-        if (data == null) {
-            return map;
+        Object value = data;
+        if (value != null) {
+            map.put("data", value);
         }
-        Optional<Object> result = Optional.ofNullable(data.get());
-        result.ifPresent(o -> map.put("data", o));
-        data.remove();
         return map;
     }
 
     public AbstractEvent(String userId) { // NOSONAR
         this.userId = userId;
-        data = new ThreadLocal<>();
     }
 }

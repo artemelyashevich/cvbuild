@@ -91,6 +91,9 @@ app:
   ai:
     prompts-flow-path: "classpath:/prompt/flow/*.txt"
     prompts-path: "classpath:/prompt/*.txt"
+  tokens:
+    free-monthly-limit: 100000 # chat tokens per calendar month without an active AiLimit
+    enforce: false # true = reject chat messages once the monthly quota is used up
   limit:
     max-messages: 20 # 20 messages per 1 day
     messages-ban-duration: 1 # 1 day
@@ -126,6 +129,7 @@ app:
     extraction-temperature: 0.2
     memory-max-messages: 10
     stop-condition: "###INTERVIEW_COMPLETED###"
+    flow-timeout: 2m # max wait for the parallel AI calls of the resume constructor
   prompt:
     base-prefix: /templates/prompt
     base-extension: .txt

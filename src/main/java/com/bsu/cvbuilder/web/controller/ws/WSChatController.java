@@ -11,7 +11,9 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import reactor.core.Disposable;
+import reactor.core.Disposables;
 
+import java.security.Principal;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,26 +25,29 @@ public class WSChatController {
     private final ChatStreamingService chatStreamingService;
     private final SimpMessagingTemplate messagingTemplate;
 
-    private final Map<String, Disposable> subscriptions = new ConcurrentHashMap<>();
+    private final Map<String, Disposable.Swap> subscriptions = new ConcurrentHashMap<>();
 
     @MessageMapping("/ai.interview")
-    public void streamChat(AiRequestDto request, SimpMessageHeaderAccessor headerAccessor) {
+    public void streamChat(AiRequestDto request, SimpMessageHeaderAccessor headerAccessor, Principal principal) {
+        if (principal == null) {
+            log.warn("Rejected unauthenticated AI stream request for chat {}", request.chatId());
+            return;
+        }
         String sessionId = headerAccessor.getSessionId();
         String destination = "/topic/chat/" + request.chatId();
 
-        Disposable subscription = chatStreamingService.process(request)
-                .doFinally(signalType -> subscriptions.remove(sessionId))
+        Disposable subscription = chatStreamingService.process(request, principal.getName())
                 .subscribe(
                         token -> messagingTemplate.convertAndSend(destination, token),
                         error -> log.error("WS Error", error)
                 );
 
-        subscriptions.put(sessionId, subscription);
+        subscriptions.computeIfAbsent(sessionId, id -> Disposables.swap()).update(subscription);
     }
 
     @EventListener
     public void handleDisconnect(SessionDisconnectEvent event) {
-        Disposable sub = subscriptions.remove(event.getSessionId());
+        Disposable.Swap sub = subscriptions.remove(event.getSessionId());
         if (sub != null) {
             sub.dispose();
         }

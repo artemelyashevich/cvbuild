@@ -5,5 +5,8 @@ import reactor.core.publisher.Flux;
 
 public interface ChatStreamingService {
 
-    Flux<String> process(AiRequestDto aiRequestDto);
+    /**
+     * @param login login of the authenticated STOMP user; {@code aiRequestDto.userId()} is ignored
+     */
+    Flux<String> process(AiRequestDto aiRequestDto, String login);
 }

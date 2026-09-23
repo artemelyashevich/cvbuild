@@ -35,9 +35,8 @@ public class HistoryEventListener {
                 event.getData().get("event")
         );
 
-        if (event.getData().get("status") != null) {
-            String status = event.getData().get("status").toString();
-            message += "\n STATUS: %s".formatted(status);
+        if (event.getData().get("data") instanceof Map<?, ?> data && data.get("status") != null) {
+            message += "\n STATUS: %s".formatted(data.get("status"));
         }
 
         notificationService.sendNotification(NotificationDto.builder()

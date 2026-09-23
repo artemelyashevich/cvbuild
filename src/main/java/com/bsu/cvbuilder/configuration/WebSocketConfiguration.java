@@ -2,9 +2,12 @@ package com.bsu.cvbuilder.configuration;
 
 import com.bsu.cvbuilder.domain.dto.auth.TokenType;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
+import com.bsu.cvbuilder.service.ChatService;
 import com.bsu.cvbuilder.service.JwtService;
+import com.bsu.cvbuilder.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -14,12 +17,13 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+import java.security.Principal;
+import java.util.UUID;
 
 import static com.bsu.cvbuilder.util.OAuthUtil.getOAuth2AuthenticationToken;
 
@@ -29,7 +33,12 @@ import static com.bsu.cvbuilder.util.OAuthUtil.getOAuth2AuthenticationToken;
 @RequiredArgsConstructor
 public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer {
 
+    private static final String CHAT_TOPIC_PREFIX = "/topic/chat/";
+
     private final JwtService jwtService;
+    // Resolved lazily: these services transitively depend on the broker messaging template configured here
+    private final ObjectProvider<ChatService> chatService;
+    private final ObjectProvider<UserProfileService> userProfileService;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
@@ -64,10 +73,7 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
                         try {
                             String login = jwtService.extractLogin(token, TokenType.ACCESS);
                             UserProfile.Role role = jwtService.extractRole(token, TokenType.ACCESS);
-                            var ctx = SecurityContextHolder.getContext();
                             OAuth2AuthenticationToken authentication = getOAuth2AuthenticationToken(login, role, token);
-                            ctx.setAuthentication(authentication);
-                            SecurityContextHolder.setContext(ctx);
                             accessor.setUser(authentication);
                         } catch (Exception e) {
                             log.error(e.getMessage(), e);
@@ -75,8 +81,32 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
                         }
                     }
                 }
+
+                if (StompCommand.SUBSCRIBE.equals(command) && !canSubscribe(accessor)) {
+                    log.warn("Rejected subscription of {} to {}", accessor.getUser(), accessor.getDestination());
+                    return null;
+                }
                 return message;
             }
         });
+    }
+
+    private boolean canSubscribe(StompHeaderAccessor accessor) {
+        String destination = accessor.getDestination();
+        if (destination == null || !destination.startsWith(CHAT_TOPIC_PREFIX)) {
+            return true;
+        }
+        Principal user = accessor.getUser();
+        if (user == null) {
+            return false;
+        }
+        try {
+            UUID chatId = UUID.fromString(destination.substring(CHAT_TOPIC_PREFIX.length()));
+            String userId = userProfileService.getObject().findByLogin(user.getName()).getId();
+            return chatService.getObject().isAccessible(chatId, userId);
+        } catch (Exception e) {
+            log.debug("Chat subscription check failed for {}", destination, e);
+            return false;
+        }
     }
 }

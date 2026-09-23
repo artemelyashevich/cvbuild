@@ -1,6 +1,9 @@
 package com.bsu.cvbuilder.web.controller.rest;
 
+import com.bsu.cvbuilder.domain.dto.ai.TokenUsageDto;
 import com.bsu.cvbuilder.domain.entity.UserStats;
+import com.bsu.cvbuilder.service.SecurityService;
+import com.bsu.cvbuilder.service.TokenUsageService;
 import com.bsu.cvbuilder.service.UserStatsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,9 +17,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserStatsController {
 
     private final UserStatsService userStatsService;
+    private final TokenUsageService tokenUsageService;
+    private final SecurityService securityService;
 
     @GetMapping("/user/{id}")
     public UserStats findByUserId(@PathVariable("id") String userId) {
         return userStatsService.findByUserId(userId);
+    }
+
+    @GetMapping("/tokens")
+    public TokenUsageDto findCurrentTokenUsage() {
+        return tokenUsageService.getUsage(securityService.findCurrentUser());
     }
 }

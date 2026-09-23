@@ -21,11 +21,12 @@ public class VoiceWebSocketConfiguration implements WebSocketConfigurer {
 
     private final AudioWebSocketHandler audioWebSocketHandler;
     private final AudioHandshakeInterceptor audioHandshakeInterceptor;
+    private final ApplicationProperties applicationProperties;
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(audioWebSocketHandler, "/audio")
                 .addInterceptors(audioHandshakeInterceptor)
-                .setAllowedOriginPatterns("*");
+                .setAllowedOrigins(applicationProperties.getSecurity().getAllowedOrigins());
     }
 }

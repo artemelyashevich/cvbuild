@@ -1,6 +1,5 @@
 package com.bsu.cvbuilder.configuration;
 
-import com.bsu.cvbuilder.ai.ExpansionQueryAdvisor;
 import com.bsu.cvbuilder.ai.MongoChatMemory;
 import com.bsu.cvbuilder.service.ChatService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +21,6 @@ import org.springframework.context.annotation.Primary;
 public class AiConfiguration {
 
     private final ChatService aiService;
-    private final ExpansionQueryAdvisor expansionQueryAdvisor;
     private final ApplicationProperties applicationProperties;
 
     @Bean
@@ -30,7 +28,6 @@ public class AiConfiguration {
     public ChatClient chatClient(ChatClient.Builder builder) {
         return builder
                 .defaultAdvisors(
-                        expansionQueryAdvisor,
                         addMongoChatMemoryAdvisor(2),
                         SimpleLoggerAdvisor.builder().order(3).build()
                 )

@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.service.unit;
 
+import com.bsu.cvbuilder.cache.SecureDataCacheSingleton;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.auth.AuthRequest;
 import com.bsu.cvbuilder.domain.dto.auth.TokenType;
@@ -8,6 +9,7 @@ import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.repository.SecureDataRepository;
 import com.bsu.cvbuilder.service.JwtService;
+import com.bsu.cvbuilder.service.LockService;
 import com.bsu.cvbuilder.service.impl.SecureDataServiceImpl;
 import com.bsu.cvbuilder.util.SecretDecodeUtil;
 import org.junit.jupiter.api.Disabled;
@@ -39,6 +41,10 @@ class SecureDataServiceImplTest {
     private SecureDataRepository secureDataRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private LockService lockService;
+    @Mock
+    private SecureDataCacheSingleton secureDataCache;
 
     @InjectMocks
     private SecureDataServiceImpl secureDataService;
@@ -131,7 +137,7 @@ class SecureDataServiceImplTest {
     }
 
     @Test
-    @DisplayName("checkData: should throw 401 when secure data is missing")
+    @DisplayName("checkData: should throw 404 when secure data is missing")
     void checkData_MissingSecureData_ThrowsAppException() {
         // Arrange
         var user = TestDataFactory.createSampleUser("non-existent");
@@ -139,7 +145,7 @@ class SecureDataServiceImplTest {
 
         // Act & Assert
         var ex = assertThrows(AppException.class, () -> secureDataService.checkCredsAndIf2faIsRequire(user, new AuthRequest("a", "b")));
-        assertEquals(401, ex.getStatusCode());
+        assertEquals(404, ex.getStatusCode());
     }
 
     // --- Helpers ---

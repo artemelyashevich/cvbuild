@@ -30,7 +30,7 @@ public class UserStatsServiceImpl implements UserStatsService {
     @CacheEvict(value = CACHE_ID, key = "#userStats.userId")
     public UserStats save(UserStats userStats) {
         log.debug("Ensuring UserStats exists for user: {}", userStats.getUserId());
-        return lockService.withLock(LockUtil.STATS.formatted(userStats.getUserId()), () -> userStatsRepository.findById(userStats.getUserId())
+        return lockService.withLock(LockUtil.STATS.formatted(userStats.getUserId()), () -> userStatsRepository.findByUserId(userStats.getUserId())
                 .orElseGet(() -> {
                     log.info("Creating new UserStats for user: {}", userStats.getUserId());
                     return userStatsRepository.save(userStats);
@@ -92,6 +92,8 @@ public class UserStatsServiceImpl implements UserStatsService {
                 .aiRequests(0)
                 .resumesCreated(0)
                 .jobAnalyses(0)
+                .promptTokens(0L)
+                .completionTokens(0L)
                 .build();
     }
 }
