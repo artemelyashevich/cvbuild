@@ -40,7 +40,7 @@ spring:
       repositories:
         enabled: false
       host: 127.0.0.1
-      port: 6379
+      port: 6380
       lettuce:
         pool:
           max-active: 8
@@ -56,28 +56,32 @@ spring:
             client-secret: ${GITHUB_CLIENT_SECRET}
             scope: user:email, read:user
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: mmfask2024@gmail.com
-    password: syvg ndjv wvdb tjlp
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    protocol: smtp
     properties:
       mail:
         smtp:
-          auth: true
+          auth: ${MAIL_SMTP_AUTH:true}
           starttls:
-            enable: true
-            required: true
+            enable: ${MAIL_SMTP_STARTTLS:true}
+            required: ${MAIL_SMTP_STARTTLS_REQUIRED:true}
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
 server:
   port: 8888
 
 app:
   volk:
-    enabled: false
+    enabled: true
   minio:
     url: ${MINIO_URL:http://127.0.0.1:9000}
     bucket: ${MINIO_BUCKET:file-storage}
-    access-key: ${MINIO_ACCESS_KEY:Q3AM3UQ867SPQQA43P2F}
-    secret-key: ${MINIO_SECRET_KEY:zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG}
+    access-key: ${MINIO_ACCESS_KEY}
+    secret-key: ${MINIO_SECRET_KEY}
   telegram:
     enabled: true
     token: ${TELEGRAM_BOT_TOKEN_API}
