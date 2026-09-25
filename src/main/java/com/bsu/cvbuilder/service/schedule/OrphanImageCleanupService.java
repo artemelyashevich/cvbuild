@@ -11,6 +11,7 @@ import org.bson.types.ObjectId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,7 @@ public class OrphanImageCleanupService extends AbstractScheduler {
 
     @Transactional
     @Scheduled(fixedDelay = 5 * 60 * 1000, scheduler = "cleanUpExecutor")
+    @SchedulerLock(name = "orphan-image-cleanup", lockAtMostFor = "PT4M", lockAtLeastFor = "PT1M")
     @Monitored(value = "scheduling.orphan_image", context = "cleanup")
     public void cleanupOrphanImages() {
 

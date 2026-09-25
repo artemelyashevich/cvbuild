@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +38,7 @@ public class NotificationDelayScheduler extends AbstractScheduler {
     private final RedisTemplate<String, String> redisTemplate;
 
     @Scheduled(fixedRate = 2000)
+    @SchedulerLock(name = "notification-delay", lockAtMostFor = "PT30S", lockAtLeastFor = "PT1S")
     public void processDelayedQueue() {
 
         execute(JOB, () -> {

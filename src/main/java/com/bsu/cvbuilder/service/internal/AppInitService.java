@@ -3,13 +3,11 @@ package com.bsu.cvbuilder.service.internal;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
 import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
-import com.bsu.cvbuilder.service.LockService;
 import com.bsu.cvbuilder.service.NotificationService;
 import com.twilio.Twilio;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.CacheManager;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
@@ -24,8 +22,6 @@ import java.util.concurrent.TimeUnit;
 public class AppInitService {
 
     private final ApplicationProperties applicationProperties;
-    private final CacheManager cacheManager;
-    private final LockService lockService;
     private final NotificationService notificationService;
 
     @PostConstruct
@@ -57,23 +53,6 @@ public class AppInitService {
     private void registerShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.info(" --- Shutdown Application ---");
-            try {
-                cacheManager.getCacheNames().forEach(cacheName -> {
-                    var cache = cacheManager.getCache(cacheName);
-                    if (cache != null) {
-                        cache.clear();
-                        log.info("Cache '{}' cleared.", cacheName);
-                    }
-                });
-            } catch (Exception e) {
-                log.error("Error clearing caches on shutdown", e);
-            }
-
-            try {
-                lockService.clear();
-            } catch (Exception e) {
-                log.error("Error releasing distributed locks on shutdown", e);
-            }
             try {
                 TimeUnit.SECONDS.sleep(2);
             } catch (InterruptedException e) {

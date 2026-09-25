@@ -68,12 +68,14 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Cacheable(value = CACHE_ID, key = "#id")
     public UserProfile findById(String id) {
         log.debug("Finding user profile by id: {}", id);
-        if (secureDataCacheSingleton.get(id) == null) {
-            UserProfile userProfile = userProfileRepository.findById(id)
-                    .orElseThrow(notFound("id", id));
-            secureDataCacheSingleton.set(userProfile);
+        UserProfile cached = secureDataCacheSingleton.get(id);
+        if (cached != null) {
+            return cached;
         }
-        return secureDataCacheSingleton.get(id);
+        UserProfile userProfile = userProfileRepository.findById(id)
+                .orElseThrow(notFound("id", id));
+        secureDataCacheSingleton.putLocal(userProfile);
+        return userProfile;
     }
 
     @Override

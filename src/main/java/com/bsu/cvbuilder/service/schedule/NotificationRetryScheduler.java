@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.retry.annotation.CircuitBreaker;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -31,9 +32,11 @@ public class NotificationRetryScheduler extends AbstractScheduler {
 
     @CircuitBreaker(maxAttempts = 5)
     @Scheduled(fixedRate = 1000, scheduler = "notificationScheduleExecutor")
+    @SchedulerLock(name = "notification-retry", lockAtMostFor = "PT2M")
     public void job() {
         setEnabled(false);
         execute("NOTIFICATION-RETRY", () -> {
+            recoverInterrupted();
             int batchSize = 50;
             long startTime = System.currentTimeMillis();
             int processedInBatch = 0;
@@ -63,6 +66,7 @@ public class NotificationRetryScheduler extends AbstractScheduler {
                     if (dto == null) {
                         log.error("[NOTIFICATION-RETRY] Failed to deserialize notification, moving to DLQ: {}", notification);
                         moveToDLQ(notification);
+                        redisTemplate.opsForList().remove(CacheUtil.NOTIFICATION_PROCESSING, 1, notification);
                         dlqCount++;
                         continue;
                     }
@@ -132,6 +136,21 @@ public class NotificationRetryScheduler extends AbstractScheduler {
                         processedInBatch, successCount, retryCount, dlqCount, executionTime);
             }
         });
+    }
+
+    /**
+     * The job runs on one instance at a time and empties the processing list before finishing, so anything left
+     * there belongs to a run that died mid-batch. Those items go back to the retry queue (at-least-once delivery).
+     */
+    private void recoverInterrupted() {
+        int recovered = 0;
+        while (redisTemplate.opsForList()
+                .rightPopAndLeftPush(CacheUtil.NOTIFICATION_PROCESSING, CacheUtil.NOTIFICATION_RETRY_KEY) != null) {
+            recovered++;
+        }
+        if (recovered > 0) {
+            log.warn("[NOTIFICATION-RETRY] Recovered {} notifications left in processing by an interrupted run", recovered);
+        }
     }
 
     private void moveToDLQ(String notificationJson) {

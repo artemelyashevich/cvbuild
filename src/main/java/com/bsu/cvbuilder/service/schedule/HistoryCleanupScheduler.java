@@ -5,6 +5,7 @@ import com.bsu.cvbuilder.domain.entity.History;
 import com.bsu.cvbuilder.repository.HistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +28,7 @@ public class HistoryCleanupScheduler extends AbstractScheduler {
     private final HistoryRepository historyRepository;
 
     @Scheduled(fixedRate = 5 * 60 * 1000, scheduler = "cleanUpExecutor")
+    @SchedulerLock(name = "history-cleanup", lockAtMostFor = "PT4M", lockAtLeastFor = "PT1M")
     @Monitored(value = "scheduling.history", context = "cleanup")
     public void cleanupHistoryDuplicates() {
 

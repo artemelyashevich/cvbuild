@@ -85,12 +85,13 @@ public class SecureDataServiceImpl implements SecureDataService {
 
     @Override
     public SecureData findByUserId(String id) {
-        if (secureDataRequestCache.getSecureData(id) != null) {
-            return secureDataRequestCache.getSecureData(id);
+        SecureData cached = secureDataRequestCache.getSecureData(id);
+        if (cached != null) {
+            return cached;
         }
         SecureData secureData = secureDataRepository.findByUserId(id)
                 .orElseThrow(() -> new AppException("User [SECURE] data not found", 404));
-        secureDataRequestCache.set(id, secureData);
+        secureDataRequestCache.putLocal(id, secureData);
         return secureData;
     }
 

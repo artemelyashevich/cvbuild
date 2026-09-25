@@ -6,6 +6,7 @@ import com.bsu.cvbuilder.domain.entity.SecureEvent;
 import com.bsu.cvbuilder.repository.SecureDataRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +25,7 @@ public class SecureDataCleanupScheduler extends AbstractScheduler {
     private final SecureDataRepository repository;
 
     @Scheduled(fixedRate = 5 * 60 * 1000, scheduler = "cleanUpExecutor")
+    @SchedulerLock(name = "secure-data-cleanup", lockAtMostFor = "PT4M", lockAtLeastFor = "PT1M")
     @Monitored(value = "scheduling.secure_data", context = "cleanup")
     public void cleanupExpiredSecureEvents() {
 
