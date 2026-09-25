@@ -38,8 +38,7 @@ class ResumeFlowServiceImplTest {
         var properties = new ApplicationProperties();
         properties.setChat(chat);
         var service = new ResumeFlowServiceImpl(mock(SecurityService.class), resumeService, aiService,
-                mock(JobParserService.class), mock(AnalyzerService.class), mock(ApplicationEventPublisher.class),
-                mock(NotificationService.class), properties);
+                mock(AtsService.class), mock(ApplicationEventPublisher.class), properties);
 
         CompletableFuture<Object> hanging = new CompletableFuture<>();
         when(aiService.callFlow(anyString(), anyString())).thenReturn(hanging);

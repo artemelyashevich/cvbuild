@@ -52,12 +52,31 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     @Monitored(value = "finding_chat", context = "api")
-    public AiChat getChatById(UUID chatId) {
+    public AiChat getOrCreateChat(UUID chatId) {
         log.debug("Attempting to get AiChat with id {}", chatId);
         return transactionTemplate.execute(s -> {
             Optional<AiChat> byId = aiChatRepository.findById(chatId);
             return byId.orElseGet(() -> createAiChat(chatId));
         });
+    }
+
+    @Override
+    @Monitored(value = "finding_own_chat", context = "api")
+    public AiChat getOwnChat(UUID chatId) {
+        UserProfile user = securityService.findCurrentUser();
+        AiChat chat = aiChatRepository.findById(chatId)
+                .orElseThrow(() -> new AppException("Chat %s not found".formatted(chatId), 404));
+        if (!Objects.equals(chat.getUserId(), user.getId())) {
+            throw new AppException("Access to chat %s is denied".formatted(chatId), 403);
+        }
+        return chat;
+    }
+
+    @Override
+    public boolean isOwnedBy(UUID chatId, String userId) {
+        return aiChatRepository.findById(chatId)
+                .map(chat -> Objects.equals(chat.getUserId(), userId))
+                .orElse(false);
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.bsu.cvbuilder.web.dto.resume.UpdateResumeRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ResumeService {
@@ -15,9 +16,15 @@ public interface ResumeService {
 
     Resume findByChatId(UUID chatId);
 
+    /**
+     * @throws com.bsu.cvbuilder.exception.AppException 404 when missing, 403 when the resume belongs to another user
+     */
     Resume findById(String id);
 
-    Resume update(String resumeId, UpdateResumeRequest updateResumeRequest);
+    /**
+     * Like {@link #findById(String)}, but empty instead of 404 when the resume does not exist.
+     */
+    Optional<Resume> tryFindById(String id);
 
-    void ats(String resumeId, String url);
+    Resume update(String resumeId, UpdateResumeRequest updateResumeRequest);
 }

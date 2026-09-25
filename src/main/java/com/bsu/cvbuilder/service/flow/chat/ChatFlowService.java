@@ -3,27 +3,17 @@ package com.bsu.cvbuilder.service.flow.chat;
 import com.bsu.cvbuilder.ai.TokenUsageAdvisor;
 import com.bsu.cvbuilder.domain.dto.ai.ChatFlowStep;
 import com.bsu.cvbuilder.domain.dto.ai.StepAnalysisResult;
-import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
-import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
-import com.bsu.cvbuilder.domain.dto.notification.WsType;
 import com.bsu.cvbuilder.domain.entity.AiChat;
 import com.bsu.cvbuilder.domain.entity.ChatMessage;
-import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.UserGenerateNewMessageEvent;
 import com.bsu.cvbuilder.exception.AppException;
-import com.bsu.cvbuilder.service.AnalyzerService;
 import com.bsu.cvbuilder.service.ChatService;
-import com.bsu.cvbuilder.service.JobParserService;
-import com.bsu.cvbuilder.service.NotificationService;
-import com.bsu.cvbuilder.service.ResumeService;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.service.TokenUsageService;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -50,10 +40,6 @@ public class ChatFlowService {
 
     private final ChatClient chatClient;
     private final ChatService chatService;
-    private final ResumeService resumeService;
-    private final JobParserService jobParserService;
-    private final AnalyzerService analyzerService;
-    private final NotificationService notificationService;
     private final SecurityService securityService;
     private final Map<ChatFlowStep, AbstractChatStepHandler> stepHandlers;
     private final ApplicationEventPublisher applicationEventPublisher;
@@ -62,15 +48,11 @@ public class ChatFlowService {
 
     public ChatFlowService(ChatClient chatClient,
                            ChatService chatService,
-                           ResumeService resumeService, JobParserService jobParserService, AnalyzerService analyzerService, NotificationService notificationService, SecurityService securityService,
+                           SecurityService securityService,
                            List<AbstractChatStepHandler> handlers, ApplicationEventPublisher applicationEventPublisher,
                            TokenUsageService tokenUsageService, TokenUsageAdvisor tokenUsageAdvisor) {
         this.chatClient = chatClient;
         this.chatService = chatService;
-        this.resumeService = resumeService;
-        this.jobParserService = jobParserService;
-        this.analyzerService = analyzerService;
-        this.notificationService = notificationService;
         this.securityService = securityService;
         this.stepHandlers = handlers.stream()
                 .collect(Collectors.toUnmodifiableMap(
@@ -80,11 +62,6 @@ public class ChatFlowService {
         this.applicationEventPublisher = applicationEventPublisher;
         this.tokenUsageService = tokenUsageService;
         this.tokenUsageAdvisor = tokenUsageAdvisor;
-    }
-
-    public Resume extractFromChat(UUID chatId) {
-        log.debug("Extracting resume from chat {}", chatId);
-        return resumeService.findByChatId(chatId);
     }
 
     public Flux<String> streamMessage(UUID chatId, String userMessage) {
@@ -121,11 +98,7 @@ public class ChatFlowService {
 
     private String prepareSystemPrompt(UserProfile userProfile, UUID chatId, String userMessage) {
         log.info("Processing message for chatId={}", chatId);
-        AiChat chat = chatService.getChatById(chatId);
-
-        if (!Objects.equals(chat.getUserId(), userProfile.getId())) {
-            throw new AppException("Access to chat %s is denied".formatted(chatId), 403);
-        }
+        AiChat chat = chatService.getOrCreateOwnChat(chatId, userProfile);
 
         tokenUsageService.checkLimit(userProfile);
 
@@ -227,46 +200,5 @@ public class ChatFlowService {
                 .collect(Collectors.joining("\n"));
 
         return history + "\nUSER: " + currentUserMessage;
-    }
-
-    public String ats(String resumeId, String link) {
-        log.debug("Attempting process ats for chatId={} and vacancy={}", resumeId, link);
-        UserProfile user = securityService.findCurrentUser();
-        Resume resume = resumeService.findById(resumeId);
-        String jobDescription = jobParserService.parse(link);
-        try {
-            analyzerService.ats(resume, jobDescription);
-        } catch (Exception e) {
-            log.warn("Exception in ATS for resume: {}", resumeId, e);
-            Map<String, Object> params = new HashMap<>();
-            params.put("resumeId", resume.getId());
-            params.put("status", "rejected");
-            sendNotification(user.getEmail(), params, "resume_rejected");
-            notificationService.sendNotification(NotificationDto.builder()
-                    .engine(NotificationEngine.WS)
-                    .parameters(Map.of("message", "Ошибка адаптации резюме!", "status", WsType.ERROR))
-                    .receiver(user.getLogin())
-                    .build());
-        }
-        return null;
-    }
-
-    public String ats(UUID chatId, String link) {
-        log.debug("Attempting process ats for chatId={} and vacancy={}", chatId, link);
-        Resume resume = resumeService.findByChatId(chatId);
-        String jobDescription = jobParserService.parse(link);
-        analyzerService.ats(resume, jobDescription);
-        return null;
-    }
-
-    private void sendNotification(String email, Map<String, Object> params, String templateName) {
-        notificationService.sendNotification(
-                NotificationDto.builder()
-                        .engine(NotificationEngine.EMAIL)
-                        .receiver(email)
-                        .parameters(params)
-                        .templateName(templateName)
-                        .build()
-        );
     }
 }

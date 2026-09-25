@@ -18,13 +18,18 @@ import java.util.UUID;
 @Builder
 public record MongoChatMemory(ChatService chatService, int maxMessages) implements ChatMemory {
 
+    /**
+     * Conversation id for one-off calls whose messages must not be stored.
+     */
+    public static final String NO_MEMORY_CONVERSATION_ID = "ignore";
+
     @Override
     public void add(@NonNull String conversationId, List<Message> messages) {
-        if (conversationId.equals("ignore")) {
+        if (NO_MEMORY_CONVERSATION_ID.equals(conversationId)) {
             return;
         }
 
-        AiChat aiChat = chatService.getChatById(UUID.fromString(conversationId));
+        AiChat aiChat = chatService.getOrCreateChat(UUID.fromString(conversationId));
 
         List<ChatMessage> chatMessages = aiChat.getMessages();
         for (Message message : messages) {
@@ -46,10 +51,10 @@ public record MongoChatMemory(ChatService chatService, int maxMessages) implemen
     @Override
     @NonNull
     public List<Message> get(@NonNull String conversationId) {
-        if (conversationId.equals("ignore")) {
+        if (NO_MEMORY_CONVERSATION_ID.equals(conversationId)) {
             return List.of();
         }
-        AiChat aiChat = chatService.getChatById(UUID.fromString(conversationId));
+        AiChat aiChat = chatService.getOrCreateChat(UUID.fromString(conversationId));
         return aiChat.getMessages().stream()
                 .skip(Math.max(0, aiChat.getMessages().size() - maxMessages))
                 .map(this::getMessage)

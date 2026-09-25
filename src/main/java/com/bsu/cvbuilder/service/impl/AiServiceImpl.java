@@ -1,5 +1,6 @@
 package com.bsu.cvbuilder.service.impl;
 
+import com.bsu.cvbuilder.ai.MongoChatMemory;
 import com.bsu.cvbuilder.annotation.limit.LimitType;
 import com.bsu.cvbuilder.annotation.limit.Limited;
 import com.bsu.cvbuilder.annotation.metrics.Monitored;
@@ -49,6 +50,7 @@ public class AiServiceImpl implements AiService {
     private static final String PROMPT_EXPANSION = "resume_expansion";
     private static final String PROMPT_JOB_EXPANSION = "job_expansion";
     private static final String COMPLETED_SIGNAL = "COMPLETED";
+    private static final int MAX_TOKENS = 2000;
 
     private final ChatClient chatClient;
     @Qualifier("expansionChatClient")
@@ -109,7 +111,7 @@ public class AiServiceImpl implements AiService {
         String extractorPrompt = promptRegistryService.getPrompt(PROMPT_EXTRACTOR);
         eventPublisher.publishEvent(new CallExtractorEvent(userProfile.getId()));
         return chatClient.prompt()
-                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, "ignore"))
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, MongoChatMemory.NO_MEMORY_CONVERSATION_ID))
                 .user(u -> u.text(extractorPrompt.formatted(history)))
                 .options(defaultOptions())
                 .call();
@@ -120,7 +122,7 @@ public class AiServiceImpl implements AiService {
         log.debug("AI Call [EPANSION] for resume: {}", resume.getId());
         String expansionPrompt = promptRegistryService.getPrompt(PROMPT_EXPANSION);
         return chatClient.prompt()
-                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, "ignore"))
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, MongoChatMemory.NO_MEMORY_CONVERSATION_ID))
                 .user(u -> u.text(expansionPrompt.formatted(JsonHelper.toJson(resume.getBlocks()))))
                 .options(defaultOptions())
                 .call();
@@ -133,12 +135,9 @@ public class AiServiceImpl implements AiService {
         String jobExpansionPrompt =  promptRegistryService.getPrompt(PROMPT_JOB_EXPANSION);
         String prompt = jobExpansionPrompt.formatted(jobDescription);
         return expansionClient.prompt()
-                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, "ignore"))
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, MongoChatMemory.NO_MEMORY_CONVERSATION_ID))
                 .user(prompt)
-                .options(OllamaOptions.builder()
-                        .temperature((double) 0)
-                        .numPredict(2000)
-                        .build())
+                .options(deterministicOptions())
                 .call();
     }
 
@@ -187,12 +186,9 @@ public class AiServiceImpl implements AiService {
         eventPublisher.publishEvent(new CallAtsEvent(userProfile.getId()));
 
         return expansionClient.prompt()
-                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, "ignore"))
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, MongoChatMemory.NO_MEMORY_CONVERSATION_ID))
                 .user(renderedPrompt)
-                .options(OllamaOptions.builder()
-                        .temperature((double) 0)
-                        .numPredict(2000)
-                        .build())
+                .options(deterministicOptions())
                 .call();
     }
 
@@ -207,12 +203,9 @@ public class AiServiceImpl implements AiService {
                     }
                     log.debug("Current thread: {}", Thread.currentThread().getName());
                     return chatClient.prompt()
-                            .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, "ignore"))
+                            .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, MongoChatMemory.NO_MEMORY_CONVERSATION_ID))
                             .user(prompt)
-                            .options(OllamaOptions.builder()
-                                    .temperature((double) 0)
-                                    .numPredict(2000)
-                                    .build())
+                            .options(deterministicOptions())
                             .call()
                             .content();
                 }, executor
@@ -222,7 +215,14 @@ public class AiServiceImpl implements AiService {
     private OllamaOptions defaultOptions() {
         return OllamaOptions.builder()
                 .temperature(applicationProperties.getChat().getExtractionTemperature())
-                .numPredict(2000)
+                .numPredict(MAX_TOKENS)
+                .build();
+    }
+
+    private OllamaOptions deterministicOptions() {
+        return OllamaOptions.builder()
+                .temperature(0.0)
+                .numPredict(MAX_TOKENS)
                 .build();
     }
 

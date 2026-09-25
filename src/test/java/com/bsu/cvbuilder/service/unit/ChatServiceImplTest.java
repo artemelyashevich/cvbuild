@@ -50,18 +50,18 @@ class ChatServiceImplTest {
         );
     }
 
-    // --- getChatById Tests ---
+    // --- getOrCreateChat Tests ---
 
     @Test
-    @DisplayName("getChatById: should return chat from repository when it exists")
-    void getChatById_ExistingChat_ReturnsChatFromRepo() {
+    @DisplayName("getOrCreateChat: should return chat from repository when it exists")
+    void getOrCreateChat_ExistingChat_ReturnsChatFromRepo() {
         // Arrange
         var chatId = UUID.randomUUID();
         var existingChat = TestDataFactory.createChat(chatId);
         when(aiChatRepository.findById(chatId)).thenReturn(Optional.of(existingChat));
 
         // Act
-        var actualChat = chatService.getChatById(chatId);
+        var actualChat = chatService.getOrCreateChat(chatId);
 
         // Assert
         assertAll(
@@ -71,8 +71,8 @@ class ChatServiceImplTest {
     }
 
     @Test
-    @DisplayName("getChatById: should create and return new chat when not found in repository")
-    void getChatById_NonExistentChat_CreatesAndReturnsNewChat() {
+    @DisplayName("getOrCreateChat: should create and return new chat when not found in repository")
+    void getOrCreateChat_NonExistentChat_CreatesAndReturnsNewChat() {
         // Arrange
         var chatId = UUID.randomUUID();
         var newChat = TestDataFactory.createChat(chatId);
@@ -81,7 +81,7 @@ class ChatServiceImplTest {
         when(aiChatRepository.save(any(AiChat.class))).thenReturn(newChat);
 
         // Act
-        var actualChat = chatService.getChatById(chatId);
+        var actualChat = chatService.getOrCreateChat(chatId);
 
         // Assert
         assertAll(

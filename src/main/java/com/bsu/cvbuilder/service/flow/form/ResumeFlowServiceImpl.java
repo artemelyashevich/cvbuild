@@ -1,14 +1,12 @@
 package com.bsu.cvbuilder.service.flow.form;
 
-import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
-import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
-import com.bsu.cvbuilder.domain.dto.notification.WsType;
 import com.bsu.cvbuilder.configuration.ApplicationProperties;
 import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.CreateResumeEvent;
 import com.bsu.cvbuilder.domain.event.FormAiGenerationEvent;
+import com.bsu.cvbuilder.domain.event.ResumeNotificationEvent;
 import com.bsu.cvbuilder.domain.event.UserGenerateNewMessageEvent;
 import com.bsu.cvbuilder.service.*;
 import com.bsu.cvbuilder.service.flow.form.domain.FollowUpQuestion;
@@ -20,7 +18,6 @@ import com.bsu.cvbuilder.util.MaskUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -44,10 +41,8 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
     private final SecurityService securityService;
     private final ResumeService resumeService;
     private final AiService aiService;
-    private final JobParserService jobParserService;
-    private final AnalyzerService analyzerService;
+    private final AtsService atsService;
     private final ApplicationEventPublisher applicationEventPublisher;
-    private final NotificationService notificationService;
     private final ApplicationProperties applicationProperties;
 
     @Override
@@ -119,13 +114,8 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
         Resume save = resumeService.save(resume);
         applicationEventPublisher.publishEvent(new FormAiGenerationEvent(user.getId()));
         applicationEventPublisher.publishEvent(new UserGenerateNewMessageEvent(user.getId()));
-        notificationService.sendNotification(
-                NotificationDto.builder()
-                        .receiver(SecurityContextHolder.getContext().getAuthentication().getName())
-                        .engine(NotificationEngine.WS)
-                        .parameters(Map.of("message", "Конструктор готов!", "type", WsType.SUCCESS))
-                        .build()
-        );
+        applicationEventPublisher.publishEvent(new ResumeNotificationEvent(
+                user.getLogin(), user.getEmail(), save.getId(), ResumeNotificationEvent.Kind.FORM_GENERATED));
         return save;
     }
 
@@ -154,10 +144,7 @@ public class ResumeFlowServiceImpl implements ResumeFlowService {
     @Override
     public Resume ats(String resumeId, String jobLink) {
         log.debug("[RESUME-FLOW] Attempting ats for resume: {} for job: {}", resumeId, MaskUtil.mask(jobLink, 10));
-        String jobDescription = jobParserService.parse(jobLink);
-        Resume resume = resumeService.findById(resumeId);
-        analyzerService.ats(resume, jobDescription);
-        return resume;
+        return atsService.optimize(resumeService.findById(resumeId), jobLink);
     }
 
     private Resume createEmptyResume(String name, UserProfile user) {

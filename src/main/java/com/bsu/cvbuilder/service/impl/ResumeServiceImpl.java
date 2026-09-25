@@ -1,25 +1,24 @@
 package com.bsu.cvbuilder.service.impl;
 
 import com.bsu.cvbuilder.annotation.limit.LimitType;
-import com.bsu.cvbuilder.annotation.limit.Limited;
-import com.bsu.cvbuilder.domain.dto.auth.NotificationDto;
-import com.bsu.cvbuilder.domain.dto.notification.NotificationEngine;
-import com.bsu.cvbuilder.domain.dto.notification.WsType;
 import com.bsu.cvbuilder.domain.entity.AiChat;
 import com.bsu.cvbuilder.domain.entity.Resume;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.domain.event.CreateResumeEvent;
+import com.bsu.cvbuilder.domain.event.ResumeNotificationEvent;
 import com.bsu.cvbuilder.exception.AppException;
-import com.bsu.cvbuilder.service.*;
+import com.bsu.cvbuilder.service.AiService;
+import com.bsu.cvbuilder.service.ChatService;
+import com.bsu.cvbuilder.service.LimitService;
+import com.bsu.cvbuilder.service.LockService;
+import com.bsu.cvbuilder.service.ResumeService;
+import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.util.LockUtil;
 import com.bsu.cvbuilder.web.dto.resume.UpdateResumeRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.converter.BeanOutputConverter;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,19 +26,14 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.support.PageableExecutionUtils;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -48,20 +42,16 @@ import java.util.stream.Collectors;
 public class ResumeServiceImpl implements ResumeService {
 
     private static final BeanOutputConverter<Resume> converter = new BeanOutputConverter<>(Resume.class);
+    private static final int RESUME_GENERATE_CAPACITY = 5;
 
     private final AiService aiService;
     private final ChatService chatService;
     private final MongoTemplate mongoTemplate;
     private final LockService lockService;
     private final SecurityService securityService;
-    private final NotificationService notificationService;
+    private final LimitService limitService;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TransactionTemplate transactionTemplate;
-    private final ApplicationContext applicationContext;
-    private final JobParserService jobParserService;
-
-    @Qualifier("taskFlowExecutor")
-    private final Executor executor;
 
     @Override
     public Resume save(Resume resume) {
@@ -93,20 +83,18 @@ public class ResumeServiceImpl implements ResumeService {
     }
 
     @Override
-    @Cacheable(value = "resume:chatId:", key = "#chatId")
-    @Limited(value = LimitType.RESUME_GENERATE, capacity = 5)
     public Resume findByChatId(UUID chatId) {
         log.debug("Finding resume for chat: {}", chatId);
+        AiChat chat = chatService.getOwnChat(chatId);
 
-        String chatIdStr = chatId.toString();
         Resume resume = mongoTemplate.findOne(
-                Query.query(Criteria.where("chatId").is(chatIdStr)),
+                Query.query(Criteria.where("chatId").is(chatId.toString())),
                 Resume.class
         );
 
         if (resume == null) {
             log.info("Resume not found for chat {}, triggering AI generation", chatId);
-            return generateAndSave(chatId);
+            return generateAndSave(chat);
         }
 
         return resume;
@@ -114,8 +102,21 @@ public class ResumeServiceImpl implements ResumeService {
 
     @Override
     public Resume findById(String id) {
-        return Optional.ofNullable(mongoTemplate.findById(id, Resume.class))
+        return tryFindById(id)
                 .orElseThrow(() -> new AppException("Resume not found with id: " + id, 404));
+    }
+
+    @Override
+    public Optional<Resume> tryFindById(String id) {
+        Resume resume = mongoTemplate.findById(id, Resume.class);
+        if (resume == null) {
+            return Optional.empty();
+        }
+        UserProfile user = securityService.findCurrentUser();
+        if (!isOwner(resume, user.getId())) {
+            throw new AppException("Access to resume %s is denied".formatted(id), 403);
+        }
+        return Optional.of(resume);
     }
 
     @Override
@@ -131,34 +132,24 @@ public class ResumeServiceImpl implements ResumeService {
         });
     }
 
-    @Override
-    public void ats(String resumeId, String url) {
-        AtomicReference<UserProfile> user = new AtomicReference<>(securityService.findCurrentUser());
-        log.debug("ATS for resume: {}", resumeId);
-        notificationService.sendNotification(NotificationDto.builder()
-                .engine(NotificationEngine.WS)
-                .parameters(Map.of("message", "Резюме успешно отправлено в обработку!", "status", WsType.SUCCESS))
-                .receiver(user.get().getLogin())
-                .build());
-        Resume byId = findById(resumeId);
-        String parse = jobParserService.parse(url);
-        CompletableFuture.runAsync(() -> {
-            ChatClient.CallResponseSpec jobSpec = aiService.callExpansion(parse);
-            log.info("Job parsing for resume: {} {}", resumeId, jobSpec.content());
-            applicationContext.getBean(AnalyzerServiceImpl.class).ats(byId, jobSpec.content());
-        }, executor).exceptionally(e -> {
-            log.error("ATS processing failed for resume {}", resumeId, e);
-            return null;
-        });
+    private boolean isOwner(Resume resume, String userId) {
+        Resume.ResumeSettings settings = resume.getResumeSettings();
+        if (settings != null && settings.getOwnerId() != null) {
+            return Objects.equals(settings.getOwnerId(), userId);
+        }
+        // Resumes generated from a chat before ownerId was stored belong to the chat owner.
+        return resume.getChatId() != null && chatService.isOwnedBy(UUID.fromString(resume.getChatId()), userId);
     }
 
-    private Resume generateAndSave(UUID chatId) {
-        AiChat chat = chatService.getChatById(chatId);
+    private Resume generateAndSave(AiChat chat) {
+        UUID chatId = chat.getId();
         UserProfile userProfile = securityService.findCurrentUser();
 
         if (!chat.isFinished()) {
             throw new AppException("Failed to convert not finished chat with id: " + chatId, 404);
         }
+
+        limitService.check(userProfile.getId(), LimitType.RESUME_GENERATE, RESUME_GENERATE_CAPACITY);
 
         String contextHistory = chat.getMessages().stream()
                 .map(m -> String.format("%s: %s", m.getRole(), m.getContent()))
@@ -167,7 +158,6 @@ public class ResumeServiceImpl implements ResumeService {
         String promptWithFormat = contextHistory + "\n\n" + converter.getFormat();
 
         return lockService.withLock(LockUtil.RESUME.formatted(chatId), () -> {
-            Map<String, Object> params = new HashMap<>();
             try {
                 log.debug("Calling AI Extractor for chat {}", chatId);
                 var responseSpec = aiService.callExtractor(promptWithFormat, chatId);
@@ -184,52 +174,31 @@ public class ResumeServiceImpl implements ResumeService {
                     }
 
                     resume.setChatId(chatId.toString());
+                    resume.setResumeSettings(withOwner(resume.getResumeSettings(), userProfile));
                     Resume saved = mongoTemplate.save(resume);
 
                     log.info("Successfully generated and saved resume for chat {}", chatId);
-                    params.put("resumeId", saved.getId());
-                    params.put("status", "success");
                     applicationEventPublisher.publishEvent(CreateResumeEvent.builder()
                             .userId(userProfile.getId())
                             .build());
-                    notificationService.sendNotification(
-                            NotificationDto.builder()
-                                    .receiver(SecurityContextHolder.getContext().getAuthentication().getName())
-                                    .engine(NotificationEngine.WS)
-                                    .parameters(Map.of("message", "Резюме сгенерировано, проверьте email", "type", WsType.SUCCESS))
-                                    .build()
-                    );
+                    applicationEventPublisher.publishEvent(new ResumeNotificationEvent(
+                            userProfile.getLogin(), userProfile.getEmail(), saved.getId(), ResumeNotificationEvent.Kind.GENERATED));
                     return saved;
                 });
 
             } catch (Exception e) {
                 log.error("Failed to generate resume for chat {}: {}", chatId, e.getMessage());
-                notificationService.sendNotification(
-                        NotificationDto.builder()
-                                .receiver(SecurityContextHolder.getContext().getAuthentication().getName())
-                                .engine(NotificationEngine.WS)
-                                .parameters(Map.of("message", "Произошла ошибка во время генерации резюме, попробуйте еще раз позже...", "type", WsType.ERROR))
-                                .build()
-                );
+                applicationEventPublisher.publishEvent(new ResumeNotificationEvent(
+                        userProfile.getLogin(), userProfile.getEmail(), null, ResumeNotificationEvent.Kind.GENERATION_FAILED));
                 throw new AppException("Failed to generate resume via AI. Please try to chat more.", e, 500);
-            } finally {
-                if (params.get("status").equals("success")) {
-                    sendNotification(userProfile.getEmail(), params, "resume_success");
-                } else {
-                    sendNotification(userProfile.getEmail(), params, "resume_rejected");
-                }
             }
         });
     }
 
-    private void sendNotification(String email, Map<String, Object> params, String templateName) {
-        notificationService.sendNotification(
-                NotificationDto.builder()
-                        .engine(NotificationEngine.EMAIL)
-                        .receiver(email)
-                        .parameters(params)
-                        .templateName(templateName)
-                        .build()
-        );
+    private Resume.ResumeSettings withOwner(Resume.ResumeSettings settings, UserProfile owner) {
+        Resume.ResumeSettings result = Optional.ofNullable(settings).orElseGet(Resume.ResumeSettings::new);
+        result.setOwnerId(owner.getId());
+        result.setOwnerLogin(owner.getLogin());
+        return result;
     }
 }

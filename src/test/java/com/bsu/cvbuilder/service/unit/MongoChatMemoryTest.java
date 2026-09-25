@@ -33,7 +33,7 @@ class MongoChatMemoryTest {
 
     private AiChat chatWith(ChatMessage... messages) {
         AiChat chat = AiChat.builder().id(CHAT_ID).messages(new ArrayList<>(List.of(messages))).build();
-        when(chatService.getChatById(CHAT_ID)).thenReturn(chat);
+        when(chatService.getOrCreateChat(CHAT_ID)).thenReturn(chat);
         return chat;
     }
 

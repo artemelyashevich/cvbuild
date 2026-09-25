@@ -11,7 +11,22 @@ public interface ChatService {
 
     AiChat createAiChat(UUID chatId);
 
-    AiChat getChatById(UUID chatId);
+    /**
+     * Internal lookup that creates the chat for the current user when missing. Performs no ownership check.
+     */
+    AiChat getOrCreateChat(UUID chatId);
+
+    /**
+     * Returns the current user's chat. Never creates it.
+     *
+     * @throws com.bsu.cvbuilder.exception.AppException 404 when the chat does not exist, 403 when it belongs to another user
+     */
+    AiChat getOwnChat(UUID chatId);
+
+    /**
+     * True only when the chat exists and belongs to the given user.
+     */
+    boolean isOwnedBy(UUID chatId, String userId);
 
     /**
      * True when the chat does not exist yet or belongs to the given user. Never creates the chat.

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -15,11 +16,7 @@ import com.bsu.cvbuilder.domain.dto.ai.StepAnalysisResult;
 import com.bsu.cvbuilder.domain.entity.AiChat;
 import com.bsu.cvbuilder.domain.entity.UserProfile;
 import com.bsu.cvbuilder.exception.AppException;
-import com.bsu.cvbuilder.service.AnalyzerService;
 import com.bsu.cvbuilder.service.ChatService;
-import com.bsu.cvbuilder.service.JobParserService;
-import com.bsu.cvbuilder.service.NotificationService;
-import com.bsu.cvbuilder.service.ResumeService;
 import com.bsu.cvbuilder.service.SecurityService;
 import com.bsu.cvbuilder.service.TokenUsageService;
 import com.bsu.cvbuilder.service.flow.chat.AbstractChatStepHandler;
@@ -61,17 +58,16 @@ class ChatFlowServiceTest {
     @BeforeEach
     void setUp() {
         when(startHandler.getStep()).thenReturn(ChatFlowStep.START);
-        chatFlowService = new ChatFlowService(chatClient, chatService,
-                mock(ResumeService.class), mock(JobParserService.class), mock(AnalyzerService.class),
-                mock(NotificationService.class), securityService, List.of(startHandler), applicationEventPublisher,
-                tokenUsageService, mock(TokenUsageAdvisor.class));
+        chatFlowService = new ChatFlowService(chatClient, chatService, securityService, List.of(startHandler),
+                applicationEventPublisher, tokenUsageService, mock(TokenUsageAdvisor.class));
         when(securityService.findCurrentUser()).thenReturn(UserProfile.builder().id("user-1").build());
     }
 
     @Test
     @DisplayName("streamMessage: chat owned by another user is rejected with 403")
     void streamMessage_ForeignChat_Throws403() {
-        when(chatService.getChatById(CHAT_ID)).thenReturn(AiChat.builder().id(CHAT_ID).userId("user-2").build());
+        when(chatService.getOrCreateOwnChat(eq(CHAT_ID), any(UserProfile.class)))
+                .thenThrow(new AppException("Access to chat %s is denied".formatted(CHAT_ID), 403));
 
         AppException ex = assertThrows(AppException.class, () -> chatFlowService.streamMessage(CHAT_ID, "hi"));
 
@@ -83,7 +79,8 @@ class ChatFlowServiceTest {
     @DisplayName("streamMessage: own chat streams model tokens")
     @SuppressWarnings("unchecked")
     void streamMessage_OwnChat_StreamsTokens() {
-        when(chatService.getChatById(CHAT_ID)).thenReturn(AiChat.builder().id(CHAT_ID).userId("user-1").build());
+        when(chatService.getOrCreateOwnChat(eq(CHAT_ID), any(UserProfile.class)))
+                .thenReturn(AiChat.builder().id(CHAT_ID).userId("user-1").build());
         when(startHandler.analyzeCompletion(any(), anyString())).thenReturn(new StepAnalysisResult(false, "", ""));
         when(startHandler.getSystemPrompt()).thenReturn("system");
         when(chatClient.prompt().advisors(any(Consumer.class)).system(anyString()).user(anyString()).stream().content())

@@ -86,4 +86,38 @@ class ChatServiceImplOwnershipTest {
         assertTrue(chatService.isAccessible(CHAT_ID, "alice-id"));
         assertFalse(chatService.isAccessible(foreign, "alice-id"));
     }
+
+    @Test
+    @DisplayName("getOwnChat: missing chat is 404 and is not created")
+    void getOwnChat_MissingChat_Throws404WithoutCreating() {
+        when(securityService.findCurrentUser()).thenReturn(ALICE);
+        when(aiChatRepository.findById(CHAT_ID)).thenReturn(Optional.empty());
+
+        AppException ex = assertThrows(AppException.class, () -> chatService.getOwnChat(CHAT_ID));
+
+        assertEquals(404, ex.getStatusCode());
+        verify(aiChatRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("getOwnChat: own chat is returned, foreign chat is 403")
+    void getOwnChat_OwnershipMatrix() {
+        UUID foreign = UUID.randomUUID();
+        AiChat own = AiChat.builder().id(CHAT_ID).userId("alice-id").build();
+        when(securityService.findCurrentUser()).thenReturn(ALICE);
+        when(aiChatRepository.findById(CHAT_ID)).thenReturn(Optional.of(own));
+        when(aiChatRepository.findById(foreign)).thenReturn(Optional.of(AiChat.builder().id(foreign).userId("bob-id").build()));
+
+        assertSame(own, chatService.getOwnChat(CHAT_ID));
+        AppException ex = assertThrows(AppException.class, () -> chatService.getOwnChat(foreign));
+        assertEquals(403, ex.getStatusCode());
+    }
+
+    @Test
+    @DisplayName("isOwnedBy: missing chat is not owned by anyone")
+    void isOwnedBy_MissingChat_False() {
+        when(aiChatRepository.findById(CHAT_ID)).thenReturn(Optional.empty());
+
+        assertFalse(chatService.isOwnedBy(CHAT_ID, "alice-id"));
+    }
 }

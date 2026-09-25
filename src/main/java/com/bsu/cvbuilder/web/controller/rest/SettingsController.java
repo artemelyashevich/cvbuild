@@ -11,7 +11,6 @@ import com.bsu.cvbuilder.service.NotificationService;
 import com.bsu.cvbuilder.service.SettingsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -23,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.security.Principal;
 import java.util.Map;
 
 @RestController
@@ -34,10 +34,10 @@ public class SettingsController {
     private final NotificationService notificationService;
 
     @PatchMapping
-    public void send(@RequestParam String message) {
+    public void send(@RequestParam String message, Principal principal) {
         notificationService.sendNotification(
                 NotificationDto.builder()
-                        .receiver(SecurityContextHolder.getContext().getAuthentication().getName())
+                        .receiver(principal.getName())
                         .engine(NotificationEngine.WS)
                         .parameters(Map.of("message", message, "type", WsType.SUCCESS))
                         .build()

@@ -2,11 +2,12 @@ package com.bsu.cvbuilder.web.controller.rest;
 
 import com.bsu.cvbuilder.annotation.agreement.AgreementRequire;
 import com.bsu.cvbuilder.annotation.email.EmailVerification;
-import com.bsu.cvbuilder.domain.entity.Resume;
+import com.bsu.cvbuilder.service.AtsService;
 import com.bsu.cvbuilder.service.ResumeGeneratorService;
 import com.bsu.cvbuilder.service.ResumeService;
-import com.bsu.cvbuilder.service.flow.chat.ChatFlowService;
+import com.bsu.cvbuilder.web.dto.resume.ResumeResponseDto;
 import com.bsu.cvbuilder.web.dto.resume.UpdateResumeRequest;
+import com.bsu.cvbuilder.web.mapper.impl.ResumeResponseDtoMapper;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -38,35 +39,27 @@ public class ResumeController {
 
     private final ResumeService resumeService;
     private final ResumeGeneratorService resumeGeneratorService;
-    private final ChatFlowService chatFlowService;
+    private final AtsService atsService;
+    private final ResumeResponseDtoMapper resumeResponseDtoMapper;
 
     @AgreementRequire
     @EmailVerification
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PostMapping(value = "/ats/{resumeId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public void ats(@PathVariable String resumeId, @RequestBody Map<String, String> body) {
-        resumeService.ats(resumeId, body.get("url"));
+        atsService.optimizeAsync(resumeId, body.get("url"));
     }
 
     @GetMapping
-    public Page<Resume> findAll(
+    public Page<ResumeResponseDto> findAll(
             @RequestParam(name = "page", defaultValue = "0", required = false) Integer page,
             @RequestParam(name = "size", defaultValue = "5", required = false) Integer size,
             @RequestParam(name = "masked", defaultValue = "false", required = false) Boolean masked
     ) {
-        Page<Resume> resumes = resumeService.findAll(Pageable
-                .ofSize(size)
-                .withPage(page)
-        );
-        if (masked) {
-           return resumes.map(resume -> Resume.builder()
-                   .id(resume.getId())
-                   .createdAt(resume.getCreatedAt())
-                   .updatedAt(resume.getUpdatedAt())
-                   .resumeSettings(resume.getResumeSettings())
-                   .build());
-        }
-        return resumes;
+        return resumeService.findAll(Pageable
+                        .ofSize(size)
+                        .withPage(page))
+                .map(masked ? resumeResponseDtoMapper::toMaskedDto : resumeResponseDtoMapper::toDto);
     }
 
     @PostMapping("/{chatId}")
@@ -75,14 +68,14 @@ public class ResumeController {
     }
 
     @GetMapping("/{id}")
-    public Resume findById(@PathVariable String id) {
-        return resumeService.findById(id);
+    public ResumeResponseDto findById(@PathVariable String id) {
+        return resumeResponseDtoMapper.toDto(resumeService.findById(id));
     }
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.CREATED)
-    public Resume update(@PathVariable String id, @RequestBody UpdateResumeRequest updateResumeRequest) {
-        return resumeService.update(id, updateResumeRequest);
+    public ResumeResponseDto update(@PathVariable String id, @RequestBody UpdateResumeRequest updateResumeRequest) {
+        return resumeResponseDtoMapper.toDto(resumeService.update(id, updateResumeRequest));
     }
 
     @GetMapping("/generate/{id}")

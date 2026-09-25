@@ -2,12 +2,13 @@ package com.bsu.cvbuilder.web.controller.rest;
 
 import com.bsu.cvbuilder.annotation.agreement.AgreementRequire;
 import com.bsu.cvbuilder.domain.dto.ai.AiRequestDto;
-import com.bsu.cvbuilder.domain.entity.AiChat;
-import com.bsu.cvbuilder.domain.entity.Resume;
-import com.bsu.cvbuilder.exception.AppException;
 import com.bsu.cvbuilder.service.AiService;
 import com.bsu.cvbuilder.service.ChatService;
 import com.bsu.cvbuilder.service.ResumeService;
+import com.bsu.cvbuilder.web.dto.chat.AiChatResponseDto;
+import com.bsu.cvbuilder.web.dto.resume.ResumeResponseDto;
+import com.bsu.cvbuilder.web.mapper.impl.AiChatResponseDtoMapper;
+import com.bsu.cvbuilder.web.mapper.impl.ResumeResponseDtoMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -37,10 +38,11 @@ import java.util.UUID;
 @Tag(name = "AI Chat Management", description = "Endpoints for managing AI chat sessions, messaging, and resume data extraction.")
 public class AiChatController {
 
-    private final ResumeService resumeDataExtractorService;
     private final AiService aiService;
     private final ChatService chatService;
     private final ResumeService resumeService;
+    private final AiChatResponseDtoMapper aiChatResponseDtoMapper;
+    private final ResumeResponseDtoMapper resumeResponseDtoMapper;
 
     @Operation(summary = "Get User's AI Chats", description = "Retrieves a paginated list of AI chat history for the currently authenticated user.")
     @ApiResponses(value = {
@@ -48,7 +50,7 @@ public class AiChatController {
             @ApiResponse(responseCode = "401", description = "User is not authenticated", content = @Content)
     })
     @GetMapping
-    public Page<AiChat> getAiChats(
+    public Page<AiChatResponseDto> getAiChats(
             @Parameter(description = "Page number (0-indexed)", example = "0")
             @RequestParam(required = false, name = "page", defaultValue = "0") Integer page,
 
@@ -62,7 +64,7 @@ public class AiChatController {
             @RequestParam(required = false, name = "direction", defaultValue = "asc") String direction
     ) {
         Sort sorting = Sort.by(Sort.Direction.fromString(direction), sort);
-        return chatService.findAllByCurrentUser(PageRequest.of(page, size, sorting));
+        return chatService.findAllByCurrentUser(PageRequest.of(page, size, sorting)).map(aiChatResponseDtoMapper::toDto);
     }
 
     @Operation(summary = "Get Specific Chat", description = "Retrieves detailed information for a specific chat session by its ID.")
@@ -71,11 +73,11 @@ public class AiChatController {
             @ApiResponse(responseCode = "404", description = "Chat not found or access denied", content = @Content)
     })
     @GetMapping("/chat/{chatId}")
-    public AiChat findAll(
+    public AiChatResponseDto findAll(
             @Parameter(description = "UUID of the chat to retrieve", required = true)
             @PathVariable UUID chatId
     ) {
-        return chatService.getChatById(chatId);
+        return aiChatResponseDtoMapper.toDto(chatService.getOwnChat(chatId));
     }
 
     @Operation(summary = "Create New Chat", description = "Initializes a new AI chat session. Requires user agreement.")
@@ -86,8 +88,8 @@ public class AiChatController {
     @AgreementRequire
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
-    public AiChat create() {
-        return chatService.createAiChat(UUID.randomUUID());
+    public AiChatResponseDto create() {
+        return aiChatResponseDtoMapper.toDto(chatService.createAiChat(UUID.randomUUID()));
     }
 
     @Operation(summary = "Send Message to AI", description = "Sends a prompt to the AI service and returns the text response. Requires user agreement.")
@@ -108,22 +110,18 @@ public class AiChatController {
 
     @Operation(summary = "Extract Resume Data", description = "Analyzes a chat session and extracts structured resume data. Requires user agreement.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Resume extracted successfully", content = @Content(schema = @Schema(implementation = Resume.class))),
+            @ApiResponse(responseCode = "200", description = "Resume extracted successfully", content = @Content(schema = @Schema(implementation = ResumeResponseDto.class))),
             @ApiResponse(responseCode = "404", description = "Chat ID not found", content = @Content),
             @ApiResponse(responseCode = "403", description = "User agreement missing", content = @Content)
     })
     @AgreementRequire
     @GetMapping("/resume/{chatId}")
     @ResponseStatus(HttpStatus.OK)
-    public Resume extract(
-            @Parameter(description = "UUID string of the chat source", required = true)
+    public ResumeResponseDto extract(
+            @Parameter(description = "Resume id, or UUID of the chat to extract the resume from", required = true)
             @PathVariable String chatId
     ) {
-        try {
-            Resume resume = resumeService.findById(chatId);
-            return resume;
-        } catch (AppException e) {
-            return resumeDataExtractorService.findByChatId(UUID.fromString(chatId));
-        }
+        return resumeResponseDtoMapper.toDto(resumeService.tryFindById(chatId)
+                .orElseGet(() -> resumeService.findByChatId(UUID.fromString(chatId))));
     }
 }

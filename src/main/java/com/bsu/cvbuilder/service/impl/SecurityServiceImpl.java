@@ -97,6 +97,7 @@ public class SecurityServiceImpl implements SecurityService {
         } catch (Exception e) {
             log.error(e.getMessage());
             data.put("error", e.getMessage());
+            throw new AppException("Authentication failed", e, 500);
         } finally {
             event.setData(data);
             applicationEventPublisher.publishEvent(event);
